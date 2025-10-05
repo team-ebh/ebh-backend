@@ -1,0 +1,21 @@
+{
+    "preset": "laravel",
+    "rules": {
+        "blank_line_before_statement": true,
+        "concat_space": {
+            "spacing": "one"
+        },
+        "declare_strict_types": true,
+        "new_with_parentheses": false,
+        "method_argument_space": true,
+        "single_trait_insert_per_statement": true,
+        "types_spaces": {
+            "space": "single"
+        },
+        "strict_comparison": true,
+        "visibility_required": true
+    },
+    "exclude": [
+        "tests"
+    ]
+}

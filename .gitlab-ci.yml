@@ -1,0 +1,22 @@
+stages:
+  - sync
+sync_to_github:
+  stage: sync
+  image: registry.nizek.dev/nz-tools:base
+  variables:
+    GIT_DEPTH: "0"
+  only:
+    - main
+    - dev
+    - stage
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo "$PROJECT_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - /usr/bin/ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+    - git config --global user.name "$PROJECT_USER_NAME"
+    - git config --global user.email "$PROJECT_USER_EMAIL"
+  script:
+    - git remote remove github || true 
+    - git remote add github "$PROJECT_GITHUB_REPO"
+    - git push github HEAD:$CI_COMMIT_REF_NAME --force
