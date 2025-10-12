@@ -9,7 +9,10 @@ use App\Http\Responses\LoginResponse;
 use App\Models\Admin;
 use Carbon\CarbonImmutable;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\Example;
 use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
@@ -147,9 +150,22 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
-        Scramble::registerApi('v1', [
-            'api_path' => 'v1',
-        ]);
+        Scramble::configure()
+            ->withOperationTransformers(function (Operation $operation) {
+                $languageHeader = (new Parameter('Language', 'header'))
+                    ->required(true)
+                    ->description('Language of the representation content');
+
+                $languageHeader->examples = [
+                    'English' => new Example('en'),
+                    'Arabic' => new Example('ar'),
+                ];
+
+                $operation->addParameters([$languageHeader]);
+            });
+
+        Scramble::registerApi('v1-drivers', config('scramble-drivers'));
+        Scramble::registerApi('v1-users', config('scramble-users'));
     }
 
     private function apiConfiguration(): void

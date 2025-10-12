@@ -7,6 +7,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::domain(config('app.domains.api'))
     ->group(function () {
-        Scramble::registerUiRoute(path: '/v1/docs', api: 'v1');
-        Scramble::registerJsonSpecificationRoute(path: '/v1/docs.json', api: 'v1');
+        Scramble::registerUiRoute('docs/v1/drivers', 'v1-drivers');
+        Scramble::registerJsonSpecificationRoute('docs/v1/drivers.json', 'v1-drivers');
+
+        Scramble::registerUiRoute('docs/v1/users', 'v1-users');
+        Scramble::registerJsonSpecificationRoute('docs/v1/users.json', 'v1-users');
+
+        Route::redirect('/', 'docs/v1/drivers');
     });
