@@ -164,8 +164,8 @@ class AppServiceProvider extends ServiceProvider
                 $operation->addParameters([$languageHeader]);
             });
 
-        Scramble::registerApi('v1-drivers', config('scramble-drivers'));
-        Scramble::registerApi('v1-users', config('scramble-users'));
+        Scramble::registerApi('v1-riders', config('scramble-riders'));
+        Scramble::registerApi('v1-customers', config('scramble-customers'));
     }
 
     private function apiConfiguration(): void
