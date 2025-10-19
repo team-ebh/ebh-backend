@@ -11,6 +11,7 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Colors\Color;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -30,7 +31,7 @@ class ApiPanelProvider extends PanelProvider
             ->login()
             ->domain(config('app.domains.api'))
             ->colors([
-                'primary' => '#DA1F26',
+                'primary' => Color::Yellow,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -44,10 +45,10 @@ class ApiPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
                 CheckAdminEnabledMiddleware::class,
             ])
-            ->brandLogo(asset('/images/logo/dark.svg'))
-            ->darkModeBrandLogo(asset('/images/logo/light.svg'))
-            ->favicon(asset('images/logo/light.svg', ! App::isLocal()))
-            ->brandLogoHeight('3rem')
+//            ->brandLogo(asset('/images/logo/dark.svg'))
+//            ->darkModeBrandLogo(asset('/images/logo/light.svg'))
+//            ->favicon(asset('images/logo/light.svg', ! App::isLocal()))
+//            ->brandLogoHeight('3rem')
             ->authMiddleware([
                 Authenticate::class,
             ]);

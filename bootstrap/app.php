@@ -19,23 +19,27 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
         then: function () {
-            $files = glob(base_path('routes/api/v*/*.php'));
+            $routeGroups = [
+                'drivers' => glob(base_path('routes/api/v*/driver/*.php')),
+                'users' => glob(base_path('routes/api/v*/user/*.php')),
+            ];
 
-            foreach ($files as $file) {
-                $exploded = explode('/', $file);
+            foreach ($routeGroups as $group => $files) {
+                foreach ($files as $file) {
+                    $parts = explode('/', $file);
+                    $version = mb_strtolower($parts[count($parts) - 3]);
 
-                $version = mb_strtolower($exploded[count($exploded) - 2]);
-
-                Route::prefix($version)
-                    ->domain(config('app.domains.api'))
-                    ->name($version . '.')
-                    ->middleware([
-                        'api',
-                        'throttle:limiter',
-                        ForceApiGuardMiddleware::class,
-                        LocalizationMiddleware::class,
-                    ])
-                    ->group($file);
+                    Route::prefix("{$version}/{$group}")
+                        ->domain(config('app.domains.api'))
+                        ->name("{$version}.{$group}.")
+                        ->middleware([
+                            'api',
+                            'throttle:limiter',
+                            ForceApiGuardMiddleware::class,
+                            LocalizationMiddleware::class,
+                        ])
+                        ->group($file);
+                }
             }
         }
     )

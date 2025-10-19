@@ -33,10 +33,6 @@ class ResetPasswordAction extends Action
                     ->required()
                     ->rules([
                         Password::min(6),
-                        //                            ->letters()
-                        //                            ->mixedCase()
-                        //                            ->numbers()
-                        //                            ->symbols()
                     ])
                     ->confirmed(),
                 TextInput::make('new_password_confirmation')
