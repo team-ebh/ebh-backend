@@ -13,6 +13,7 @@ arch()->preset()->laravel()->ignoring([
     'App\Http\Resources\Api\SuccessResource',
     'App\Http\Controllers\Controller',
     'App\Http\Controllers\Api\V1\Customer\TripController', // Allow custom methods in TripController
+    'App\Http\Controllers\Api\V1\Customer\AuthController', // Allow custom methods in AuthController
 ]);
 
 arch('strict types')

@@ -63,3 +63,14 @@ if (! function_exists('safeProcess')) {
         return new SafeProcess();
     }
 }
+
+if (! function_exists('generateOtpCode')) {
+
+    /**
+     * @throws \Random\RandomException
+     */
+    function generateOtpCode(): string
+    {
+        return str_pad((string) random_int(1111, 9999), 4, '0', STR_PAD_LEFT);
+    }
+}

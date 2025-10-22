@@ -6,7 +6,9 @@ namespace App\Providers;
 
 use App\Exceptions\Handler;
 use App\Http\Responses\LoginResponse;
+use App\Interfaces\Repositories\Api\V1\Customer\CustomerRepositoryInterface;
 use App\Models\Admin;
+use App\Repositories\Api\V1\Customer\CustomerRepository;
 use Carbon\CarbonImmutable;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Example;
@@ -47,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public $singletons = [
         FilamentLoginResponse::class => LoginResponse::class,
+        CustomerRepositoryInterface::class => CustomerRepository::class,
     ];
 
     /**
