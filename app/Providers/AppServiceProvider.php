@@ -165,7 +165,7 @@ class AppServiceProvider extends ServiceProvider
             });
 
         Scramble::registerApi('v1-riders', config('scramble-riders'));
-        Scramble::registerApi('v1-customers', config('scramble-customers'));
+        Scramble::registerApi('v1-users', config('scramble-users'));
     }
 
     private function apiConfiguration(): void
