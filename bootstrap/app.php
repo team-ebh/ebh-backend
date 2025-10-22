@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         then: function () {
             $routeGroups = [
                 'riders' => glob(base_path('routes/api/v*/riders/*.php')),
-                'users' => glob(base_path('routes/api/v*/users/*.php')),
+                'customers' => glob(base_path('routes/api/v*/customers/*.php')),
             ];
 
             foreach ($routeGroups as $group => $files) {
@@ -62,11 +62,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 Response::HTTP_INTERNAL_SERVER_ERROR,
             ];
 
-            if ($exception instanceof BaseException && ! in_array(
-                $exception->statusCode(),
-                $reportWhiteListStatusCode,
-                true
-            )) {
+            if ($exception instanceof BaseException && !in_array(
+                    $exception->statusCode(),
+                    $reportWhiteListStatusCode,
+                    true
+                )) {
                 return false;
             }
 

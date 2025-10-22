@@ -6,15 +6,15 @@ use App\Http\Middleware\RestrictedDocsAccess;
 
 return [
     /*
-     * Users API Configuration
+     * Customers API Configuration
      */
-    'api_path' => 'v1/users',
+    'api_path' => 'v1/customers',
     'api_domain' => null,
-    'export_path' => 'docs/v1/users.json',
+    'export_path' => 'docs/v1/customers.json',
 
     'info' => [
         'version' => '1.0.0',
-        'title' => 'Users API Documentation',
+        'title' => 'Customers API Documentation',
         'description' => <<<'HTML'
 <!-- API Documentation Tables -->
 <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; background-color: #fff; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -169,7 +169,7 @@ HTML
     ],
 
     'ui' => [
-        'title' => 'Users API Documentation',
+        'title' => 'Customers API Documentation',
         'theme' => 'light',
         'hide_try_it' => false,
         'logo' => '/images/Nizek Logo - Black.svg',
