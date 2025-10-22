@@ -52,9 +52,7 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
-    public function register(): void
-    {
-    }
+    public function register(): void {}
 
     /**
      * Bootstrap any application services.
@@ -78,14 +76,14 @@ class AppServiceProvider extends ServiceProvider
 
         Model::unguard();
         Model::shouldBeStrict();
-        Model::preventLazyLoading(!app()->isProduction());
+        Model::preventLazyLoading(! app()->isProduction());
         Model::preventAccessingMissingAttributes();
 
         Date::use(CarbonImmutable::class);
 
         DB::prohibitDestructiveCommands(app()->isProduction());
 
-        if (!app()->isLocal()) {
+        if (! app()->isLocal()) {
             URL::forceScheme('https');
         }
     }
@@ -94,13 +92,13 @@ class AppServiceProvider extends ServiceProvider
     {
         FilamentView::registerRenderHook(
             PanelsRenderHook::SIDEBAR_FOOTER,
-            fn(): string => Blade::render('filament/components/nizek-sidebar-nav-footer')
+            fn (): string => Blade::render('filament/components/nizek-sidebar-nav-footer')
         );
 
         Column::configureUsing(function (Column $column): void {
             if ($column instanceof TextColumn) {
                 $column
-                    ->formatStateUsing(fn($state) => is_string($state) ? Str::limit($state, 40, '…') : $state)
+                    ->formatStateUsing(fn ($state) => is_string($state) ? Str::limit($state, 40, '…') : $state)
                     ->placeholder('-')
                     ->searchable();
             }
@@ -124,9 +122,9 @@ class AppServiceProvider extends ServiceProvider
             return Password::min(6);
         });
 
-        CreateAction::configureUsing(fn($action) => $action->slideOver());
+        CreateAction::configureUsing(fn ($action) => $action->slideOver());
 
-        EditAction::configureUsing(fn($action) => $action->slideOver());
+        EditAction::configureUsing(fn ($action) => $action->slideOver());
 
         Table::configureUsing(function (Table $table): void {
             $table
@@ -196,7 +194,7 @@ class AppServiceProvider extends ServiceProvider
                 return Limit::none()->by($index);
             }
 
-            if (!$user) {
+            if (! $user) {
                 $limit = config('rate-limiter.guest');
             } else {
                 $limit = config('rate-limiter.logged_in_user');

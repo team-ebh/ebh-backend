@@ -62,11 +62,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 Response::HTTP_INTERNAL_SERVER_ERROR,
             ];
 
-            if ($exception instanceof BaseException && !in_array(
-                    $exception->statusCode(),
-                    $reportWhiteListStatusCode,
-                    true
-                )) {
+            if ($exception instanceof BaseException && ! in_array(
+                $exception->statusCode(),
+                $reportWhiteListStatusCode,
+                true
+            )) {
                 return false;
             }
 
