@@ -22,7 +22,7 @@ use App\Http\Resources\Api\V1\Customer\Auth\VerifyOtpResource;
 use Illuminate\Http\JsonResponse;
 
 /**
- * @tags Customer Auth
+ * @tags Auth
  */
 class AuthController extends Controller
 {
@@ -35,26 +35,28 @@ class AuthController extends Controller
      */
     public function signUp(
         SignUpRequest $request,
-        SignUpDTO $dto,
-        SignUpAction $action
-    ): SignUpResource {
+        SignUpDTO     $dto,
+        SignUpAction  $action
+    ): SignUpResource
+    {
         $dto->getDataFromRequest($request);
 
         return new SignUpResource($action($dto));
     }
 
     /**
-     * Verify OTP and complete authentication
+     * Sign up Verify OTP and complete authentication
      *
      * @unauthenticated
      *
      * @throws \Throwable
      */
     public function signUpVerifyOtp(
-        VerifyOtpRequest $request,
+        VerifyOtpRequest   $request,
         SignUpVerifyOtpDTO $dto,
-        VerifyOtpAction $action
-    ): VerifyOtpResource {
+        VerifyOtpAction    $action
+    ): VerifyOtpResource
+    {
         $dto->getDataFromRequest($request);
 
         return new VerifyOtpResource($action($dto));
@@ -69,26 +71,28 @@ class AuthController extends Controller
      */
     public function signIn(
         SignInRequest $request,
-        SignInDTO $dto,
-        SignInAction $action
-    ): SignInResource {
+        SignInDTO     $dto,
+        SignInAction  $action
+    ): SignInResource
+    {
         $dto->getDataFromRequest($request);
 
         return new SignInResource($action($dto));
     }
 
     /**
-     * Verify OTP and complete authentication
+     * Sign in Verify OTP
      *
      * @unauthenticated
      *
      * @throws \Throwable
      */
     public function signInVerifyOtp(
-        VerifyOtpRequest $request,
+        VerifyOtpRequest   $request,
         SignInVerifyOtpDTO $dto,
-        VerifyOtpAction $action
-    ): VerifyOtpResource {
+        VerifyOtpAction    $action
+    ): VerifyOtpResource
+    {
         $dto->getDataFromRequest($request);
 
         return new VerifyOtpResource($action($dto));
