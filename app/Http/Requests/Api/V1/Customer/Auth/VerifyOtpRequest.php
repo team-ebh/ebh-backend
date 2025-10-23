@@ -15,6 +15,9 @@ class VerifyOtpRequest extends FormRequest
                 'required',
                 'regex:/^[0-9]{8}$/',
             ],
+            /**
+             * On the dev and stage servers, use the code 0421 to pass the OTP
+             */
             'otp' => [
                 'required',
                 'string',

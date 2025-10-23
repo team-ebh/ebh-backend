@@ -35,10 +35,9 @@ class AuthController extends Controller
      */
     public function signUp(
         SignUpRequest $request,
-        SignUpDTO     $dto,
-        SignUpAction  $action
-    ): SignUpResource
-    {
+        SignUpDTO $dto,
+        SignUpAction $action
+    ): SignUpResource {
         $dto->getDataFromRequest($request);
 
         return new SignUpResource($action($dto));
@@ -52,11 +51,10 @@ class AuthController extends Controller
      * @throws \Throwable
      */
     public function signUpVerifyOtp(
-        VerifyOtpRequest   $request,
+        VerifyOtpRequest $request,
         SignUpVerifyOtpDTO $dto,
-        VerifyOtpAction    $action
-    ): VerifyOtpResource
-    {
+        VerifyOtpAction $action
+    ): VerifyOtpResource {
         $dto->getDataFromRequest($request);
 
         return new VerifyOtpResource($action($dto));
@@ -71,10 +69,9 @@ class AuthController extends Controller
      */
     public function signIn(
         SignInRequest $request,
-        SignInDTO     $dto,
-        SignInAction  $action
-    ): SignInResource
-    {
+        SignInDTO $dto,
+        SignInAction $action
+    ): SignInResource {
         $dto->getDataFromRequest($request);
 
         return new SignInResource($action($dto));
@@ -88,11 +85,10 @@ class AuthController extends Controller
      * @throws \Throwable
      */
     public function signInVerifyOtp(
-        VerifyOtpRequest   $request,
+        VerifyOtpRequest $request,
         SignInVerifyOtpDTO $dto,
-        VerifyOtpAction    $action
-    ): VerifyOtpResource
-    {
+        VerifyOtpAction $action
+    ): VerifyOtpResource {
         $dto->getDataFromRequest($request);
 
         return new VerifyOtpResource($action($dto));
