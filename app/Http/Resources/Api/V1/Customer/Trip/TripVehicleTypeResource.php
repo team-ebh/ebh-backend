@@ -44,6 +44,13 @@ class TripVehicleTypeResource extends JsonResource
              * @var string
              */
             'description' => $vehicleType->getDescription(),
+
+            /**
+             * @example "http://api.ebhapp.com/images/trip/types/wheelchair.svg"
+             *
+             * @var string
+             */
+            'icon' => $vehicleType->getIcon(),
         ];
     }
 }

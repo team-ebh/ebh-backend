@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Enums\Trip;
 
+use BackedEnum;
+use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 
-enum AccessibilityRequirementsEnum: int implements HasLabel
+enum AccessibilityRequirementsEnum: int implements HasIcon, HasLabel
 {
     case WHEELCHAIR_ACCESSIBLE = 1;
     case OXYGEN_SUPPORT = 2;
@@ -20,5 +22,14 @@ enum AccessibilityRequirementsEnum: int implements HasLabel
     public function getDescription(): ?string
     {
         return trans('trips.api.accessibility_requirements.' . $this->name . '_description');
+    }
+
+    public function getIcon(): string | BackedEnum | null
+    {
+        return match ($this) {
+            self::WHEELCHAIR_ACCESSIBLE => asset('images/trip/accessibility/wheelchair 1.svg'),
+            self::OXYGEN_SUPPORT => asset('images/trip/accessibility/oxygen 1.svg'),
+            self::PORTABLE_RAMP => asset('images/trip/accessibility/ramp 1.svg'),
+        };
     }
 }

@@ -44,6 +44,13 @@ class AccessibilityRequirementsResource extends JsonResource
              * @var string
              */
             'description' => $accessibilityRequirement->getDescription(),
+
+            /**
+             * @example "http://api.ebhapp.com/images/trip/types/wheelchair.svg"
+             *
+             * @var string
+             */
+            'icon' => $accessibilityRequirement->getIcon(),
         ];
     }
 }
