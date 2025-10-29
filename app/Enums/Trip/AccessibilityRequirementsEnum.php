@@ -32,4 +32,17 @@ enum AccessibilityRequirementsEnum: int implements HasIcon, HasLabel
             self::PORTABLE_RAMP => asset('images/trip/accessibility/ramp 1.svg'),
         };
     }
+
+    /**
+     * Get the price in KWD for this accessibility requirement
+     * Returns null if the service is included for free
+     */
+    public function getPrice(): ?float
+    {
+        return match ($this) {
+            self::WHEELCHAIR_ACCESSIBLE => 3.000,
+            self::OXYGEN_SUPPORT => 2.500,
+            self::PORTABLE_RAMP => null, // Included for free
+        };
+    }
 }

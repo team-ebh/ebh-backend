@@ -74,3 +74,71 @@ if (! function_exists('generateOtpCode')) {
         return str_pad((string) random_int(1111, 9999), 4, '0', STR_PAD_LEFT);
     }
 }
+
+if (! function_exists('priceFormat')) {
+    function priceFormat($price): ?string
+    {
+        if (! $price) {
+            return $price;
+        }
+
+        return number_format(
+            num: numberFormat($price),
+            decimals: 3,
+            thousands_separator: ''
+        );
+    }
+}
+
+if (! function_exists('numberFormat')) {
+    function numberFormat(int | float | null | string $number, ?int $decimal = null): float | int | null | string
+    {
+        $decimalPlaces = 3;
+
+        if (! is_null($decimal)) {
+            $decimalPlaces = $decimal;
+        }
+
+        if (is_null($number)) {
+            return null;
+        }
+
+        if (! is_numeric($number)) {
+            return $number;
+        }
+
+        if (numericVal($number) === 0) {
+            return 0;
+        }
+
+        if (numericVal($number) === 0.0000) {
+            return 0;
+        }
+
+        if (abs(floatval($number)) <= 0.01) {
+            if ($number < 0) {
+                return -0.01;
+            }
+
+            return 0.01;
+        }
+
+        $result = bcdiv((string) $number, '1', $decimalPlaces);
+
+        /**
+         * if result actually is integer, cast it to integer to be sure that zero decimal values will be removed
+         */
+        if ($result - (int) $result === 0) {
+            return (int) $result;
+        }
+
+        return (float) $result;
+    }
+}
+
+if (! function_exists('numericVal')) {
+    function numericVal(null | string | float | int | array $numericValue): float | int | string | null | array
+    {
+        return is_numeric($numericValue) ? $numericValue + 0 : $numericValue;
+    }
+}

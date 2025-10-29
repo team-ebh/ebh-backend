@@ -6,13 +6,16 @@ namespace App\Models;
 
 use App\Enums\Customer\CustomerStatusEnum;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\Access\Authorizable;
 use Laravel\Sanctum\HasApiTokens;
 
-class Customer extends Model
+class Customer extends Model implements AuthenticatableContract
 {
+    use Authorizable;
     use HasApiTokens;
     use HasDefaultColumnModelTrait;
     use HasFactory;
@@ -67,5 +70,61 @@ class Customer extends Model
     public function isPendingVerification(): bool
     {
         return $this->{self::COLUMN_STATUS} === CustomerStatusEnum::PENDING_VERIFICATION;
+    }
+
+    /**
+     * Get the name of the unique identifier for the user.
+     */
+    public function getAuthIdentifierName(): string
+    {
+        return 'id';
+    }
+
+    /**
+     * Get the unique identifier for the user.
+     */
+    public function getAuthIdentifier(): mixed
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Get the password for the user.
+     */
+    public function getAuthPassword(): ?string
+    {
+        return null; // No password for customers, using OTP
+    }
+
+    /**
+     * Get the token value for the "remember me" session.
+     */
+    public function getRememberToken(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Set the token value for the "remember me" session.
+     */
+    public function setRememberToken($value): void
+    {
+        //
+    }
+
+    /**
+     * Get the column name for the "remember me" token.
+     */
+    public function getRememberTokenName(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Get the password hash for the user (Laravel 11 requirement).
+     */
+    public function getAuthPasswordName(): string
+    {
+        return 'password';
     }
 }

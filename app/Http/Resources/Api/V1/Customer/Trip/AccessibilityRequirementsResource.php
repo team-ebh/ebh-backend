@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Api\V1\Customer\Trip;
 
 use App\Enums\Trip\AccessibilityRequirementsEnum;
+use App\Models\TripAccessibility;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,7 +16,10 @@ class AccessibilityRequirementsResource extends JsonResource
         /**
          * @var AccessibilityRequirementsEnum $accessibilityRequirement
          */
-        $accessibilityRequirement = $this->resource;
+        // Handle both cases: direct enum (from form data) or TripAccessibility model (from trip)
+        $accessibilityRequirement = $this->resource instanceof AccessibilityRequirementsEnum
+            ? $this->resource
+            : $this->resource->{TripAccessibility::COLUMN_ACCESSIBILITY_REQUIREMENT};
 
         return [
             /**
@@ -51,6 +55,15 @@ class AccessibilityRequirementsResource extends JsonResource
              * @var string
              */
             'icon' => $accessibilityRequirement->getIcon(),
+
+            /**
+             * Price in KWD for this accessibility requirement
+             *
+             * @example 3.000
+             *
+             * @var float|null
+             */
+            'price' => $accessibilityRequirement->getPrice(),
         ];
     }
 }
