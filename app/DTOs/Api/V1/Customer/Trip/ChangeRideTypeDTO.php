@@ -26,6 +26,10 @@ class ChangeRideTypeDTO implements RequestDataTransferObject
 
     public ?float $originLongitude;
 
+    public ?string $destinationLocationTitle;
+
+    public ?string $destinationLocationSubTitle;
+
     public ?float $destinationLatitude;
 
     public ?float $destinationLongitude;
@@ -53,6 +57,12 @@ class ChangeRideTypeDTO implements RequestDataTransferObject
         $this->originLongitude = $originLocation ? (float) $originLocation->{TripLocation::COLUMN_LONGITUDE} : 0;
 
         // Get destination from request if provided, otherwise use trip's destination
+        $this->destinationLocationTitle = $request->filled('destination_location_title')
+            ? $request->post('destination_location_title')
+            : ($destinationLocation ? $destinationLocation->{TripLocation::COLUMN_LOCATION_TITLE} : null);
+        $this->destinationLocationSubTitle = $request->filled('destination_location_sub_title')
+            ? $request->post('destination_location_sub_title')
+            : ($destinationLocation ? $destinationLocation->{TripLocation::COLUMN_LOCATION_SUB_TITLE} : null);
         $this->destinationLatitude = $request->filled('destination_latitude')
             ? (float) $request->post('destination_latitude')
             : ($destinationLocation ? (float) $destinationLocation->{TripLocation::COLUMN_LATITUDE} : 0);

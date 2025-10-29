@@ -113,4 +113,17 @@ class TripRepository implements TripRepositoryInterface
 
         return $trip->fresh();
     }
+
+    public function updateDestinationLocation(Trip $trip, ?string $locationTitle, ?string $locationSubTitle, float $latitude, float $longitude): void
+    {
+        TripLocation::query()
+            ->where(TripLocation::COLUMN_TRIP_ID, $trip->{Trip::COLUMN_ID})
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)
+            ->update([
+                TripLocation::COLUMN_LOCATION_TITLE => $locationTitle,
+                TripLocation::COLUMN_LOCATION_SUB_TITLE => $locationSubTitle,
+                TripLocation::COLUMN_LATITUDE => $latitude,
+                TripLocation::COLUMN_LONGITUDE => $longitude,
+            ]);
+    }
 }

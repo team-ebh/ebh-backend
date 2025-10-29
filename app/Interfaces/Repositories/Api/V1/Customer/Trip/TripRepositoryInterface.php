@@ -21,4 +21,6 @@ interface TripRepositoryInterface
     public function updateStatus(Trip $trip, string $status): Trip;
 
     public function updateTripPrices(Trip $trip, ?float $accessibilityPrice, ?float $waitingPrice, float $totalPrice): Trip;
+
+    public function updateDestinationLocation(Trip $trip, ?string $locationTitle, ?string $locationSubTitle, float $latitude, float $longitude): void;
 }

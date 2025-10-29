@@ -653,6 +653,34 @@ describe('Change Ride Type API', function () {
         // Skip this test - location data is always required from trip model
     })->skip('Location data is always required from trip model');
 
+    it('can update destination location when changing ride type', function () {
+        $newTitle = 'New Airport Terminal';
+        $newSubTitle = 'Terminal 3, Gate 5';
+        $newLatitude = 29.3117;
+        $newLongitude = 47.4818;
+
+        \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
+            'destination_location_title' => $newTitle,
+            'destination_location_sub_title' => $newSubTitle,
+            'destination_latitude' => $newLatitude,
+            'destination_longitude' => $newLongitude,
+        ])->assertStatus(200);
+
+        // Verify destination location was updated in database
+        $this->trip->refresh();
+        $this->trip->load('locations');
+
+        $destination = $this->trip->locations
+            ->where(\App\Models\TripLocation::COLUMN_TYPE, \App\Enums\Trip\TripLocationTypeEnum::DESTINATION)
+            ->first();
+
+        expect($destination->{App\Models\TripLocation::COLUMN_LOCATION_TITLE})->toBe($newTitle);
+        expect($destination->{App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE})->toBe($newSubTitle);
+        expect((float) $destination->{App\Models\TripLocation::COLUMN_LATITUDE})->toBe($newLatitude);
+        expect((float) $destination->{App\Models\TripLocation::COLUMN_LONGITUDE})->toBe($newLongitude);
+    });
+
     it('validates required fields for change ride type', function () {
         $response = \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [])
             ->assertStatus(422);

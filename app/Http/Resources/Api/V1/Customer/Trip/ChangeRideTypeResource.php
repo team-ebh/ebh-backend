@@ -44,7 +44,7 @@ class ChangeRideTypeResource extends JsonResource
              *
              * Configuration for waiting time pricing (only for ROUND_TRIP_WAIT ride type)
              *
-             * @example {"price": "2.500 KWD", "time": 30}
+             * @example {"price": "2.500 KWD", "time": "30 minutes"}
              *
              * @var array|null
              */

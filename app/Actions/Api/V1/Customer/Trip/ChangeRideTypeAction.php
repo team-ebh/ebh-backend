@@ -124,6 +124,15 @@ class ChangeRideTypeAction
             $totalPrice
         );
 
+        // Update destination location if provided
+        $this->tripRepository->updateDestinationLocation(
+            $dto->trip,
+            $dto->destinationLocationTitle,
+            $dto->destinationLocationSubTitle,
+            $dto->destinationLatitude,
+            $dto->destinationLongitude
+        );
+
         $result['price_breakdown'] = $priceBreakdown;
         $result['price_estimation'] = $this->priceBreakdownService->buildPriceEstimation($totalPrice);
 
