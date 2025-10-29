@@ -7,6 +7,7 @@ namespace App\Http\Resources\Api\V1\Customer\Trip;
 use App\Enums\Trip\RideTypeEnum;
 use App\Models\Trip;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
@@ -70,19 +71,16 @@ class TripResource extends JsonResource
             /**
              * Ride types information
              *
-             * @var RideTypeResource
+             * @var AnonymousResourceCollection<RideTypeResource>
              */
             'ride_types' => RideTypeResource::collection(RideTypeEnum::cases()),
 
             /**
              * Price Breakdown
              *
-             * @var TripPaymentResource
+             * @var AnonymousResourceCollection<TripPaymentResource>
              */
-            'price_breakdown' => $this->when(
-                count($this->resource['price_breakdown']),
-                fn () => TripPaymentResource::collection($this->resource['price_breakdown'])
-            ),
+            'price_breakdown' => TripPaymentResource::collection($this->resource['price_breakdown']),
 
             /**
              * Price Estimation
