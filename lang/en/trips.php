@@ -57,6 +57,7 @@ return [
             'waiting_time_charge' => 'Waiting Time Charge',
             'accessibility_services' => 'Accessibility Services',
             'to_be_calculated' => 'To be calculated',
+            'included' => 'Included',
         ],
     ],
 ];

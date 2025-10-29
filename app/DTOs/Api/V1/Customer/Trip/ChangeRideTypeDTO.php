@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\DTOs\Api\V1\Customer\Trip;
 
 use App\Enums\Trip\RideTypeEnum;
+use App\Enums\Trip\TripLocationTypeEnum;
 use App\Interfaces\DTOs\RequestDataTransferObject;
 use App\Models\Trip;
+use App\Models\TripLocation;
 use Illuminate\Http\Request;
 
 /**
@@ -40,17 +42,23 @@ class ChangeRideTypeDTO implements RequestDataTransferObject
         $this->customerId = auth('api')->id();
         $this->trip = $request->route()->parameter('trip');
 
-        // Get origin from trip model
-        $this->originLatitude = (float) $this->trip->{Trip::COLUMN_ORIGIN_LATITUDE};
-        $this->originLongitude = (float) $this->trip->{Trip::COLUMN_ORIGIN_LONGITUDE};
+        // Load locations to get coordinates
+        $this->trip->load('locations');
+
+        $originLocation = $this->trip->locations->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::ORIGIN)->first();
+        $destinationLocation = $this->trip->locations->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)->first();
+
+        // Get origin from trip locations
+        $this->originLatitude = $originLocation ? (float) $originLocation->{TripLocation::COLUMN_LATITUDE} : 0;
+        $this->originLongitude = $originLocation ? (float) $originLocation->{TripLocation::COLUMN_LONGITUDE} : 0;
 
         // Get destination from request if provided, otherwise use trip's destination
         $this->destinationLatitude = $request->filled('destination_latitude')
             ? (float) $request->post('destination_latitude')
-            : (float) $this->trip->{Trip::COLUMN_DESTINATION_LATITUDE};
+            : ($destinationLocation ? (float) $destinationLocation->{TripLocation::COLUMN_LATITUDE} : 0);
         $this->destinationLongitude = $request->filled('destination_longitude')
             ? (float) $request->post('destination_longitude')
-            : (float) $this->trip->{Trip::COLUMN_DESTINATION_LONGITUDE};
+            : ($destinationLocation ? (float) $destinationLocation->{TripLocation::COLUMN_LONGITUDE} : 0);
 
         $this->rideTypeId = $request->enum('ride_type_id', RideTypeEnum::class);
         $this->waitingTimeMinutes = $request->filled('waiting_time_minutes') ? (int) $request->post('waiting_time_minutes') : null;

@@ -22,35 +22,23 @@ class Trip extends Model
 
     public const string COLUMN_CUSTOMER_ID = 'customer_id';
 
-    public const string COLUMN_ORIGIN_LOCATION = 'origin_location';
-
-    public const string COLUMN_ORIGIN_SUB_LOCATION = 'origin_sub_location';
-
-    public const string COLUMN_ORIGIN_LATITUDE = 'origin_latitude';
-
-    public const string COLUMN_ORIGIN_LONGITUDE = 'origin_longitude';
-
-    public const string COLUMN_DESTINATION_LOCATION = 'destination_location';
-
-    public const string COLUMN_DESTINATION_SUB_LOCATION = 'destination_sub_location';
-
-    public const string COLUMN_DESTINATION_LATITUDE = 'destination_latitude';
-
-    public const string COLUMN_DESTINATION_LONGITUDE = 'destination_longitude';
-
     public const string COLUMN_TRIP_TYPE_ID = 'trip_type_id';
 
     public const string COLUMN_VEHICLE_TYPE_ID = 'vehicle_type_id';
 
     public const string COLUMN_PASSENGER_COUNT = 'passenger_count';
 
-    public const string COLUMN_BASE_FARE = 'base_fare';
+    public const string COLUMN_ACCESSIBILITY_PRICE = 'accessibility_price';
 
-    public const string COLUMN_ESTIMATED_PRICE = 'estimated_price';
+    public const string COLUMN_WAITING_PRICE = 'waiting_price';
+
+    public const string COLUMN_TOTAL_PRICE = 'total_price';
 
     public const string COLUMN_CURRENCY = 'currency';
 
     public const string COLUMN_STATUS = 'status';
+
+    public const string COLUMN_DEMAND_TRIP_ID = 'demand_trip_id';
 
     protected function casts(): array
     {

@@ -10,6 +10,14 @@ return [
 
     ],
     'trips' => [
+        'origin_location_title' => [
+            'string' => 'Origin location title must be a string.',
+            'max' => 'Origin location title must not exceed :max characters.',
+        ],
+        'origin_location_sub_title' => [
+            'string' => 'Origin location subtitle must be a string.',
+            'max' => 'Origin location subtitle must not exceed :max characters.',
+        ],
         'origin_latitude' => [
             'required' => 'Origin latitude is required.',
             'numeric' => 'Origin latitude must be a number.',
@@ -21,6 +29,14 @@ return [
             'numeric' => 'Origin longitude must be a number.',
             'min' => 'Origin longitude must be at least :min.',
             'max' => 'Origin longitude must not exceed :max.',
+        ],
+        'destination_location_title' => [
+            'string' => 'Destination location title must be a string.',
+            'max' => 'Destination location title must not exceed :max characters.',
+        ],
+        'destination_location_sub_title' => [
+            'string' => 'Destination location subtitle must be a string.',
+            'max' => 'Destination location subtitle must not exceed :max characters.',
         ],
         'destination_latitude' => [
             'required' => 'Destination latitude is required.',

@@ -21,6 +21,8 @@ class TripStoreRequest extends FormRequest
     {
         return [
             // Origin location
+            'origin_location_title' => ['nullable', 'string', 'max:255'],
+            'origin_location_sub_title' => ['nullable', 'string', 'max:255'],
             'origin_latitude' => [
                 'required',
                 'numeric',
@@ -35,6 +37,8 @@ class TripStoreRequest extends FormRequest
             ],
 
             // Destination location
+            'destination_location_title' => ['nullable', 'string', 'max:255'],
+            'destination_location_sub_title' => ['nullable', 'string', 'max:255'],
             'destination_latitude' => [
                 'required',
                 'numeric',
@@ -61,6 +65,10 @@ class TripStoreRequest extends FormRequest
     {
         return [
             // Origin location
+            'origin_location_title.string' => trans('validations.trips.origin_location_title.string'),
+            'origin_location_title.max' => trans('validations.trips.origin_location_title.max'),
+            'origin_location_sub_title.string' => trans('validations.trips.origin_location_sub_title.string'),
+            'origin_location_sub_title.max' => trans('validations.trips.origin_location_sub_title.max'),
             'origin_latitude.required' => trans('validations.trips.origin_latitude.required'),
             'origin_latitude.numeric' => trans('validations.trips.origin_latitude.numeric'),
             'origin_latitude.min' => trans('validations.trips.origin_latitude.min'),
@@ -71,6 +79,10 @@ class TripStoreRequest extends FormRequest
             'origin_longitude.max' => trans('validations.trips.origin_longitude.max'),
 
             // Destination location
+            'destination_location_title.string' => trans('validations.trips.destination_location_title.string'),
+            'destination_location_title.max' => trans('validations.trips.destination_location_title.max'),
+            'destination_location_sub_title.string' => trans('validations.trips.destination_location_sub_title.string'),
+            'destination_location_sub_title.max' => trans('validations.trips.destination_location_sub_title.max'),
             'destination_latitude.required' => trans('validations.trips.destination_latitude.required'),
             'destination_latitude.numeric' => trans('validations.trips.destination_latitude.numeric'),
             'destination_latitude.min' => trans('validations.trips.destination_latitude.min'),

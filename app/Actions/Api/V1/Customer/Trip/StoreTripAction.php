@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
-use App\Enums\Currency\CurrencyEnum;
 use App\Models\Trip;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\AttachAccessibilityRequirementsPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\CalculatePricingPipe;
@@ -13,6 +12,7 @@ use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\CreateTripPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\ReverseGeocodeDestinationPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\ReverseGeocodeOriginPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\TripCreationContext;
+use App\Services\PriceBreakdownService;
 use Illuminate\Pipeline\Pipeline;
 
 /**
@@ -22,6 +22,10 @@ use Illuminate\Pipeline\Pipeline;
  */
 class StoreTripAction
 {
+    public function __construct(
+        private readonly PriceBreakdownService $priceBreakdownService
+    ) {}
+
     /**
      * Execute the action
      *
@@ -57,48 +61,23 @@ class StoreTripAction
             ->thenReturn();
 
         // Load relationships for response
-        $result->trip->load(['customer', 'accessibility']);
+        $result->trip->load(['customer', 'accessibility', 'locations']);
 
-        $priceBreakdown = [
-            [
-                'label' => 'Base Fare',
-                'value' => priceFormat($result->baseFare) . ' ' . CurrencyEnum::KWD->getLabel(),
-            ],
-        ];
+        // Build price breakdown using service
+        $priceBreakdown = $this->priceBreakdownService->buildTripStoreBreakdown(
+            $result->baseFare,
+            $dto->accessibilityRequirements,
+            $result->accessibilityCost
+        );
 
-        // Add accessibility cost if any accessibility requirements exist
-        if ($dto->accessibilityRequirements) {
-            // Get translated names of selected accessibility requirements
-            $accessibilityNames = array_map(
-                fn ($requirement) => $requirement->getLabel(),
-                $dto->accessibilityRequirements
-            );
-            $subLabel = implode(', ', $accessibilityNames);
-
-            if ($result->accessibilityCost > 0) {
-                $priceBreakdown[] = [
-                    'label' => 'Accessibility Services',
-                    'sub_label' => $subLabel,
-                    'value' => priceFormat($result->accessibilityCost) . ' ' . CurrencyEnum::KWD->getLabel(),
-                ];
-            } else {
-                // If there are accessibility requirements but cost is 0 (all are free/included)
-                $priceBreakdown[] = [
-                    'label' => 'Accessibility Services',
-                    'sub_label' => $subLabel,
-                    'value' => 'Included',
-                ];
-            }
-        }
+        // Build price estimation using service
+        $priceEstimation = $this->priceBreakdownService->buildPriceEstimation($result->estimatedPrice);
 
         return [
             'trip' => $result->trip,
             'dto' => $dto,
             'price_breakdown' => $priceBreakdown,
-            'price_estimation' => [
-                'label' => 'Price estimation',
-                'value' => priceFormat($result->estimatedPrice) . ' ' . CurrencyEnum::KWD->getLabel(),
-            ],
+            'price_estimation' => $priceEstimation,
         ];
     }
 }

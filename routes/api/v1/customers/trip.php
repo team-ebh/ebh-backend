@@ -12,5 +12,5 @@ Route::name('trips.')
     ->group(function () {
         Route::get('/form-data', 'formData')->name('form-data');
         Route::post('/', 'store')->name('store');
-//        Route::post('/{trip}/change-ride-type', 'changeRideType')->name('change-ride-type');
+        Route::post('/{trip}/change-ride-type', 'changeRideType')->name('change-ride-type');
     });

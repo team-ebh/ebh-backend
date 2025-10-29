@@ -7,6 +7,7 @@ namespace App\Actions\Api\V1\Customer\Trip;
 use App\DTOs\Api\V1\Customer\Trip\ChangeRideTypeDTO;
 use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Trip\RideTypeEnum;
+use App\Services\PriceBreakdownService;
 
 /**
  * Change Ride Type Action
@@ -22,6 +23,10 @@ class ChangeRideTypeAction
     private const float WAITING_TIME_RATE_PER_30_MIN = 2.500;
 
     private const int WAITING_TIME_INTERVAL_MINUTES = 30;
+
+    public function __construct(
+        private readonly PriceBreakdownService $priceBreakdownService
+    ) {}
 
     /**
      * Execute the action
@@ -45,16 +50,15 @@ class ChangeRideTypeAction
      */
     public function calculateRidePrice(ChangeRideTypeDTO $dto): array
     {
-        $result = [
-            'waiting_time_config' => [
-                'rate_per_interval' => self::WAITING_TIME_RATE_PER_30_MIN,
-                'interval_minutes' => self::WAITING_TIME_INTERVAL_MINUTES,
-                'rate_description' => trans('trips.api.waiting_time_rate_description', [
-                    'minutes' => self::WAITING_TIME_INTERVAL_MINUTES,
-                    'price' => priceFormat(self::WAITING_TIME_RATE_PER_30_MIN) . ' ' . CurrencyEnum::KWD->getLabel(),
-                ]),
-            ],
-        ];
+        $result = [];
+
+        // Add waiting time config only for ride types that need it
+        if ($dto->rideTypeId->needsWaitingTimeConfig()) {
+            $result['waiting_time_config'] = [
+                'price' => priceFormat(self::WAITING_TIME_RATE_PER_30_MIN) . ' ' . CurrencyEnum::KWD->getLabel(),
+                'time' => self::WAITING_TIME_INTERVAL_MINUTES,
+            ];
+        }
 
         // If location data is not provided, return only waiting time config
         if ($dto->originLatitude === null || $dto->originLongitude === null ||
@@ -101,34 +105,16 @@ class ChangeRideTypeAction
             ],
         };
 
-        // Add accessibility cost to breakdown
-        if ($dto->trip->accessibility->isNotEmpty()) {
-            // Get translated names of selected accessibility requirements
-            $accessibilityNames = $dto->trip->accessibility->map(
-                fn ($accessibility) => $accessibility->accessibility_requirement->getLabel()
-            )->toArray();
-            $subLabel = implode(', ', $accessibilityNames);
+        // Add accessibility cost to breakdown using service
+        $accessibilityBreakdown = $this->priceBreakdownService->buildAccessibilityBreakdown(
+            $dto->trip->accessibility,
+            $accessibilityCost
+        );
 
-            if ($accessibilityCost > 0) {
-                $priceBreakdown[] = [
-                    'label' => trans('trips.api.breakdown.accessibility_services'),
-                    'sub_label' => $subLabel,
-                    'value' => priceFormat($accessibilityCost) . ' ' . CurrencyEnum::KWD->getLabel(),
-                ];
-            } else {
-                $priceBreakdown[] = [
-                    'label' => trans('trips.api.breakdown.accessibility_services'),
-                    'sub_label' => $subLabel,
-                    'value' => 'Included',
-                ];
-            }
-        }
+        $priceBreakdown = array_merge($priceBreakdown, $accessibilityBreakdown);
 
         $result['price_breakdown'] = $priceBreakdown;
-        $result['price_estimation'] = [
-            'label' => trans('trips.api.price_estimation'),
-            'value' => priceFormat($totalPrice) . ' ' . CurrencyEnum::KWD->getLabel(),
-        ];
+        $result['price_estimation'] = $this->priceBreakdownService->buildPriceEstimation($totalPrice);
 
         return $result;
     }
@@ -153,7 +139,7 @@ class ChangeRideTypeAction
         $lonDelta = $lonTo - $lonFrom;
 
         $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
-            cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+                cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
 
         return $angle * $earthRadius;
     }
@@ -209,7 +195,7 @@ class ChangeRideTypeAction
         return [
             [
                 'label' => trans('trips.api.breakdown.base_fare'),
-                'sub_label' => '',
+                'sub_label' => null,
                 'value' => priceFormat($baseFare) . ' ' . CurrencyEnum::KWD->getLabel(),
             ],
         ];
@@ -223,12 +209,12 @@ class ChangeRideTypeAction
         return [
             [
                 'label' => trans('trips.api.breakdown.base_fare'),
-                'sub_label' => '',
+                'sub_label' => null,
                 'value' => priceFormat($baseFare) . ' ' . CurrencyEnum::KWD->getLabel(),
             ],
             [
                 'label' => trans('trips.api.breakdown.round_trip_fee'),
-                'sub_label' => '',
+                'sub_label' => null,
                 'value' => priceFormat($roundTripFee) . ' ' . CurrencyEnum::KWD->getLabel(),
             ],
         ];
@@ -242,12 +228,12 @@ class ChangeRideTypeAction
         $breakdown = [
             [
                 'label' => trans('trips.api.breakdown.base_fare'),
-                'sub_label' => '',
+                'sub_label' => null,
                 'value' => priceFormat($baseFare) . ' ' . CurrencyEnum::KWD->getLabel(),
             ],
             [
                 'label' => trans('trips.api.breakdown.round_trip_fee'),
-                'sub_label' => '',
+                'sub_label' => null,
                 'value' => priceFormat($roundTripFee) . ' ' . CurrencyEnum::KWD->getLabel(),
             ],
         ];
@@ -256,13 +242,13 @@ class ChangeRideTypeAction
         if ($waitingTimeMinutes !== null && $waitingTimeMinutes > 0) {
             $breakdown[] = [
                 'label' => trans('trips.api.breakdown.waiting_time_charge'),
-                'sub_label' => '',
+                'sub_label' => null,
                 'value' => priceFormat($waitingCharge) . ' ' . CurrencyEnum::KWD->getLabel(),
             ];
         } else {
             $breakdown[] = [
                 'label' => trans('trips.api.breakdown.waiting_time_charge'),
-                'sub_label' => '',
+                'sub_label' => null,
                 'value' => trans('trips.api.breakdown.to_be_calculated'),
             ];
         }

@@ -7,6 +7,8 @@ namespace App\Traits\Model\Aggregates;
 use App\Models\Customer;
 use App\Models\Trip;
 use App\Models\TripAccessibility;
+use App\Models\TripLocation;
+use App\Models\TripPrice;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -25,5 +27,15 @@ trait TripAggregate
     public function accessibility(): HasMany
     {
         return $this->hasMany(TripAccessibility::class, TripAccessibility::COLUMN_TRIP_ID);
+    }
+
+    public function prices(): HasMany
+    {
+        return $this->hasMany(TripPrice::class, TripPrice::COLUMN_TRIP_ID);
+    }
+
+    public function locations(): HasMany
+    {
+        return $this->hasMany(TripLocation::class, TripLocation::COLUMN_TRIP_ID);
     }
 }

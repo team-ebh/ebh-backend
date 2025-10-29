@@ -27,7 +27,7 @@ class CreateTripPipe
             $context->dto,
             $context->originLocation,
             $context->destinationLocation,
-            $context->baseFare,
+            $context->accessibilityCost,
             $context->estimatedPrice
         );
 

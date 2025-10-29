@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Resources\Api\V1\Customer\Trip;
 
 use App\Enums\Trip\RideTypeEnum;
+use App\Enums\Trip\TripLocationTypeEnum;
 use App\Models\Trip;
+use App\Models\TripLocation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -24,6 +26,10 @@ class TripResource extends JsonResource
          */
         $trip = $this->resource['trip'];
 
+        // Get origin and destination locations from trip_locations table
+        $originLocation = $trip->locations->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::ORIGIN)->first();
+        $destinationLocation = $trip->locations->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)->first();
+
         return [
             /**
              * Trip identifier
@@ -40,10 +46,10 @@ class TripResource extends JsonResource
              * @var TripLocationResource
              */
             'from' => new TripLocationResource(
-                location: $trip->{Trip::COLUMN_ORIGIN_LOCATION},
-                subLocation: $trip->{Trip::COLUMN_ORIGIN_SUB_LOCATION},
-                latitude: (float) $trip->{Trip::COLUMN_ORIGIN_LATITUDE},
-                longitude: (float) $trip->{Trip::COLUMN_ORIGIN_LONGITUDE},
+                location: $originLocation?->{TripLocation::COLUMN_LOCATION_TITLE} ?? '',
+                subLocation: $originLocation?->{TripLocation::COLUMN_LOCATION_SUB_TITLE},
+                latitude: $originLocation ? (float) $originLocation->{TripLocation::COLUMN_LATITUDE} : 0,
+                longitude: $originLocation ? (float) $originLocation->{TripLocation::COLUMN_LONGITUDE} : 0,
             ),
 
             /**
@@ -52,10 +58,10 @@ class TripResource extends JsonResource
              * @var TripLocationResource
              */
             'to' => new TripLocationResource(
-                location: $trip->{Trip::COLUMN_DESTINATION_LOCATION},
-                subLocation: $trip->{Trip::COLUMN_DESTINATION_SUB_LOCATION},
-                latitude: (float) $trip->{Trip::COLUMN_DESTINATION_LATITUDE},
-                longitude: (float) $trip->{Trip::COLUMN_DESTINATION_LONGITUDE},
+                location: $destinationLocation?->{TripLocation::COLUMN_LOCATION_TITLE} ?? '',
+                subLocation: $destinationLocation?->{TripLocation::COLUMN_LOCATION_SUB_TITLE},
+                latitude: $destinationLocation ? (float) $destinationLocation->{TripLocation::COLUMN_LATITUDE} : 0,
+                longitude: $destinationLocation ? (float) $destinationLocation->{TripLocation::COLUMN_LONGITUDE} : 0,
             ),
 
             /**

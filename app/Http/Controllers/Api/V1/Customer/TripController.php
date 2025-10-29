@@ -53,7 +53,7 @@ class TripController extends Controller
     }
 
     /**
-     * Calculate ride pricing based on ride type
+     * Change ride type
      *
      * Calculates price estimation and breakdown for different ride types without creating a trip.
      * Supports ONE_WAY, ROUND_TRIP, and ROUND_TRIP_WAIT with waiting time calculation.

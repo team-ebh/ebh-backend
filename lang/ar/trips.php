@@ -57,6 +57,7 @@ return [
             'waiting_time_charge' => 'رسوم وقت الانتظار',
             'accessibility_services' => 'خدمات إمكانية الوصول',
             'to_be_calculated' => 'سيتم حسابها',
+            'included' => 'مشمول',
         ],
     ],
 ];

@@ -95,21 +95,44 @@ class GeocodingService
             }
 
             // Extract location information from the results
-            $result = $data['results'][0];
+            // Try to find a point of interest (POI) first
+            $locationTitle = null;
+            $formattedAddress = null;
 
-            // Main location title (formatted address)
-            $locationTitle = $result['formatted_address'] ?? '';
+            foreach ($data['results'] as $result) {
+                // If this is a POI (point of interest), use its name
+                $types = $result['types'] ?? [];
+                if (in_array('point_of_interest', $types) || in_array('establishment', $types)) {
+                    // Extract place name from address components
+                    $locationTitle = $this->extractPlaceName($result['address_components'] ?? []);
+                    if ($locationTitle && ! empty($result['formatted_address'])) {
+                        $formattedAddress = $result['formatted_address'];
+
+                        break;
+                    }
+                }
+            }
+
+            // If no POI found, use the first result
+            if (! $locationTitle) {
+                $result = $data['results'][0];
+                $formattedAddress = $result['formatted_address'] ?? '';
+                // Try to extract street address as title
+                $locationTitle = $this->extractStreetAddress($result['address_components'] ?? []);
+
+                // If still no title, use formatted address
+                if (! $locationTitle) {
+                    $locationTitle = $formattedAddress;
+                }
+            }
 
             if (empty($locationTitle)) {
                 throw new InvalidGeocodingResponseException();
             }
 
-            // Extract sub-location (neighborhood, sublocality, or locality)
-            $locationSubTitle = $this->extractSubLocation($result['address_components'] ?? []);
-
             return [
                 'location_title' => $locationTitle,
-                'location_sub_title' => $locationSubTitle,
+                'location_sub_title' => $formattedAddress,
             ];
         } catch (BaseException $e) {
             throw $e;
@@ -124,28 +147,50 @@ class GeocodingService
     }
 
     /**
-     * Extract sub-location from address components
+     * Extract place name from address components
      *
-     * Prioritizes: neighborhood > sublocality > locality > administrative_area_level_1
+     * Looks for establishment or point_of_interest name
      *
      * @param  array<array{types: array<string>, long_name: string}>  $addressComponents
      */
-    private function extractSubLocation(array $addressComponents): ?string
+    private function extractPlaceName(array $addressComponents): ?string
     {
-        $priorities = [
-            'neighborhood',
-            'sublocality_level_1',
-            'sublocality',
-            'locality',
-            'administrative_area_level_1',
-        ];
-
-        foreach ($priorities as $type) {
-            foreach ($addressComponents as $component) {
-                if (in_array($type, $component['types'] ?? [], true)) {
-                    return $component['long_name'] ?? null;
-                }
+        foreach ($addressComponents as $component) {
+            $types = $component['types'] ?? [];
+            if (in_array('establishment', $types) || in_array('point_of_interest', $types)) {
+                return $component['long_name'] ?? null;
             }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract street address from address components
+     *
+     * Combines route and street_number
+     *
+     * @param  array<array{types: array<string>, long_name: string}>  $addressComponents
+     */
+    private function extractStreetAddress(array $addressComponents): ?string
+    {
+        $streetNumber = null;
+        $route = null;
+
+        foreach ($addressComponents as $component) {
+            $types = $component['types'] ?? [];
+
+            if (in_array('street_number', $types)) {
+                $streetNumber = $component['long_name'] ?? null;
+            }
+
+            if (in_array('route', $types)) {
+                $route = $component['long_name'] ?? null;
+            }
+        }
+
+        if ($route) {
+            return trim(($streetNumber ? $streetNumber . ' ' : '') . $route);
         }
 
         return null;

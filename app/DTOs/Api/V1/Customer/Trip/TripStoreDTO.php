@@ -17,9 +17,17 @@ class TripStoreDTO implements RequestDataTransferObject
 {
     public ?int $customerId;
 
+    public ?string $originLocationTitle;
+
+    public ?string $originLocationSubTitle;
+
     public float $originLatitude;
 
     public float $originLongitude;
+
+    public ?string $destinationLocationTitle;
+
+    public ?string $destinationLocationSubTitle;
 
     public float $destinationLatitude;
 
@@ -39,10 +47,20 @@ class TripStoreDTO implements RequestDataTransferObject
     public function getDataFromRequest(Request $request): void
     {
         $this->customerId = auth('api')->id();
+
+        // Origin location
+        $this->originLocationTitle = $request->post('origin_location_title');
+        $this->originLocationSubTitle = $request->post('origin_location_sub_title');
         $this->originLatitude = (float) $request->post('origin_latitude');
         $this->originLongitude = (float) $request->post('origin_longitude');
+
+        // Destination location
+        $this->destinationLocationTitle = $request->post('destination_location_title');
+        $this->destinationLocationSubTitle = $request->post('destination_location_sub_title');
         $this->destinationLatitude = (float) $request->post('destination_latitude');
         $this->destinationLongitude = (float) $request->post('destination_longitude');
+
+        // Trip details
         $this->tripTypeId = (int) $request->post('trip_type_id');
         $this->vehicleTypeId = (int) $request->post('vehicle_type_id');
 

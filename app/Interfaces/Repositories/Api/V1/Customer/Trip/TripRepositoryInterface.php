@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface TripRepositoryInterface
 {
-    public function createTrip(TripStoreDTO $dto, array $originLocation, array $destinationLocation, float $baseFare, float $estimatedPrice): Trip;
+    public function createTrip(TripStoreDTO $dto, array $originLocation, array $destinationLocation, float $accessibilityCost, float $totalPrice): Trip;
 
     public function attachAccessibilityRequirements(Trip $trip, array $requirements): void;
 

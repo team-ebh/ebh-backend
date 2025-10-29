@@ -42,13 +42,16 @@ class ChangeRideTypeResource extends JsonResource
             /**
              * Waiting Time Configuration
              *
-             * Configuration for waiting time pricing (for ROUND_TRIP_WAIT)
+             * Configuration for waiting time pricing (only for ROUND_TRIP_WAIT ride type)
              *
-             * @example {"rate_per_interval": 2.5, "interval_minutes": 30, "rate_description": "2.500 KWD per 30 minutes"}
+             * @example {"price": "2.500 KWD", "time": 30}
              *
-             * @var array
+             * @var array|null
              */
-            'waiting_time_config' => $this->resource['waiting_time_config'],
+            'waiting_time_config' => $this->when(
+                isset($this->resource['waiting_time_config']),
+                fn () => $this->resource['waiting_time_config']
+            ),
         ];
     }
 }
