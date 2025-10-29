@@ -48,12 +48,16 @@ return [
         ],
         'price_estimation' => 'Price Estimation',
         'waiting_time_rate_description' => ':price per :minutes minutes',
+        'time_units' => [
+            'minutes' => 'minutes',
+            'hours' => 'hours',
+        ],
         'breakdown' => [
             'base_fare' => 'Base Fare',
             'one_way' => 'One Way',
             'return_fare' => 'Return Fare',
             'return_trip' => 'Return Trip',
-            'round_trip_fee' => 'Round Trip Fee',
+            'round_trip_fee' => 'Round Trip',
             'waiting_time_charge' => 'Waiting Time Charge',
             'accessibility_services' => 'Accessibility Services',
             'to_be_calculated' => 'To be calculated',

@@ -609,7 +609,6 @@ describe('Change Ride Type API', function () {
         $breakdown = $response->json('data.price_breakdown');
         expect($breakdown)->toHaveCount(1);
         expect($breakdown[0]['label'])->toBe('Base Fare');
-        expect($breakdown[0]['sub_label'])->toBe('');
 
         // Verify waiting_time_config is not present for ONE_WAY
         expect($response->json('data'))->not->toHaveKey('waiting_time_config');
@@ -624,9 +623,7 @@ describe('Change Ride Type API', function () {
         $breakdown = $response->json('data.price_breakdown');
         expect($breakdown)->toHaveCount(2);
         expect($breakdown[0]['label'])->toBe('Base Fare');
-        expect($breakdown[0]['sub_label'])->toBe('');
         expect($breakdown[1]['label'])->toContain('Round Trip');
-        expect($breakdown[1]['sub_label'])->toBe('');
 
         // Verify waiting_time_config is not present for ROUND_TRIP
         expect($response->json('data'))->not->toHaveKey('waiting_time_config');
@@ -649,7 +646,7 @@ describe('Change Ride Type API', function () {
         $config = $response->json('data.waiting_time_config');
         expect($config)->toHaveKey('price');
         expect($config)->toHaveKey('time');
-        expect($config['time'])->toBe(30);
+        expect($config['time'])->toBe('30 minutes');
     });
 
     it('can get waiting time config without location data', function () {

@@ -20,10 +20,10 @@ use Illuminate\Pipeline\Pipeline;
  *
  * Creates a new trip using a pipeline pattern
  */
-class StoreTripAction
+readonly class StoreTripAction
 {
     public function __construct(
-        private readonly PriceBreakdownService $priceBreakdownService
+        private PriceBreakdownService $priceBreakdownService
     ) {}
 
     /**

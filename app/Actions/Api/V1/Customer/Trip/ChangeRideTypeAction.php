@@ -7,12 +7,13 @@ namespace App\Actions\Api\V1\Customer\Trip;
 use App\DTOs\Api\V1\Customer\Trip\ChangeRideTypeDTO;
 use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Trip\RideTypeEnum;
+use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Services\PriceBreakdownService;
 
 /**
  * Change Ride Type Action
  *
- * Calculates pricing based on ride type without creating a trip
+ * Calculates pricing based on ride type and updates trip prices
  */
 class ChangeRideTypeAction
 {
@@ -25,7 +26,8 @@ class ChangeRideTypeAction
     private const int WAITING_TIME_INTERVAL_MINUTES = 30;
 
     public function __construct(
-        private readonly PriceBreakdownService $priceBreakdownService
+        private readonly PriceBreakdownService $priceBreakdownService,
+        private readonly TripRepositoryInterface $tripRepository
     ) {}
 
     /**
@@ -39,16 +41,17 @@ class ChangeRideTypeAction
         $dto->trip->load('accessibility');
 
         return safeProcess()
+            ->withTransaction()
             ->onFailed(fn ($e) => throw $e)
-            ->do([$this, 'calculateRidePrice'], $dto);
+            ->do([$this, 'calculateAndUpdateRidePrice'], $dto);
     }
 
     /**
-     * Calculate ride price based on ride type
+     * Calculate ride price based on ride type and update trip prices
      *
      * @throws \Throwable
      */
-    public function calculateRidePrice(ChangeRideTypeDTO $dto): array
+    public function calculateAndUpdateRidePrice(ChangeRideTypeDTO $dto): array
     {
         $result = [];
 
@@ -56,7 +59,7 @@ class ChangeRideTypeAction
         if ($dto->rideTypeId->needsWaitingTimeConfig()) {
             $result['waiting_time_config'] = [
                 'price' => priceFormat(self::WAITING_TIME_RATE_PER_30_MIN) . ' ' . CurrencyEnum::KWD->getLabel(),
-                'time' => self::WAITING_TIME_INTERVAL_MINUTES,
+                'time' => self::WAITING_TIME_INTERVAL_MINUTES . ' ' . trans('trips.api.time_units.minutes'),
             ];
         }
 
@@ -112,6 +115,14 @@ class ChangeRideTypeAction
         );
 
         $priceBreakdown = array_merge($priceBreakdown, $accessibilityBreakdown);
+
+        // Update trip prices in database
+        $this->tripRepository->updateTripPrices(
+            $dto->trip,
+            $accessibilityCost > 0 ? $accessibilityCost : null,
+            $waitingCharge > 0 ? $waitingCharge : null,
+            $totalPrice
+        );
 
         $result['price_breakdown'] = $priceBreakdown;
         $result['price_estimation'] = $this->priceBreakdownService->buildPriceEstimation($totalPrice);

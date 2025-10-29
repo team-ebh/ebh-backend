@@ -18,39 +18,47 @@ class TripRepository implements TripRepositoryInterface
 {
     public function createTrip(TripStoreDTO $dto, array $originLocation, array $destinationLocation, float $accessibilityCost, float $totalPrice): Trip
     {
-        $trip = new Trip();
-        $trip->{Trip::COLUMN_CUSTOMER_ID} = $dto->customerId;
-        $trip->{Trip::COLUMN_TRIP_TYPE_ID} = $dto->tripTypeId;
-        $trip->{Trip::COLUMN_VEHICLE_TYPE_ID} = $dto->vehicleTypeId;
-        $trip->{Trip::COLUMN_PASSENGER_COUNT} = $dto->passengerCount;
-        $trip->{Trip::COLUMN_ACCESSIBILITY_PRICE} = $accessibilityCost > 0 ? $accessibilityCost : null;
-        $trip->{Trip::COLUMN_WAITING_PRICE} = null;
-        $trip->{Trip::COLUMN_TOTAL_PRICE} = $totalPrice;
-        $trip->{Trip::COLUMN_CURRENCY} = CurrencyEnum::KWD;
-        $trip->{Trip::COLUMN_STATUS} = TripStatusEnum::PENDING;
-        $trip->save();
+        // Create trip
+        $trip = Trip::query()->create([
+            Trip::COLUMN_CUSTOMER_ID => $dto->customerId,
+            Trip::COLUMN_TRIP_TYPE_ID => $dto->tripTypeId,
+            Trip::COLUMN_VEHICLE_TYPE_ID => $dto->vehicleTypeId,
+            Trip::COLUMN_PASSENGER_COUNT => $dto->passengerCount,
+            Trip::COLUMN_ACCESSIBILITY_PRICE => $accessibilityCost > 0 ? $accessibilityCost : null,
+            Trip::COLUMN_WAITING_PRICE => null,
+            Trip::COLUMN_TOTAL_PRICE => $totalPrice,
+            Trip::COLUMN_CURRENCY => CurrencyEnum::KWD,
+            Trip::COLUMN_STATUS => TripStatusEnum::PENDING,
+        ]);
 
-        // Create origin location
-        $originLocationModel = new TripLocation();
-        $originLocationModel->{TripLocation::COLUMN_TRIP_ID} = $trip->{Trip::COLUMN_ID};
-        $originLocationModel->{TripLocation::COLUMN_LOCATION_TITLE} = $originLocation['location_title'];
-        $originLocationModel->{TripLocation::COLUMN_LOCATION_SUB_TITLE} = $originLocation['location_sub_title'];
-        $originLocationModel->{TripLocation::COLUMN_LATITUDE} = $dto->originLatitude;
-        $originLocationModel->{TripLocation::COLUMN_LONGITUDE} = $dto->originLongitude;
-        $originLocationModel->{TripLocation::COLUMN_TYPE} = TripLocationTypeEnum::ORIGIN;
-        $originLocationModel->{TripLocation::COLUMN_SEQUENCE} = 1;
-        $originLocationModel->save();
+        // Bulk insert trip locations
+        $now = now();
+        $locations = [
+            [
+                TripLocation::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
+                TripLocation::COLUMN_LOCATION_TITLE => $originLocation['location_title'],
+                TripLocation::COLUMN_LOCATION_SUB_TITLE => $originLocation['location_sub_title'],
+                TripLocation::COLUMN_LATITUDE => $dto->originLatitude,
+                TripLocation::COLUMN_LONGITUDE => $dto->originLongitude,
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+                TripLocation::COLUMN_SEQUENCE => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                TripLocation::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
+                TripLocation::COLUMN_LOCATION_TITLE => $destinationLocation['location_title'],
+                TripLocation::COLUMN_LOCATION_SUB_TITLE => $destinationLocation['location_sub_title'],
+                TripLocation::COLUMN_LATITUDE => $dto->destinationLatitude,
+                TripLocation::COLUMN_LONGITUDE => $dto->destinationLongitude,
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+                TripLocation::COLUMN_SEQUENCE => 2,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ];
 
-        // Create destination location
-        $destinationLocationModel = new TripLocation();
-        $destinationLocationModel->{TripLocation::COLUMN_TRIP_ID} = $trip->{Trip::COLUMN_ID};
-        $destinationLocationModel->{TripLocation::COLUMN_LOCATION_TITLE} = $destinationLocation['location_title'];
-        $destinationLocationModel->{TripLocation::COLUMN_LOCATION_SUB_TITLE} = $destinationLocation['location_sub_title'];
-        $destinationLocationModel->{TripLocation::COLUMN_LATITUDE} = $dto->destinationLatitude;
-        $destinationLocationModel->{TripLocation::COLUMN_LONGITUDE} = $dto->destinationLongitude;
-        $destinationLocationModel->{TripLocation::COLUMN_TYPE} = TripLocationTypeEnum::DESTINATION;
-        $destinationLocationModel->{TripLocation::COLUMN_SEQUENCE} = 2;
-        $destinationLocationModel->save();
+        TripLocation::insert($locations);
 
         return $trip->fresh(['locations']);
     }
@@ -90,6 +98,17 @@ class TripRepository implements TripRepositoryInterface
     {
         $trip->update([
             Trip::COLUMN_STATUS => $status,
+        ]);
+
+        return $trip->fresh();
+    }
+
+    public function updateTripPrices(Trip $trip, ?float $accessibilityPrice, ?float $waitingPrice, float $totalPrice): Trip
+    {
+        $trip->update([
+            Trip::COLUMN_ACCESSIBILITY_PRICE => $accessibilityPrice,
+            Trip::COLUMN_WAITING_PRICE => $waitingPrice,
+            Trip::COLUMN_TOTAL_PRICE => $totalPrice,
         ]);
 
         return $trip->fresh();

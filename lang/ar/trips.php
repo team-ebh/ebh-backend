@@ -48,12 +48,16 @@ return [
         ],
         'price_estimation' => 'تقدير السعر',
         'waiting_time_rate_description' => ':price لكل :minutes دقيقة',
+        'time_units' => [
+            'minutes' => 'دقيقة',
+            'hours' => 'ساعة',
+        ],
         'breakdown' => [
             'base_fare' => 'الأجرة الأساسية',
             'one_way' => 'ذهاب فقط',
             'return_fare' => 'أجرة العودة',
             'return_trip' => 'رحلة العودة',
-            'round_trip_fee' => 'رسوم الذهاب والعودة',
+            'round_trip_fee' => 'الذهاب والعودة',
             'waiting_time_charge' => 'رسوم وقت الانتظار',
             'accessibility_services' => 'خدمات إمكانية الوصول',
             'to_be_calculated' => 'سيتم حسابها',

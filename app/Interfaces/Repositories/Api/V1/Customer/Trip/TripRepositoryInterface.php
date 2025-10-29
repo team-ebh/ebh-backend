@@ -19,4 +19,6 @@ interface TripRepositoryInterface
     public function getCustomerTrips(int $customerId): Collection;
 
     public function updateStatus(Trip $trip, string $status): Trip;
+
+    public function updateTripPrices(Trip $trip, ?float $accessibilityPrice, ?float $waitingPrice, float $totalPrice): Trip;
 }
