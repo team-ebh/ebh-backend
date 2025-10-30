@@ -43,7 +43,7 @@ class ChangeRideTypeDTO implements RequestDataTransferObject
      */
     public function getDataFromRequest(Request $request): void
     {
-        $this->customerId = auth('api')->id();
+        $this->customerId = auth('customer')->id();
         $this->trip = $request->route()->parameter('trip');
 
         // Load locations to get coordinates

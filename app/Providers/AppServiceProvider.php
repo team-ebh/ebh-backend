@@ -8,9 +8,11 @@ use App\Exceptions\Handler;
 use App\Http\Responses\LoginResponse;
 use App\Interfaces\Repositories\Api\V1\Customer\CustomerRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
+use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
 use App\Models\Admin;
 use App\Repositories\Api\V1\Customer\CustomerRepository;
 use App\Repositories\Api\V1\Customer\Trip\TripRepository;
+use App\Repositories\Api\V1\Rider\RiderRepository;
 use Carbon\CarbonImmutable;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Example;
@@ -53,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
         FilamentLoginResponse::class => LoginResponse::class,
         CustomerRepositoryInterface::class => CustomerRepository::class,
         TripRepositoryInterface::class => TripRepository::class,
+        RiderRepositoryInterface::class => RiderRepository::class,
     ];
 
     /**

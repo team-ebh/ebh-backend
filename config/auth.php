@@ -43,9 +43,14 @@ return [
             'provider' => 'admins',
         ],
 
-        'api' => [
+        'customer' => [
             'driver' => 'sanctum',
             'provider' => 'customers',
+        ],
+
+        'rider' => [
+            'driver' => 'sanctum',
+            'provider' => 'riders',
         ],
     ],
 
@@ -75,6 +80,11 @@ return [
         'customers' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\Customer::class),
+        ],
+
+        'riders' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\Rider::class),
         ],
     ],
 

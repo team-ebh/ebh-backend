@@ -46,7 +46,7 @@ class TripStoreDTO implements RequestDataTransferObject
      */
     public function getDataFromRequest(Request $request): void
     {
-        $this->customerId = auth('api')->id();
+        $this->customerId = auth('customer')->id();
 
         // Origin location
         $this->originLocationTitle = $request->post('origin_location_title');

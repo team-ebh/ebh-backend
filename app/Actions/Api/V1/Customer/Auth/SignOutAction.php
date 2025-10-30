@@ -12,7 +12,7 @@ class SignOutAction
     public function __invoke(): void
     {
         /** @var Customer $customer */
-        $customer = Auth::guard('api')->user();
+        $customer = Auth::guard('customer')->user();
 
         $customer?->currentAccessToken()->delete();
     }
