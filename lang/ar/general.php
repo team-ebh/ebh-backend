@@ -7,6 +7,7 @@ return [
         'navigation' => [
             'user_management' => 'إدارة المستخدمين',
             'app_management' => 'إدارة التطبيق',
+            'fleet_management' => 'إدارة الأسطول',
         ],
         'created_at' => 'تاريخ الإنشاء',
         'updated_at' => 'تاريخ التحديث',
