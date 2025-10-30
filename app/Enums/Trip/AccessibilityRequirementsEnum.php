@@ -24,12 +24,12 @@ enum AccessibilityRequirementsEnum: int implements HasIcon, HasLabel
         return trans('trips.api.accessibility_requirements.' . $this->name . '_description');
     }
 
-    public function getIcon(): string | BackedEnum | null
+    public function getIcon(): string|BackedEnum|null
     {
         return match ($this) {
-            self::WHEELCHAIR_ACCESSIBLE => asset('images/trip/accessibility/wheelchair 1.svg'),
-            self::OXYGEN_SUPPORT => asset('images/trip/accessibility/oxygen 1.svg'),
-            self::PORTABLE_RAMP => asset('images/trip/accessibility/ramp 1.svg'),
+            self::WHEELCHAIR_ACCESSIBLE => asset('images/trip/accessibility/wheelchair 1 (1).png'),
+            self::OXYGEN_SUPPORT => asset('images/trip/accessibility/oxygen 1.png'),
+            self::PORTABLE_RAMP => asset('images/trip/accessibility/ramp 1.png'),
         };
     }
 

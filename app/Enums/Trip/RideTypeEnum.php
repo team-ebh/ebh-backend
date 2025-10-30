@@ -27,9 +27,9 @@ enum RideTypeEnum: int implements HasDescription, HasIcon, HasLabel
     public function getIcon(): string
     {
         return match ($this) {
-            self::ONE_WAY => asset('images/trip/ride_types/one-way.svg'),
-            self::ROUND_TRIP => asset('images/trip/ride_types/round-trip.svg'),
-            self::ROUND_TRIP_WAIT => asset('images/trip/ride_types/round-trip-with-wait.svg'),
+            self::ONE_WAY => asset('images/trip/ride_types/one-way.png'),
+            self::ROUND_TRIP => asset('images/trip/ride_types/round-trip.png'),
+            self::ROUND_TRIP_WAIT => asset('images/trip/ride_types/round-trip-with-wait.png'),
         };
     }
 
