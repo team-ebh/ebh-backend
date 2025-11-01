@@ -54,6 +54,7 @@ class CompanyInfolist
                             ->color(fn ($state) => $state >= 10 ? 'warning' : 'success'),
 
                         TextEntry::make('riders_count')
+                            ->counts('riders')
                             ->label(trans('companies.admin.fields.riders_count'))
                             ->icon('heroicon-o-users')
                             ->formatStateUsing(fn (Company $record): int => $record->riders()->count())
