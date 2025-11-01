@@ -79,7 +79,7 @@ if (! function_exists('priceFormat')) {
     function priceFormat($price): ?string
     {
         if (! $price) {
-            return $price;
+            return (string) $price;
         }
 
         return number_format(

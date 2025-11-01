@@ -25,7 +25,7 @@ class RiderResource extends Resource
 
     protected static ?string $model = Rider::class;
 
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedUser;
+    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedTruck;
 
     public static function getNavigationGroup(): ?string
     {

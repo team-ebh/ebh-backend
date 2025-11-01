@@ -18,35 +18,75 @@ class CompaniesTable
             ->columns([
                 TextColumn::make(Company::COLUMN_NAME)
                     ->label(trans('companies.admin.fields.name'))
-                    ->searchable(),
+                    ->icon('heroicon-o-building-office-2')
+                    ->weight('bold'),
+
                 TextColumn::make(Company::COLUMN_EMAIL)
                     ->label(trans('companies.admin.fields.email'))
-                    ->searchable(),
+                    ->icon('heroicon-o-envelope')
+                    ->copyable(),
+
                 TextColumn::make(Company::COLUMN_PHONE_NUMBER)
                     ->label(trans('companies.admin.fields.phone_number'))
-                    ->searchable(),
+                    ->icon('heroicon-o-phone')
+                    ->prefix(defaultPrefixPhoneNumber())
+                    ->searchable(query: function ($query, string $search) {
+                        // Normalize search: remove +965 prefix if present, also try with + prefix added
+                        $cleanSearch = preg_replace('/^\+965/', '', $search);
+                        $withPlus = str_starts_with($cleanSearch, '+') ? $cleanSearch : '+' . $cleanSearch;
+                        $withoutPlus = preg_replace('/^965/', '', $search);
+
+                        return $query->where(Company::COLUMN_PHONE_NUMBER, "%{$cleanSearch}%")
+                            ->orWhereLike(Company::COLUMN_PHONE_NUMBER, "%{$withPlus}%")
+                            ->orWhereLike(Company::COLUMN_PHONE_NUMBER, "%{$withoutPlus}%")
+                            ->orWhereLike(Company::COLUMN_PHONE_NUMBER, "%{$search}%");
+                    })
+                    ->copyable(),
+
                 TextColumn::make(Company::COLUMN_ADDRESS)
                     ->label(trans('companies.admin.fields.address'))
-                    ->searchable(),
+                    ->icon('heroicon-o-map-pin')
+                    ->wrap(),
+
+                TextColumn::make('riders_count')
+                    ->label(trans('companies.admin.fields.riders_count'))
+                    ->icon('heroicon-o-users')
+                    ->counts('riders')
+                    ->searchable(false)
+                    ->sortable()
+                    ->badge()
+                    ->color('info'),
+
                 TextColumn::make(Company::COLUMN_COMMISSION_RATE)
                     ->label(trans('companies.admin.fields.commission_rate'))
+                    ->icon('heroicon-o-percent-badge')
                     ->suffix('%')
-                    ->sortable(),
+                    ->sortable()
+                    ->color(fn ($state) => $state >= 10 ? 'warning' : 'success'),
+
                 IconColumn::make(Company::COLUMN_ENABLED)
                     ->label(trans('companies.admin.fields.enabled'))
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
+
                 TextColumn::make(Company::COLUMN_CREATED_AT)
                     ->searchable(false)
                     ->label(trans('general.admin.created_at'))
                     ->description(fn ($record) => $record->created_at->format(adminPanelTimeFormat()))
                     ->dateTime(adminPanelDataFormat())
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make(Company::COLUMN_UPDATED_AT)
                     ->searchable(false)
                     ->label(trans('general.admin.updated_at'))
                     ->description(fn ($record) => $record->updated_at->format(adminPanelTimeFormat()))
                     ->dateTime(adminPanelDataFormat())
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->recordActions([

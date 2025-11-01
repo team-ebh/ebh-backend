@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Companies\Pages;
 
 use App\Filament\Resources\Companies\CompanyResource;
+use App\Traits\Filament\FilamentRedirectToListPage;
 use App\Traits\Filament\HasCustomCreateActions;
 use App\Traits\Filament\HasFilamentNotifications;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateCompany extends CreateRecord
 {
+    use FilamentRedirectToListPage;
     use HasCustomCreateActions;
     use HasFilamentNotifications;
 
