@@ -5,17 +5,21 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Rider\RiderStatusEnum;
+use App\Traits\Model\Aggregates\RiderAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use App\Traits\Model\HasMediaTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\MediaLibrary\HasMedia;
 
-class Rider extends User
+class Rider extends User implements HasMedia
 {
     use HasApiTokens;
     use HasDefaultColumnModelTrait;
     use HasFactory;
+    use HasMediaTrait;
+    use RiderAggregate;
 
     public const string COLUMN_FULL_NAME = 'full_name';
 
@@ -31,9 +35,16 @@ class Rider extends User
 
     public const string COLUMN_OTP_EXPIRES_AT = 'otp_expires_at';
 
+    public const string COLUMN_ACCESSIBILITY_CERTIFICATIONS = 'accessibility_certifications';
+
+    public const string PROFILE_PHOTO = 'profile_photo';
+
+    public const string MEDIA_COLLECTION_NAME = 'riders';
+
     protected $casts = [
         self::COLUMN_STATUS => RiderStatusEnum::class,
         self::COLUMN_OTP_EXPIRES_AT => 'timestamp',
+        self::COLUMN_ACCESSIBILITY_CERTIFICATIONS => 'json',
     ];
 
     protected $hidden = [
@@ -44,11 +55,6 @@ class Rider extends User
     protected $attributes = [
         self::COLUMN_STATUS => RiderStatusEnum::OFFLINE,
     ];
-
-    public function company(): BelongsTo
-    {
-        return $this->belongsTo(Company::class, self::COLUMN_COMPANY_ID);
-    }
 
     public function isOtpValid(): bool
     {

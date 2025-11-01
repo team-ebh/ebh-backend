@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Traits\Model\Aggregates\CompanyAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\HasEnabledTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Company extends Model
 {
+    use CompanyAggregate;
     use HasDefaultColumnModelTrait;
     use HasEnabledTrait;
     use HasFactory;
@@ -29,9 +30,4 @@ class Company extends Model
     protected $casts = [
         self::COLUMN_COMMISSION_RATE => 'decimal:2',
     ];
-
-    public function riders(): HasMany
-    {
-        return $this->hasMany(Rider::class, Rider::COLUMN_COMPANY_ID);
-    }
 }

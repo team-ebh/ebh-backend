@@ -10,17 +10,17 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
+        "ext-bcmath": "*",
         "dedoc/scramble": "^0.12.30",
         "filament/filament": "^4.0.3",
-        "filament/spatie-laravel-media-library-plugin": "^4.0.3",
+        "filament/spatie-laravel-media-library-plugin": "*",
         "laravel/framework": "^12.25.0",
         "laravel/octane": "^2.12.1",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.0",
         "resend/resend-php": "^0.19.1",
-        "sentry/sentry-laravel": "*",
-        "ext-bcmath": "*"
+        "sentry/sentry-laravel": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

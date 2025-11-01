@@ -25,4 +25,12 @@ class ViewRider extends BaseViewRecord
             Actions\EditAction::make(),
         ];
     }
+
+    protected function mutateInfolistDataBeforeFill(array $data): array
+    {
+        // Eager load documents with their relations and media for better performance
+        $this->record->load(['documents.document', 'documents.media', 'company', 'media']);
+
+        return $data;
+    }
 }

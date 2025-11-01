@@ -6,7 +6,6 @@ namespace App\Filament\Resources\Riders\Widgets;
 
 use App\Enums\Rider\RiderStatusEnum;
 use App\Models\Rider;
-use App\Models\TripAccessibility;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -17,12 +16,11 @@ class RiderStatsWidget extends BaseWidget
         $totalRiders = Rider::query()->count();
         $onlineRiders = Rider::query()->where(Rider::COLUMN_STATUS, RiderStatusEnum::ONLINE)->count();
 
-        // Count unique trips with accessibility requirements
-        // Note: This represents trips with accessibility features, not necessarily riders
-        // Adjust this query if you have a direct relationship between riders and accessibility certification
-        $accessibilityCertified = TripAccessibility::query()
-            ->distinct(TripAccessibility::COLUMN_TRIP_ID)
-            ->count(TripAccessibility::COLUMN_TRIP_ID);
+        // Count riders with at least one accessibility certification
+        $accessibilityCertified = Rider::query()
+            ->whereNotNull(Rider::COLUMN_ACCESSIBILITY_CERTIFICATIONS)
+            ->whereRaw('JSON_LENGTH(`' . Rider::COLUMN_ACCESSIBILITY_CERTIFICATIONS . '`) > 0')
+            ->count();
 
         // Calculate average rating
         // Note: This assumes there's a rating system. Adjust based on your database structure
