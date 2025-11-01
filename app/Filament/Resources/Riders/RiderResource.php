@@ -59,7 +59,7 @@ class RiderResource extends Resource
         return [
             'index' => ListRiders::route('/'),
             'create' => CreateRider::route('/create'),
-            //            'view' => ViewRider::route('/{record}'),
+            'view' => ViewRider::route('/{record}'),
             'edit' => EditRider::route('/{record}/edit'),
         ];
     }

@@ -16,20 +16,42 @@ class RiderInfolist
     {
         return $schema
             ->components([
-                Section::make()
+                Section::make(trans('riders.admin.infolist.personal_information'))
+                    ->icon('heroicon-o-user')
                     ->columns(2)
                     ->schema([
                         TextEntry::make(Rider::COLUMN_FULL_NAME)
-                            ->label(trans('riders.admin.fields.full_name')),
+                            ->label(trans('riders.admin.fields.full_name'))
+                            ->icon('heroicon-o-user')
+                            ->weight('bold')
+                            ->size('lg'),
+
                         TextEntry::make(Rider::COLUMN_EMAIL)
-                            ->label(trans('riders.admin.fields.email')),
+                            ->label(trans('riders.admin.fields.email'))
+                            ->icon('heroicon-o-envelope')
+                            ->copyable(),
+
                         TextEntry::make(Rider::COLUMN_PHONE_NUMBER)
-                            ->label(trans('riders.admin.fields.phone_number')),
+                            ->label(trans('riders.admin.fields.phone_number'))
+                            ->icon('heroicon-o-phone')
+                            ->prefix(defaultPrefixPhoneNumber())
+                            ->copyable(),
+
                         TextEntry::make('company.' . Company::COLUMN_NAME)
-                            ->label(trans('riders.admin.fields.company')),
+                            ->label(trans('riders.admin.fields.company'))
+                            ->icon('heroicon-o-building-office-2'),
+                    ]),
+
+                Section::make(trans('riders.admin.infolist.status_information'))
+                    ->icon('heroicon-o-signal')
+                    ->columns(2)
+                    ->schema([
                         TextEntry::make(Rider::COLUMN_STATUS)
                             ->label(trans('riders.admin.fields.status'))
-                            ->badge(),
+                            ->icon('heroicon-o-signal')
+                            ->badge()
+                            ->color(fn ($state) => $state?->getColor() ?? 'gray')
+                            ->columnSpanFull(),
                     ]),
             ]);
     }
