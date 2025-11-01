@@ -43,7 +43,7 @@ class RideTypeResource extends JsonResource
              *
              * @var string
              */
-            'description' => $this->when(isset($rideType->description), fn () => $rideType->getDescription()),
+            'description' => $rideType->getDescription(),
 
             /**
              * @example "http://api.ebhapp.com/images/trip/types/wheelchair.svg"

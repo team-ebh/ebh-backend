@@ -23,7 +23,7 @@ enum TripVehicleTypeEnum: int implements HasIcon, HasLabel
         return trans('trips.api.vehicle_types.' . $this->name . '_description');
     }
 
-    public function getIcon(): string|BackedEnum|null
+    public function getIcon(): string | BackedEnum | null
     {
         return match ($this) {
             self::WHEELCHAIR_ACCESSIBLE => asset('images/trip/types/wheelchair 1.png'),
