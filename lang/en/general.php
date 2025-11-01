@@ -11,6 +11,9 @@ return [
         ],
         'created_at' => 'Created at',
         'updated_at' => 'Updated at',
+        'timestamps' => 'Timestamps',
+        'record_info' => 'Record Info',
+        'creation_update_info' => 'Creation & Update',
 
         'all' => 'All',
 

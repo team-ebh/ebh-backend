@@ -11,6 +11,9 @@ return [
         ],
         'created_at' => 'تاريخ الإنشاء',
         'updated_at' => 'تاريخ التحديث',
+        'timestamps' => 'الطوابع الزمنية',
+        'record_info' => 'معلومات السجل',
+        'creation_update_info' => 'الإنشاء والتحديث',
 
         'all' => 'الكل',
 

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Companies\Tables;
 
+use App\Filament\Resources\Companies\CompanyResource;
 use App\Models\Company;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -90,6 +92,8 @@ class CompaniesTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->recordActions([
+                ViewAction::make()
+                    ->url(fn (Company $record): string => CompanyResource::getUrl('view', ['record' => $record])),
                 EditAction::make(),
             ]);
     }

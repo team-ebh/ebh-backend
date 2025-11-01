@@ -26,6 +26,11 @@ return [
             'total_earnings' => 'Total Earnings',
             'total_earnings_description' => 'Total revenue from trips',
         ],
+        'infolist' => [
+            'basic_information' => 'Basic Information',
+            'business_information' => 'Business Information',
+            'timestamps' => 'Timestamps',
+        ],
     ],
     'api' => [
 

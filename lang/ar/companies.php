@@ -26,6 +26,11 @@ return [
             'total_earnings' => 'إجمالي الأرباح',
             'total_earnings_description' => 'إجمالي الإيرادات من الرحلات',
         ],
+        'infolist' => [
+            'basic_information' => 'المعلومات الأساسية',
+            'business_information' => 'معلومات العمل',
+            'timestamps' => 'طوابع زمنية',
+        ],
     ],
     'api' => [
 
