@@ -16,11 +16,13 @@ class RiderStatsWidget extends BaseWidget
         $totalRiders = Rider::query()->count();
         $onlineRiders = Rider::query()->where(Rider::COLUMN_STATUS, RiderStatusEnum::ONLINE)->count();
 
-        // Count riders with at least one accessibility certification
-        $accessibilityCertified = Rider::query()
+        // Count total number of accessibility certification items across all riders
+        // This sums up the JSON array lengths for each rider
+        $accessibilityCertified = (int) Rider::query()
             ->whereNotNull(Rider::COLUMN_ACCESSIBILITY_CERTIFICATIONS)
             ->whereRaw('JSON_LENGTH(`' . Rider::COLUMN_ACCESSIBILITY_CERTIFICATIONS . '`) > 0')
-            ->count();
+            ->selectRaw('COALESCE(SUM(JSON_LENGTH(`' . Rider::COLUMN_ACCESSIBILITY_CERTIFICATIONS . '`)), 0) as total')
+            ->value('total') ?? 0;
 
         // Calculate average rating
         // Note: This assumes there's a rating system. Adjust based on your database structure

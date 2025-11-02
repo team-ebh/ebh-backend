@@ -24,6 +24,8 @@ class RiderDocument extends Model implements HasMedia
 
     public const string COLUMN_EXPIRES_AT = 'expires_at';
 
+    public const string MEDIA_COLLECTION_NAME = 'rider_documents';
+
     protected $casts = [
         self::COLUMN_EXPIRES_AT => 'datetime',
     ];

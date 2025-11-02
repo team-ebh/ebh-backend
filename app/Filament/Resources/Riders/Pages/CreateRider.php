@@ -22,54 +22,50 @@ class CreateRider extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Extract document fields and store for afterCreate
-        $this->documentFiles = [];
-        foreach ($data as $key => $value) {
-            if (str_starts_with($key, 'document_')) {
-                $documentId = (int) str_replace('document_', '', $key);
-                $this->documentFiles[$documentId] = $value;
-                unset($data[$key]);
-            }
-        }
+        // Store documents data for afterCreate
+        $this->documentsData = $data['documents'] ?? [];
+
+        // Remove documents from main data
+        unset($data['documents']);
 
         return $data;
     }
 
-    protected array $documentFiles = [];
+    protected array $documentsData = [];
 
     protected function afterCreate(): void
     {
         $rider = $this->record;
 
-        foreach ($this->documentFiles as $documentId => $files) {
-            if (empty($files)) {
-                continue;
-            }
+        // Get all enabled documents
+        $enabledDocuments = Document::query()
+            ->where(Document::COLUMN_ENABLED, true)
+            ->get();
 
-            $document = Document::find($documentId);
-            if (! $document) {
-                continue;
-            }
+        foreach ($enabledDocuments as $document) {
+            $documentData = $this->documentsData[$document->id] ?? [];
 
-            // Get or create RiderDocument
-            $riderDocument = RiderDocument::firstOrCreate(
-                [
+            // Check if there's any data for this document
+            if (! empty($documentData['file']) || isset($documentData['expires_at'])) {
+                // Create RiderDocument
+                $riderDocument = RiderDocument::create([
                     RiderDocument::COLUMN_RIDER_ID => $rider->id,
-                    RiderDocument::COLUMN_DOCUMENT_ID => $documentId,
-                ]
-            );
+                    RiderDocument::COLUMN_DOCUMENT_ID => $document->id,
+                    RiderDocument::COLUMN_EXPIRES_AT => $documentData['expires_at'] ?? null,
+                ]);
 
-            // Get media from rider's temporary collection and move to riderDocument
-            $collectionName = "document_{$documentId}";
-            $mediaItems = $rider->getMedia($collectionName);
+                // Handle media from temporary collection on rider
+                $temporaryMedia = $rider->getMedia("document_{$document->id}");
 
-            foreach ($mediaItems as $media) {
-                // Move media from rider to riderDocument
-                $media->move($riderDocument, 'documents');
+                if ($temporaryMedia->isNotEmpty()) {
+                    foreach ($temporaryMedia as $media) {
+                        $media->move($riderDocument, 'rider_documents');
+                    }
+                }
+
+                // Clean up temporary collection
+                $rider->clearMediaCollection("document_{$document->id}");
             }
-
-            // Clean up temporary collection
-            $rider->clearMediaCollection($collectionName);
         }
     }
 }

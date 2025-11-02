@@ -29,35 +29,48 @@ class EditRider extends EditRecord
     {
         $rider = $this->record;
 
-        // Load existing documents and populate form fields
-        $riderDocuments = $rider->documents()->with('document')->get();
+        // Load existing rider documents
+        $riderDocuments = $rider->documents()
+            ->with(['document', 'media'])
+            ->get()
+            ->keyBy('document_id');
 
-        foreach ($riderDocuments as $riderDocument) {
-            $documentId = $riderDocument->document_id;
-            $media = $riderDocument->firstMedia('documents');
+        // Get all enabled documents
+        $enabledDocuments = Document::query()
+            ->where(Document::COLUMN_ENABLED, true)
+            ->get();
 
-            if ($media) {
-                $collectionName = "document_{$documentId}";
+        // Prepare document data for form
+        $data['documents'] = [];
 
-                // Copy media from riderDocument to rider's temporary collection for form display
-                try {
-                    $rider->addMediaFromDisk($media->getPath(), $media->disk)
-                        ->usingName($media->name)
-                        ->usingFileName($media->file_name)
-                        ->toMediaCollection($collectionName);
-                } catch (\Exception $e) {
-                    // If disk method fails, try direct path
-                    try {
-                        if (file_exists($media->getPath())) {
-                            $rider->addMedia($media->getPath())
-                                ->usingName($media->name)
-                                ->usingFileName($media->file_name)
-                                ->toMediaCollection($collectionName);
+        foreach ($enabledDocuments as $document) {
+            $riderDocument = $riderDocuments->get($document->id);
+
+            if ($riderDocument) {
+                // Copy media from RiderDocument to Rider temporarily for display
+                $media = $riderDocument->getMedia('rider_documents');
+
+                if ($media->isNotEmpty()) {
+                    foreach ($media as $mediaItem) {
+                        try {
+                            $rider->addMediaFromDisk($mediaItem->getPath(), $mediaItem->disk)
+                                ->usingName($mediaItem->name)
+                                ->usingFileName($mediaItem->file_name)
+                                ->toMediaCollection("document_{$document->id}");
+                        } catch (\Exception $e) {
+                            if (file_exists($mediaItem->getPath())) {
+                                $rider->addMedia($mediaItem->getPath())
+                                    ->usingName($mediaItem->name)
+                                    ->usingFileName($mediaItem->file_name)
+                                    ->toMediaCollection("document_{$document->id}");
+                            }
                         }
-                    } catch (\Exception $e2) {
-                        // If all fails, SpatieMediaLibraryFileUpload will handle via URL
                     }
                 }
+
+                $data['documents'][$document->id] = [
+                    'expires_at' => $riderDocument->{RiderDocument::COLUMN_EXPIRES_AT},
+                ];
             }
         }
 
@@ -66,60 +79,73 @@ class EditRider extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        // Extract document fields and store for afterSave
-        $this->documentFiles = [];
-        foreach ($data as $key => $value) {
-            if (str_starts_with($key, 'document_')) {
-                $documentId = (int) str_replace('document_', '', $key);
-                $this->documentFiles[$documentId] = $value;
-                unset($data[$key]);
-            }
-        }
+        // Store documents data for afterSave
+        $this->documentsData = $data['documents'] ?? [];
+
+        // Remove documents from main data
+        unset($data['documents']);
 
         return $data;
     }
 
-    protected array $documentFiles = [];
+    protected array $documentsData = [];
 
     protected function afterSave(): void
     {
         $rider = $this->record;
 
-        foreach ($this->documentFiles as $documentId => $files) {
-            $document = Document::find($documentId);
-            if (! $document) {
-                continue;
-            }
+        // Get all enabled documents
+        $enabledDocuments = Document::query()
+            ->where(Document::COLUMN_ENABLED, true)
+            ->get();
+
+        foreach ($enabledDocuments as $document) {
+            $documentData = $this->documentsData[$document->id] ?? [];
 
             // Get or create RiderDocument
             $riderDocument = RiderDocument::firstOrCreate(
                 [
                     RiderDocument::COLUMN_RIDER_ID => $rider->id,
-                    RiderDocument::COLUMN_DOCUMENT_ID => $documentId,
+                    RiderDocument::COLUMN_DOCUMENT_ID => $document->id,
                 ]
             );
 
-            $collectionName = "document_{$documentId}";
-            $mediaItems = $rider->getMedia($collectionName);
-
-            // Check if new files were uploaded (not existing URLs)
-            $hasNewFiles = ! empty($files) && ! empty($mediaItems);
-
-            if ($hasNewFiles) {
-                // Clear old media from riderDocument
-                $riderDocument->clearMediaCollection('documents');
-
-                // Move new media from rider to riderDocument
-                foreach ($mediaItems as $media) {
-                    $media->move($riderDocument, 'documents');
-                }
-
-                // Clean up temporary collection
-                $rider->clearMediaCollection($collectionName);
-            } elseif (empty($files) || $files === [null] || (is_array($files) && empty(array_filter($files)))) {
-                // If file was removed
-                $riderDocument->clearMediaCollection('documents');
+            // Update expires_at if provided
+            if (isset($documentData['expires_at'])) {
+                $riderDocument->{RiderDocument::COLUMN_EXPIRES_AT} = $documentData['expires_at'];
+                $riderDocument->save();
             }
+
+            // Handle media from temporary collection
+            $temporaryMedia = $rider->getMedia("document_{$document->id}");
+            $existingMedia = $riderDocument->getMedia('rider_documents');
+
+            if ($temporaryMedia->isNotEmpty()) {
+                // Check if there are new uploads
+                $temporaryUuids = $temporaryMedia->pluck('uuid')->toArray();
+                $existingUuids = $existingMedia->pluck('uuid')->toArray();
+
+                if (array_diff($temporaryUuids, $existingUuids)) {
+                    // Clear old media and move new media
+                    $riderDocument->clearMediaCollection('rider_documents');
+
+                    foreach ($temporaryMedia as $media) {
+                        $media->move($riderDocument, 'rider_documents');
+                    }
+                }
+            } elseif ($existingMedia->isNotEmpty() && empty($documentData['file'] ?? [])) {
+                // User removed the file
+                $riderDocument->clearMediaCollection('rider_documents');
+            }
+
+            // Clean up temporary collection
+            $rider->clearMediaCollection("document_{$document->id}");
         }
+    }
+
+    protected function beforeFill(): void
+    {
+        // Ensure documents relation is loaded
+        $this->record->load('documents.media');
     }
 }

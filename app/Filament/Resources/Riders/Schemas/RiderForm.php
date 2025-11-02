@@ -13,46 +13,15 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
 
 class RiderForm
 {
     public static function configure(Schema $schema): Schema
     {
-        $enabledDocuments = Document::query()
-            ->where(Document::COLUMN_ENABLED, true)
-            ->orderBy(Document::COLUMN_NAME)
-            ->get();
-
-        // Create document fields for each enabled document
-        $documentFields = [];
-        foreach ($enabledDocuments as $document) {
-            $acceptedFormats = $document->{Document::COLUMN_ACCEPTED_FORMATS} ?? [];
-            $mimeTypes = FileFormatEnum::toMimeTypes($acceptedFormats);
-
-            // Build helper text
-            $helperParts = [];
-            if ($document->{Document::COLUMN_DESCRIPTION}) {
-                $helperParts[] = $document->{Document::COLUMN_DESCRIPTION};
-            }
-            if ($document->{Document::COLUMN_VALIDITY_PERIOD}) {
-                $helperParts[] = trans('documents.admin.fields.validity_period') . ': ' . $document->{Document::COLUMN_VALIDITY_PERIOD};
-            }
-            $helperText = ! empty($helperParts) ? implode(' • ', $helperParts) : null;
-
-            $documentFields[] = SpatieMediaLibraryFileUpload::make("document_{$document->id}")
-                ->label($document->{Document::COLUMN_NAME})
-                ->collection("document_{$document->id}")
-                ->acceptedFileTypes($mimeTypes)
-                ->maxFiles(1)
-                ->required($document->{Document::COLUMN_IS_REQUIRED})
-                ->helperText($helperText)
-                ->downloadable()
-                ->deletable()
-                ->columnSpanFull();
-        }
-
         return $schema
             ->columns(1)
             ->components([
@@ -88,7 +57,6 @@ class RiderForm
                         TextInput::make(Rider::COLUMN_EMAIL)
                             ->label(trans('riders.admin.fields.email'))
                             ->email()
-                            ->required()
                             ->unique(table: Rider::class, column: Rider::COLUMN_EMAIL, ignoreRecord: true)
                             ->maxLength(255)
                             ->columnSpan(1),
@@ -108,7 +76,6 @@ class RiderForm
                             ->relationship('company', Company::COLUMN_NAME)
                             ->searchable()
                             ->preload()
-                            ->required()
                             ->columnSpan(1),
                     ]),
 
@@ -122,12 +89,57 @@ class RiderForm
                             ->columnSpanFull(),
                     ]),
 
-                ...(! empty($documentFields) ? [
-                    Section::make(trans('riders.admin.form.documents'))
-                        ->icon('heroicon-o-document-text')
-                        ->description(trans('riders.admin.form.documents_description'))
-                        ->schema($documentFields),
-                ] : []),
+                Section::make(trans('riders.admin.form.documents'))
+                    ->hidden()
+                    ->icon('heroicon-o-document-text')
+                    ->description(trans('riders.admin.form.documents_description'))
+                    ->schema(function (?Model $record) {
+                        $fields = [];
+
+                        // Get all enabled documents
+                        $enabledDocuments = Document::query()
+                            ->where(Document::COLUMN_ENABLED, true)
+                            ->orderBy(Document::COLUMN_NAME)
+                            ->get();
+
+                        foreach ($enabledDocuments as $document) {
+                            $acceptedFormats = $document->{Document::COLUMN_ACCEPTED_FORMATS} ?? [];
+                            $mimeTypes = FileFormatEnum::toMimeTypes($acceptedFormats);
+
+                            // Build helper text
+                            $helperParts = [];
+                            if ($document->{Document::COLUMN_DESCRIPTION}) {
+                                $helperParts[] = $document->{Document::COLUMN_DESCRIPTION};
+                            }
+                            if ($document->{Document::COLUMN_VALIDITY_PERIOD}) {
+                                $helperParts[] = trans('documents.admin.fields.validity_period') . ': ' . $document->{Document::COLUMN_VALIDITY_PERIOD};
+                            }
+                            if (! empty($acceptedFormats)) {
+                                $helperParts[] = trans('documents.admin.fields.accepted_formats') . ': ' . implode(', ', array_map(fn ($format) => strtoupper($format), $acceptedFormats));
+                            }
+                            $helperText = ! empty($helperParts) ? implode(' • ', $helperParts) : null;
+
+                            $isRequired = $document->{Document::COLUMN_IS_REQUIRED};
+
+                            // Create a grid for each document
+                            $fields[] = SpatieMediaLibraryFileUpload::make("documents.{$document->id}.file")
+                                ->label($document->{Document::COLUMN_NAME})
+                                ->statePath("documents.{$document->id}.file")
+                                ->collection("document_{$document->id}")
+                                ->acceptedFileTypes($mimeTypes)
+                                ->maxFiles(1)
+                                ->maxSize(5120) // 5MB
+                                ->required($isRequired)
+                                ->helperText($helperText)
+                                ->downloadable()
+                                ->deletable()
+                                ->previewable()
+                                ->openable()
+                                ->columnSpan(2);
+                        }
+
+                        return $fields;
+                    }),
             ]);
     }
 }

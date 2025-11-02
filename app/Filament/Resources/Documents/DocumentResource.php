@@ -25,6 +25,11 @@ class DocumentResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedDocumentText;
 
+    public static function canViewAny(): bool
+    {
+        return false;
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return trans('general.admin.navigation.settings');
