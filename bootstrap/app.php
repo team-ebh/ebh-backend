@@ -20,8 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function () {
             $routeGroups = [
-                'drivers' => glob(base_path('routes/api/v*/driver/*.php')),
-                'users' => glob(base_path('routes/api/v*/user/*.php')),
+                'riders' => glob(base_path('routes/api/v*/riders/*.php')),
+                'customers' => glob(base_path('routes/api/v*/customers/*.php')),
             ];
 
             foreach ($routeGroups as $group => $files) {

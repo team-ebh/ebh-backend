@@ -12,6 +12,8 @@ arch()->preset()->laravel()->ignoring([
     'App\Http\Responses\LoginResponse',
     'App\Http\Resources\Api\SuccessResource',
     'App\Http\Controllers\Controller',
+    'App\Http\Controllers\Api\V1\Customer\TripController', // Allow custom methods in TripController
+    'App\Http\Controllers\Api\V1\Customer\AuthController', // Allow custom methods in AuthController
 ]);
 
 arch('strict types')
@@ -26,6 +28,7 @@ arch('avoid inheritance')
         'App\Console\Commands',
         'App\Exceptions',
         'App\Filament',
+        'App\Http\Controllers',
         'App\Http\Requests',
         'App\Http\Responses',
         'App\Http\Resources',

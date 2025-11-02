@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'admin' => [
+        'fields' => [
+            'full_name' => 'Full Name',
+            'email' => 'Email',
+            'phone_number' => 'Phone Number',
+            'company' => 'Company',
+            'status' => 'Status',
+            'profile_photo' => 'Profile Photo',
+            'accessibility_certifications' => [
+                'label' => 'Accessibility Certifications',
+                'wheelchair_accessible' => 'Wheelchair Accessible',
+                'arabic_sign_language' => 'Arabic Sign Language',
+                'visual_assistance' => 'Visual Assistance',
+                'hearing_assistance' => 'Hearing Assistance',
+            ],
+        ],
+        'statuses' => [
+            'online' => 'Online',
+            'offline' => 'Offline',
+            'busy' => 'Busy',
+        ],
+        'model_label' => 'Rider',
+        'plural_model_label' => 'Riders',
+        'navigation_label' => 'Riders',
+        'stats' => [
+            'total_riders' => 'Total Riders',
+            'total_riders_description' => 'All registered riders',
+            'online_now' => 'Online Now',
+            'online_now_description' => 'Currently online riders',
+            'accessibility_certified' => 'Accessibility Certified',
+            'accessibility_certified_description' => 'Riders with accessibility training',
+            'avg_rating' => 'Avg Rating',
+            'avg_rating_description' => 'Average rider rating',
+        ],
+        'form' => [
+            'personal_information' => 'Personal Information',
+            'personal_information_description' => 'Enter the rider\'s basic personal information',
+            'profile_photo_helper' => 'Upload a square profile photo (max 2MB). JPG, JPEG, WEBP or PNG formats are accepted.',
+            'accessibility_certifications' => 'Accessibility Certifications',
+            'accessibility_certifications_description' => 'Select the accessibility certifications this rider has',
+            'documents' => 'Documents',
+            'documents_description' => 'Upload required documents for the rider',
+            'add_document' => 'Add Document',
+            'document_file' => 'Document File',
+        ],
+        'infolist' => [
+            'personal_information' => 'Personal Information',
+            'personal_information_description' => 'Basic personal details of the rider',
+            'status_information' => 'Status Information',
+            'status_information_description' => 'Current status and accessibility certifications',
+            'documents' => 'Documents',
+            'documents_description' => 'Uploaded documents and certificates',
+            'timestamps' => 'Timestamps',
+        ],
+    ],
+    'api' => [
+
+    ],
+];

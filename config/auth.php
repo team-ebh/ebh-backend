@@ -17,7 +17,7 @@ return [
 
     'defaults' => [
         'guard' => env('AUTH_GUARD', 'web'),
-        'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
+        'passwords' => env('AUTH_PASSWORD_BROKER', 'admins'),
     ],
 
     /*
@@ -43,9 +43,14 @@ return [
             'provider' => 'admins',
         ],
 
-        'api' => [
+        'customer' => [
             'driver' => 'sanctum',
-            'provider' => 'users',
+            'provider' => 'customers',
+        ],
+
+        'rider' => [
+            'driver' => 'sanctum',
+            'provider' => 'riders',
         ],
     ],
 
@@ -72,9 +77,14 @@ return [
             'model' => env('AUTH_MODEL', App\Models\Admin::class),
         ],
 
-        'users' => [
+        'customers' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => env('AUTH_MODEL', App\Models\Customer::class),
+        ],
+
+        'riders' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\Rider::class),
         ],
     ],
 

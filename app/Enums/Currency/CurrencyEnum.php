@@ -8,7 +8,7 @@ use Filament\Support\Contracts\HasLabel;
 
 enum CurrencyEnum: string implements HasLabel
 {
-    case KD = 'KD';
+    case KWD = 'KWD';
 
     public function getLabel(): ?string
     {

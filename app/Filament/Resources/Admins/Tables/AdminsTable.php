@@ -26,7 +26,17 @@ class AdminsTable
                 TextColumn::make(Admin::COLUMN_PHONE_NUMBER)
                     ->label(trans('admins.admin.fields.phone_number'))
                     ->prefix(defaultPrefixPhoneNumber())
-                    ->searchable(),
+                    ->searchable(query: function ($query, string $search) {
+                        // Normalize search: remove +965 prefix if present, also try with + prefix added
+                        $cleanSearch = preg_replace('/^\+965/', '', $search);
+                        $withPlus = str_starts_with($cleanSearch, '+') ? $cleanSearch : '+' . $cleanSearch;
+                        $withoutPlus = str_starts_with($cleanSearch, '+') ? substr($cleanSearch, 1) : $cleanSearch;
+
+                        return $query->where(Admin::COLUMN_PHONE_NUMBER, 'like', "%{$cleanSearch}%")
+                            ->orWhere(Admin::COLUMN_PHONE_NUMBER, 'like', "%{$withPlus}%")
+                            ->orWhere(Admin::COLUMN_PHONE_NUMBER, 'like', "%{$withoutPlus}%")
+                            ->orWhere(Admin::COLUMN_PHONE_NUMBER, 'like', "%{$search}%");
+                    }),
                 IconColumn::make(Admin::COLUMN_ENABLED)
                     ->label(trans('admins.admin.fields.enabled'))
                     ->boolean()
