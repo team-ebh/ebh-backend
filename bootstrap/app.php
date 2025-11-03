@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\ApplicationEnvironmentEnum;
 use App\Exceptions\BaseException;
 use App\Http\Middleware\ForceApiGuardMiddleware;
 use App\Http\Middleware\LocalizationMiddleware;
@@ -23,6 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 'riders' => glob(base_path('routes/api/v*/riders/*.php')),
                 'customers' => glob(base_path('routes/api/v*/customers/*.php')),
             ];
+
+            // Add test routes only in non-risky environments
+            if (! ApplicationEnvironmentEnum::isRiskyEnvironment()) {
+                $routeGroups['test'] = glob(base_path('routes/api/v*/test/*.php'));
+            }
 
             foreach ($routeGroups as $group => $files) {
                 foreach ($files as $file) {
