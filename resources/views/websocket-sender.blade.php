@@ -33,8 +33,11 @@
             <h3 class="font-semibold text-blue-900 mb-2">📋 Instructions:</h3>
             <ol class="text-sm text-blue-800 space-y-1">
                 <li><strong>1.</strong> This page is for sending messages</li>
-                <li><strong>2.</strong> Open receiver page in another tab: <a href="/websocket-receiver" target="_blank" class="underline font-medium">Receiver Page</a></li>
-                <li><strong>3.</strong> Make sure Reverb is running: <code class="bg-blue-100 px-2 py-0.5 rounded">php artisan reverb:start</code></li>
+                <li><strong>2.</strong> Open receiver page in another tab: <a href="/websocket-receiver" target="_blank"
+                                                                              class="underline font-medium">Receiver
+                        Page</a></li>
+                <li><strong>3.</strong> Make sure Reverb is running: <code class="bg-blue-100 px-2 py-0.5 rounded">php
+                        artisan reverb:start</code></li>
             </ol>
         </div>
 
@@ -182,7 +185,14 @@
         try {
             showStatus('Sending...', 'loading');
 
-            const response = await fetch('/v1/test/send', {
+            // On local: use APP_URL with port, On server: use scheme + domain without port
+            const apiUrl = @if(app()->isLocal())
+                '{{ str_replace(config('app.domains.admin'), config('app.domains.api'), config('app.url')) }}/v1/test/send'
+            @else
+                '{{ config('broadcasting.connections.reverb.options.scheme') }}://{{ config('app.domains.api') }}/v1/test/send'
+            @endif;
+
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
