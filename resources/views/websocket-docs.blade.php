@@ -61,7 +61,7 @@
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="font-medium text-gray-700">REST API Base URL:</span>
-                        <code class="bg-gray-200 px-3 py-1 rounded text-sm">http://api.localhost:9000</code>
+                        <code class="bg-gray-200 px-3 py-1 rounded text-sm">{{ config('broadcasting.connections.reverb.options.scheme') }}://{{ config('app.domains.api') }}</code>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="font-medium text-gray-700">WebSocket URL:</span>
@@ -259,7 +259,7 @@ Language: en</code></pre>
 
         <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
             <div class="font-semibold text-blue-900 mb-2">Base URL:</div>
-            <code class="text-blue-800">http://api.localhost:9000</code>
+            <code class="text-blue-800">{{ config('broadcasting.connections.reverb.options.scheme') }}://{{ config('app.domains.api') }}</code>
         </div>
     </div>
 
@@ -330,7 +330,7 @@ export const useWebSocket = () => {
 
   const sendMessage = useCallback(async (message, sender) => {
     try {
-      const response = await fetch('http://api.localhost:9000/v1/test/send', {
+      const response = await fetch('{{ config('broadcasting.connections.reverb.options.scheme') }}://{{ config('app.domains.api') }}/v1/test/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -599,8 +599,8 @@ const styles = StyleSheet.create({
                 <h4 class="font-semibold text-blue-900 mb-2">API Requests Failing</h4>
                 <ul class="text-sm text-blue-800 space-y-1">
                     <li>• Add the required header: <code class="bg-blue-100 px-2 py-1 rounded">Language: en</code></li>
-                    <li>• Check the base URL points to: <code class="bg-blue-100 px-2 py-1 rounded">http://api.localhost:9000</code></li>
-                    <li>• For physical devices, replace localhost with your computer's IP</li>
+                    <li>• Check the base URL points to: <code class="bg-blue-100 px-2 py-1 rounded">{{ config('broadcasting.connections.reverb.options.scheme') }}://{{ config('app.domains.api') }}</code></li>
+                    <li>• For physical devices, replace the domain with your computer's IP address</li>
                     <li>• Verify Content-Type is set to <code class="bg-blue-100 px-2 py-1 rounded">application/json</code></li>
                 </ul>
             </div>

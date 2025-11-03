@@ -15,6 +15,19 @@
             <p class="text-gray-600">Send messages through WebSocket</p>
         </div>
 
+        <!-- Connection Status -->
+        <div class="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-2 border-purple-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div id="status-indicator" class="w-4 h-4 rounded-full bg-gray-400 animate-pulse"></div>
+                    <div>
+                        <div class="font-semibold text-gray-900">Connection Status:</div>
+                        <div id="connection-status" class="text-sm text-gray-600">Connecting...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Instructions -->
         <div class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
             <h3 class="font-semibold text-blue-900 mb-2">📋 Instructions:</h3>
@@ -90,9 +103,67 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0-rc2/dist/web/pusher.min.js"></script>
 <script>
     let sentCount = 0;
     let errorCount = 0;
+
+    const statusIndicator = document.getElementById('status-indicator');
+    const connectionStatus = document.getElementById('connection-status');
+
+    // Initialize Pusher for connection status
+    const pusher = new Pusher('{{ config('broadcasting.connections.reverb.key') }}', {
+        wsHost: '{{ config('broadcasting.connections.reverb.options.host') }}',
+        wsPort: {{ config('broadcasting.connections.reverb.options.port') }},
+        wssPort: {{ config('broadcasting.connections.reverb.options.port') }},
+        forceTLS: false,
+        enabledTransports: ['ws', 'wss'],
+        cluster: 'mt1'
+    });
+
+    // Connection handlers
+    pusher.connection.bind('connected', function () {
+        setConnectionStatus('Connected', 'connected');
+        console.log('✅ Connected to WebSocket');
+    });
+
+    pusher.connection.bind('connecting', function () {
+        setConnectionStatus('Connecting...', 'connecting');
+        console.log('🔄 Connecting...');
+    });
+
+    pusher.connection.bind('disconnected', function () {
+        setConnectionStatus('Disconnected', 'disconnected');
+        console.log('❌ Disconnected');
+    });
+
+    pusher.connection.bind('unavailable', function () {
+        setConnectionStatus('Unavailable', 'error');
+        console.log('⚠️ Connection unavailable');
+    });
+
+    pusher.connection.bind('error', function (err) {
+        setConnectionStatus('Connection Error', 'error');
+        console.error('❌ Connection error:', err);
+    });
+
+    function setConnectionStatus(text, status) {
+        connectionStatus.textContent = text;
+
+        const colors = {
+            connected: 'bg-green-500',
+            connecting: 'bg-yellow-500 animate-pulse',
+            disconnected: 'bg-red-500',
+            error: 'bg-red-600 animate-pulse'
+        };
+
+        statusIndicator.className = `w-4 h-4 rounded-full ${colors[status] || 'bg-gray-400'}`;
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        pusher.disconnect();
+    });
 
     async function sendMessage() {
         const message = document.getElementById('message-input').value.trim();

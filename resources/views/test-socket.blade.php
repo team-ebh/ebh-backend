@@ -18,17 +18,17 @@
     <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-white/20">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                    <div class="w-6 h-6 rounded-full bg-green-500 animate-pulse"></div>
+                <div id="status-indicator" class="w-12 h-12 rounded-full bg-gray-500/20 flex items-center justify-center">
+                    <div class="w-6 h-6 rounded-full bg-gray-400 animate-pulse"></div>
                 </div>
                 <div>
-                    <div class="text-white font-semibold text-lg">System Ready</div>
-                    <div class="text-purple-200 text-sm">Choose a testing mode below</div>
+                    <div class="text-white font-semibold text-lg">Connection Status</div>
+                    <div id="connection-status" class="text-purple-200 text-sm">Connecting...</div>
                 </div>
             </div>
             <div class="text-right">
                 <div class="text-white text-sm">Channel: <span class="font-mono font-bold text-purple-300">test-channel</span></div>
-                <div class="text-white text-sm">Port: <span class="font-mono font-bold text-purple-300">8080</span></div>
+                <div class="text-white text-sm">Port: <span class="font-mono font-bold text-purple-300">{{ config('broadcasting.connections.reverb.options.port') }}</span></div>
             </div>
         </div>
     </div>
@@ -119,7 +119,7 @@
                 <div class="flex-1">
                     <div class="font-semibold text-yellow-900 mb-1">Quick Test with cURL:</div>
                     <code class="text-xs bg-yellow-100 px-2 py-1 rounded block overflow-x-auto">
-curl -X POST http://api.localhost:9000/v1/test/send \<br>
+curl -X POST {{ config('broadcasting.connections.reverb.options.scheme') }}://{{ config('app.domains.api') }}/v1/test/send \<br>
   -H "Content-Type: application/json" \<br>
   -H "Accept: application/json" \<br>
   -H "Language: en" \<br>
@@ -149,5 +149,68 @@ curl -X POST http://api.localhost:9000/v1/test/send \<br>
         <p class="mt-1">Powered by Laravel {{ app()->version() }}</p>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0-rc2/dist/web/pusher.min.js"></script>
+<script>
+    const statusIndicator = document.getElementById('status-indicator');
+    const connectionStatus = document.getElementById('connection-status');
+
+    // Initialize Pusher
+    const pusher = new Pusher('{{ config('broadcasting.connections.reverb.key') }}', {
+        wsHost: '{{ config('broadcasting.connections.reverb.options.host') }}',
+        wsPort: {{ config('broadcasting.connections.reverb.options.port') }},
+        wssPort: {{ config('broadcasting.connections.reverb.options.port') }},
+        forceTLS: false,
+        enabledTransports: ['ws', 'wss'],
+        cluster: 'mt1'
+    });
+
+    // Connection handlers
+    pusher.connection.bind('connected', function () {
+        setConnectionStatus('Connected', 'connected');
+        console.log('✅ Connected to WebSocket');
+    });
+
+    pusher.connection.bind('connecting', function () {
+        setConnectionStatus('Connecting...', 'connecting');
+        console.log('🔄 Connecting...');
+    });
+
+    pusher.connection.bind('disconnected', function () {
+        setConnectionStatus('Disconnected', 'disconnected');
+        console.log('❌ Disconnected');
+    });
+
+    pusher.connection.bind('unavailable', function () {
+        setConnectionStatus('Unavailable', 'error');
+        console.log('⚠️ Connection unavailable');
+    });
+
+    pusher.connection.bind('error', function (err) {
+        setConnectionStatus('Connection Error', 'error');
+        console.error('❌ Connection error:', err);
+    });
+
+    function setConnectionStatus(text, status) {
+        connectionStatus.textContent = text;
+
+        const colors = {
+            connected: { bg: 'bg-green-500/20', dot: 'bg-green-500' },
+            connecting: { bg: 'bg-yellow-500/20', dot: 'bg-yellow-500 animate-pulse' },
+            disconnected: { bg: 'bg-red-500/20', dot: 'bg-red-500' },
+            error: { bg: 'bg-red-600/20', dot: 'bg-red-600 animate-pulse' }
+        };
+
+        const color = colors[status] || { bg: 'bg-gray-500/20', dot: 'bg-gray-400' };
+
+        statusIndicator.className = `w-12 h-12 rounded-full ${color.bg} flex items-center justify-center`;
+        statusIndicator.innerHTML = `<div class="w-6 h-6 rounded-full ${color.dot}"></div>`;
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        pusher.disconnect();
+    });
+</script>
 </body>
 </html>
