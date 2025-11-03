@@ -8,6 +8,7 @@ use App\Enums\Rider\RiderStatusEnum;
 use App\Traits\Model\Aggregates\RiderAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\HasMediaTrait;
+use App\Traits\Model\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User;
 use Laravel\Sanctum\HasApiTokens;
@@ -19,7 +20,10 @@ class Rider extends User implements HasMedia
     use HasDefaultColumnModelTrait;
     use HasFactory;
     use HasMediaTrait;
+    use LogsActivity;
     use RiderAggregate;
+
+    protected $touches = ['documents', 'media'];
 
     public const string COLUMN_FULL_NAME = 'full_name';
 

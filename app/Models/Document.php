@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Traits\Model\Aggregates\DocumentAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\HasEnabledTrait;
+use App\Traits\Model\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,6 +17,7 @@ class Document extends Model
     use HasDefaultColumnModelTrait;
     use HasEnabledTrait;
     use HasFactory;
+    use LogsActivity;
 
     public const string COLUMN_NAME = 'name';
 

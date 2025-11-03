@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use App\Traits\Filament\HasTimestampsHeaderActions;
+use App\Traits\Filament\HasActivityLogHeaderActions;
 use Filament\Resources\Pages\ViewRecord;
 
 abstract class BaseViewRecord extends ViewRecord
 {
-    use HasTimestampsHeaderActions;
+    use HasActivityLogHeaderActions;
 
     protected function getHeaderActions(): array
     {
@@ -17,7 +17,7 @@ abstract class BaseViewRecord extends ViewRecord
 
         return array_merge(
             $actions,
-            $this->getTimestampsHeaderActions()
+            $this->getActivityLogHeaderActions()
         );
     }
 
