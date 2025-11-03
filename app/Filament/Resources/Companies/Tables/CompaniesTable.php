@@ -35,11 +35,9 @@ class CompaniesTable
                     ->searchable(query: function ($query, string $search) {
                         // Normalize search: remove +965 prefix if present, also try with + prefix added
                         $cleanSearch = preg_replace('/^\+965/', '', $search);
-                        $withPlus = str_starts_with($cleanSearch, '+') ? $cleanSearch : '+' . $cleanSearch;
                         $withoutPlus = preg_replace('/^965/', '', $search);
 
-                        return $query->where(Company::COLUMN_PHONE_NUMBER, "%{$cleanSearch}%")
-                            ->orWhereLike(Company::COLUMN_PHONE_NUMBER, "%{$withPlus}%")
+                        return $query->whereLike(Company::COLUMN_PHONE_NUMBER, "%{$cleanSearch}%")
                             ->orWhereLike(Company::COLUMN_PHONE_NUMBER, "%{$withoutPlus}%")
                             ->orWhereLike(Company::COLUMN_PHONE_NUMBER, "%{$search}%");
                     })
