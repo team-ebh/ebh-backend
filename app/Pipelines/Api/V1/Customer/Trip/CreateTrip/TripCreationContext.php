@@ -26,6 +26,10 @@ class TripCreationContext
 
     public ?Trip $trip = null;
 
+    public ?array $priceBreakdown = null;
+
+    public ?array $priceEstimation = null;
+
     public function __construct(
         public readonly TripStoreDTO $dto,
     ) {}

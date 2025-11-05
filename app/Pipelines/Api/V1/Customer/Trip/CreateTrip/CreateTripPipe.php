@@ -31,6 +31,9 @@ class CreateTripPipe
             $context->estimatedPrice
         );
 
+        // Load relationships for response
+        $context->trip->load(['customer', 'accessibility', 'locations']);
+
         return $next($context);
     }
 }
