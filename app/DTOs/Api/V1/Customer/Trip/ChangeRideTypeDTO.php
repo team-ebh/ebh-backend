@@ -36,7 +36,7 @@ class ChangeRideTypeDTO implements RequestDataTransferObject
 
     public RideTypeEnum $rideTypeId;
 
-    public ?int $waitingTimeMinutes;
+    public ?int $returnTime;
 
     /**
      * Populate DTO from request data
@@ -71,6 +71,6 @@ class ChangeRideTypeDTO implements RequestDataTransferObject
             : ($destinationLocation ? (float) $destinationLocation->{TripLocation::COLUMN_LONGITUDE} : 0);
 
         $this->rideTypeId = $request->enum('ride_type_id', RideTypeEnum::class);
-        $this->waitingTimeMinutes = $request->filled('waiting_time_minutes') ? (int) $request->post('waiting_time_minutes') : null;
+        $this->returnTime = $request->filled('return_time') ? (int) $request->post('return_time') : null;
     }
 }

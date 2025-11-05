@@ -78,10 +78,10 @@ return [
             'integer' => 'Ride type must be an integer.',
             'enum' => 'The selected ride type is invalid.',
         ],
-        'waiting_time_minutes' => [
-            'integer' => 'Waiting time must be an integer.',
-            'min' => 'Waiting time must be at least :min minute.',
-            'max' => 'Waiting time must not exceed :max minutes.',
+        'return_time' => [
+            'integer' => 'Return time must be an integer.',
+            'min' => 'Return time must be at least :min minute.',
+            'max' => 'Return time must not exceed :max minutes.',
         ],
     ],
 ];

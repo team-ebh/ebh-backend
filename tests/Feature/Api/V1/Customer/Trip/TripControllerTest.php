@@ -632,7 +632,7 @@ describe('Change Ride Type API', function () {
     it('can calculate pricing for ROUND_TRIP_WAIT with waiting time', function () {
         $response = \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
             'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP_WAIT->value,
-            'waiting_time_minutes' => 60,
+            'return_time' => 60,
         ])->assertStatus(200);
 
         // Verify ROUND_TRIP_WAIT has base fare, round trip fee, and waiting time charge
@@ -705,10 +705,10 @@ describe('Change Ride Type API', function () {
         ])->assertStatus(422);
     });
 
-    it('validates waiting time range when provided', function () {
+    it('validates return time range when provided', function () {
         \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
             'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP_WAIT->value,
-            'waiting_time_minutes' => 9999,
+            'return_time' => 9999,
         ])->assertStatus(422);
     });
 

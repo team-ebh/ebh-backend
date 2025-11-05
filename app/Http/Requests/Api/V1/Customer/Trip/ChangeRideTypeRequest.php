@@ -37,8 +37,8 @@ class ChangeRideTypeRequest extends FormRequest
                 'max:180',
             ],
 
-            // Waiting time (optional)
-            'waiting_time_minutes' => [
+            // Return time (optional)
+            'return_time' => [
                 'nullable',
                 'integer',
                 'min:1',
@@ -69,10 +69,10 @@ class ChangeRideTypeRequest extends FormRequest
             'ride_type_id.integer' => trans('validations.trips.ride_type_id.integer'),
             'ride_type_id.enum' => trans('validations.trips.ride_type_id.enum'),
 
-            // Waiting time
-            'waiting_time_minutes.integer' => trans('validations.trips.waiting_time_minutes.integer'),
-            'waiting_time_minutes.min' => trans('validations.trips.waiting_time_minutes.min'),
-            'waiting_time_minutes.max' => trans('validations.trips.waiting_time_minutes.max'),
+            // Return time
+            'return_time.integer' => trans('validations.trips.return_time.integer'),
+            'return_time.min' => trans('validations.trips.return_time.min'),
+            'return_time.max' => trans('validations.trips.return_time.max'),
         ];
     }
 }

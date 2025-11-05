@@ -45,6 +45,6 @@ enum RideTypeEnum: int implements HasDescription, HasIcon, HasLabel
 
     public function needsWaitingTimeConfig(): bool
     {
-        return $this === self::ROUND_TRIP_WAIT;
+        return $this === self::ROUND_TRIP;
     }
 }

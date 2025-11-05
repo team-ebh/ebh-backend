@@ -102,8 +102,8 @@ class ChangeRideTypeAction
             RideTypeEnum::ROUND_TRIP_WAIT => [
                 // ROUND_TRIP_WAIT: Base fare + Round Trip fee + Wait Time Charge
                 $roundTripFee = $baseFare,
-                $waitingCharge = $this->calculateWaitingCharge($dto->waitingTimeMinutes ?? 0),
-                $priceBreakdown = $this->buildRoundTripWaitBreakdown($baseFare, $roundTripFee, $waitingCharge, $dto->waitingTimeMinutes ?? null),
+                $waitingCharge = $this->calculateWaitingCharge($dto->returnTime ?? 0),
+                $priceBreakdown = $this->buildRoundTripWaitBreakdown($baseFare, $roundTripFee, $waitingCharge, $dto->returnTime ?? null),
                 $totalPrice = $baseFare + $roundTripFee + $waitingCharge + $accessibilityCost,
             ],
         };
