@@ -20,12 +20,12 @@ class UpdateTripPricesPipe
 
     public function handle(ChangeRideTypeContext $context, Closure $next): mixed
     {
-        // Only update if we have calculated prices
-        if ($context->totalPrice !== null) {
+        // Only update if we have calculated prices (distance was available)
+        if (isset($context->totalPrice)) {
             $this->tripRepository->updateTripPrices(
                 $context->dto->trip,
-                $context->accessibilityCost > 0 ? $context->accessibilityCost : null,
-                $context->waitingCharge > 0 ? $context->waitingCharge : null,
+                $context->accessibilityCost,
+                $context->waitingCharge,
                 $context->totalPrice
             );
         }

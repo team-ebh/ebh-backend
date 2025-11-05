@@ -15,7 +15,7 @@ class ChangeRideTypeContext
 {
     public ?float $distance = null;
 
-    public ?float $baseFare = null;
+    public float $baseFare;
 
     public ?float $accessibilityCost = null;
 
@@ -23,7 +23,7 @@ class ChangeRideTypeContext
 
     public ?float $waitingCharge = null;
 
-    public ?float $totalPrice = null;
+    public float $totalPrice;
 
     public ?array $priceBreakdown = null;
 
