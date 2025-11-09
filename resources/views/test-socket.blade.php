@@ -183,7 +183,6 @@
         wsPort: {{ config('broadcasting.connections.reverb.options.port') }},
         wssPort: {{ config('broadcasting.connections.reverb.options.port') }},
         forceTLS: {{ config('broadcasting.connections.reverb.options.scheme') === 'https' ? 'true' : 'false' }},
-        authEndpoint: 'https://api.dev.ebhapp.com/broadcasting/auth',
         enabledTransports: ['ws', 'wss'],
         cluster: 'mt1'
     });
