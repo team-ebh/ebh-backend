@@ -16,7 +16,6 @@ use App\DTOs\Api\V1\Customer\Trip\ChangeRideTypeDTO;
 use App\DTOs\Api\V1\Customer\Trip\ConfirmTripDTO;
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\Customer\Trip\CancelTripRequest;
 use App\Http\Requests\Api\V1\Customer\Trip\ChangeRideTypeRequest;
 use App\Http\Requests\Api\V1\Customer\Trip\TripStoreRequest;
 use App\Http\Resources\Api\V1\Customer\Trip\ChangeRideTypeResource;
@@ -55,10 +54,9 @@ class TripController extends Controller
      */
     public function store(
         TripStoreRequest $request,
-        TripStoreDTO     $dto,
-        StoreTripAction  $action
-    ): TripResource
-    {
+        TripStoreDTO $dto,
+        StoreTripAction $action
+    ): TripResource {
         $dto->getDataFromRequest($request);
 
         return new TripResource($action($dto));
@@ -75,12 +73,11 @@ class TripController extends Controller
      * @throws \Throwable
      */
     public function changeRideType(
-        Trip                  $trip,
+        Trip $trip,
         ChangeRideTypeRequest $request,
-        ChangeRideTypeDTO     $dto,
-        ChangeRideTypeAction  $action
-    ): ChangeRideTypeResource
-    {
+        ChangeRideTypeDTO $dto,
+        ChangeRideTypeAction $action
+    ): ChangeRideTypeResource {
         $dto->getDataFromRequest($request);
 
         return new ChangeRideTypeResource($action($dto));
@@ -95,12 +92,11 @@ class TripController extends Controller
      * @authenticated
      */
     public function confirm(
-        Trip              $trip,
-        Request           $request,
-        ConfirmTripDTO    $dto,
+        Trip $trip,
+        Request $request,
+        ConfirmTripDTO $dto,
         ConfirmTripAction $action
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $dto->getDataFromRequest($request);
 
         $action($dto);
@@ -132,12 +128,11 @@ class TripController extends Controller
      * @throws \Throwable
      */
     public function cancel(
-        Trip             $trip,
-        Request          $request,
-        CancelTripDTO    $dto,
+        Trip $trip,
+        Request $request,
+        CancelTripDTO $dto,
         CancelTripAction $action
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $dto->getDataFromRequest($request);
 
         $action($dto);

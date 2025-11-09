@@ -27,7 +27,8 @@
     <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
         <h2 class="text-2xl font-bold text-gray-900 mb-4">🚀 Quick Access</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <a href="#api-keys" class="block p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors border-2 border-yellow-300">
+            <a href="#api-keys"
+               class="block p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors border-2 border-yellow-300">
                 <div class="font-semibold text-yellow-900">🔑 API Keys</div>
                 <div class="text-sm text-yellow-700">URLs, Keys, Headers</div>
             </a>
@@ -61,11 +62,15 @@
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="font-medium text-gray-700">REST API Base URL:</span>
-                        <code class="bg-gray-200 px-3 py-1 rounded text-sm">{{ config('broadcasting.connections.reverb.options.scheme') }}://{{ config('app.domains.api') }}</code>
+                        <code
+                            class="bg-gray-200 px-3 py-1 rounded text-sm">{{ config('broadcasting.connections.reverb.options.scheme') }}
+                            ://{{ config('app.domains.api') }}</code>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="font-medium text-gray-700">WebSocket URL:</span>
-                        <code class="bg-gray-200 px-3 py-1 rounded text-sm">ws://{{ config('broadcasting.connections.reverb.options.host') }}:{{ config('broadcasting.connections.reverb.options.port') }}</code>
+                        <code
+                            class="bg-gray-200 px-3 py-1 rounded text-sm">ws://{{ config('broadcasting.connections.reverb.options.host') }}
+                            :{{ config('broadcasting.connections.reverb.options.port') }}</code>
                     </div>
                 </div>
             </div>
@@ -78,7 +83,8 @@
 Accept: application/json
 Language: en  <span class="text-green-600">// Required! (en or ar)</span></code></pre>
                 </div>
-                <p class="text-sm text-gray-600 mt-2">⚠️ The <code class="bg-gray-200 px-2 py-1 rounded">Language</code> header is mandatory for all API requests.</p>
+                <p class="text-sm text-gray-600 mt-2">⚠️ The <code class="bg-gray-200 px-2 py-1 rounded">Language</code>
+                    header is mandatory for all API requests.</p>
             </div>
 
             <!-- WebSocket Keys -->
@@ -87,27 +93,36 @@ Language: en  <span class="text-green-600">// Required! (en or ar)</span></code>
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="font-medium text-gray-700">App Key:</span>
-                        <code class="bg-gray-200 px-3 py-1 rounded text-sm font-mono">{{ config('broadcasting.connections.reverb.key') }}</code>
+                        <code
+                            class="bg-gray-200 px-3 py-1 rounded text-sm font-mono">{{ config('broadcasting.connections.reverb.key') }}</code>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="font-medium text-gray-700">Cluster:</span>
                         <code class="bg-gray-200 px-3 py-1 rounded text-sm">mt1</code>
                     </div>
                 </div>
-                <p class="text-sm text-gray-600 mt-2">💡 These keys are used to initialize the Pusher client in your mobile app.</p>
+                <p class="text-sm text-gray-600 mt-2">💡 These keys are used to initialize the Pusher client in your
+                    mobile app.</p>
             </div>
 
             <!-- Network Configuration -->
             <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
                 <h4 class="font-semibold text-blue-900 mb-2">📱 Important: Network Configuration for Mobile Devices</h4>
                 <div class="text-sm text-blue-800 space-y-2">
-                    <p><strong>iOS Simulator:</strong> Use <code class="bg-blue-100 px-2 py-1 rounded">localhost</code> or <code class="bg-blue-100 px-2 py-1 rounded">127.0.0.1</code></p>
-                    <p><strong>Android Emulator:</strong> Use <code class="bg-blue-100 px-2 py-1 rounded">10.0.2.2</code> (this maps to host machine's localhost)</p>
-                    <p><strong>Physical Devices:</strong> Use your computer's local IP address (e.g., <code class="bg-blue-100 px-2 py-1 rounded">192.168.1.100</code>)</p>
+                    <p><strong>iOS Simulator:</strong> Use <code class="bg-blue-100 px-2 py-1 rounded">localhost</code>
+                        or <code class="bg-blue-100 px-2 py-1 rounded">127.0.0.1</code></p>
+                    <p><strong>Android Emulator:</strong> Use <code
+                            class="bg-blue-100 px-2 py-1 rounded">10.0.2.2</code> (this maps to host machine's
+                        localhost)</p>
+                    <p><strong>Physical Devices:</strong> Use your computer's local IP address (e.g., <code
+                            class="bg-blue-100 px-2 py-1 rounded">192.168.1.100</code>)</p>
                     <p class="mt-2"><strong>Find your IP:</strong></p>
                     <ul class="ml-4 space-y-1">
-                        <li>• Windows: <code class="bg-blue-100 px-2 py-1 rounded">ipconfig</code> in Command Prompt</li>
-                        <li>• Mac: <code class="bg-blue-100 px-2 py-1 rounded">ifconfig | grep "inet "</code> in Terminal</li>
+                        <li>• Windows: <code class="bg-blue-100 px-2 py-1 rounded">ipconfig</code> in Command Prompt
+                        </li>
+                        <li>• Mac: <code class="bg-blue-100 px-2 py-1 rounded">ifconfig | grep "inet "</code> in
+                            Terminal
+                        </li>
                         <li>• Linux: <code class="bg-blue-100 px-2 py-1 rounded">ip addr show</code> in Terminal</li>
                     </ul>
                 </div>
@@ -125,19 +140,23 @@ Language: en  <span class="text-green-600">// Required! (en or ar)</span></code>
                 <div class="space-y-2 bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <div class="flex justify-between">
                         <span class="font-medium text-gray-700">Host:</span>
-                        <code class="bg-gray-200 px-2 py-1 rounded text-sm">{{ config('broadcasting.connections.reverb.options.host') }}</code>
+                        <code
+                            class="bg-gray-200 px-2 py-1 rounded text-sm">{{ config('broadcasting.connections.reverb.options.host') }}</code>
                     </div>
                     <div class="flex justify-between">
                         <span class="font-medium text-gray-700">Port:</span>
-                        <code class="bg-gray-200 px-2 py-1 rounded text-sm">{{ config('broadcasting.connections.reverb.options.port') }}</code>
+                        <code
+                            class="bg-gray-200 px-2 py-1 rounded text-sm">{{ config('broadcasting.connections.reverb.options.port') }}</code>
                     </div>
                     <div class="flex justify-between">
                         <span class="font-medium text-gray-700">App Key:</span>
-                        <code class="bg-gray-200 px-2 py-1 rounded text-sm">{{ config('broadcasting.connections.reverb.key') }}</code>
+                        <code
+                            class="bg-gray-200 px-2 py-1 rounded text-sm">{{ config('broadcasting.connections.reverb.key') }}</code>
                     </div>
                     <div class="flex justify-between">
                         <span class="font-medium text-gray-700">Scheme:</span>
-                        <code class="bg-gray-200 px-2 py-1 rounded text-sm">{{ config('broadcasting.connections.reverb.options.scheme') }}</code>
+                        <code
+                            class="bg-gray-200 px-2 py-1 rounded text-sm">{{ config('broadcasting.connections.reverb.options.scheme') }}</code>
                     </div>
                     <div class="flex justify-between">
                         <span class="font-medium text-gray-700">Force TLS:</span>
@@ -259,7 +278,8 @@ Language: en</code></pre>
 
         <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
             <div class="font-semibold text-blue-900 mb-2">Base URL:</div>
-            <code class="text-blue-800">{{ config('broadcasting.connections.reverb.options.scheme') }}://{{ config('app.domains.api') }}</code>
+            <code class="text-blue-800">{{ config('broadcasting.connections.reverb.options.scheme') }}
+                ://{{ config('app.domains.api') }}</code>
         </div>
     </div>
 
@@ -295,7 +315,7 @@ export const useWebSocket = () => {
       wsHost: '{{ config('broadcasting.connections.reverb.options.host') }}',
       wsPort: {{ config('broadcasting.connections.reverb.options.port') }},
       wssPort: {{ config('broadcasting.connections.reverb.options.port') }},
-      forceTLS: false,
+      forceTLS: {{ config('broadcasting.connections.reverb.options.useTLS') }},
       enabledTransports: ['ws', 'wss'],
       cluster: 'mt1',
     });
@@ -514,7 +534,8 @@ const styles = StyleSheet.create({
                 <p class="text-gray-700 mb-4">Use our web-based testing tools to verify your mobile implementation:</p>
 
                 <div class="grid md:grid-cols-2 gap-4">
-                    <a href="/websocket-sender" target="_blank" class="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border-2 border-blue-200 transition-colors">
+                    <a href="/websocket-sender" target="_blank"
+                       class="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border-2 border-blue-200 transition-colors">
                         <div class="flex items-center gap-3 mb-2">
                             <span class="text-2xl">📤</span>
                             <div class="font-semibold text-blue-900 text-lg">Sender Page</div>
@@ -522,7 +543,8 @@ const styles = StyleSheet.create({
                         <p class="text-sm text-blue-700">Send test messages to your mobile app</p>
                     </a>
 
-                    <a href="/websocket-receiver" target="_blank" class="block p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border-2 border-purple-200 transition-colors">
+                    <a href="/websocket-receiver" target="_blank"
+                       class="block p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border-2 border-purple-200 transition-colors">
                         <div class="flex items-center gap-3 mb-2">
                             <span class="text-2xl">📥</span>
                             <div class="font-semibold text-purple-900 text-lg">Receiver Page</div>
@@ -536,28 +558,33 @@ const styles = StyleSheet.create({
                 <h3 class="text-xl font-semibold text-gray-900 mb-3">Testing Steps</h3>
                 <ol class="space-y-3">
                     <li class="flex items-start gap-3">
-                        <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                        <span
+                            class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
                         <div>
                             <div class="font-semibold text-gray-900">Implement WebSocket in your React Native app</div>
                             <p class="text-sm text-gray-600">Copy the code examples above into your project</p>
                         </div>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                        <span
+                            class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</span>
                         <div>
                             <div class="font-semibold text-gray-900">Open the Receiver page</div>
                             <p class="text-sm text-gray-600">Use the link above to monitor incoming messages</p>
                         </div>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                        <span
+                            class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
                         <div>
                             <div class="font-semibold text-gray-900">Send message from your mobile app</div>
-                            <p class="text-sm text-gray-600">The message should appear in the Receiver page instantly</p>
+                            <p class="text-sm text-gray-600">The message should appear in the Receiver page
+                                instantly</p>
                         </div>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">4</span>
+                        <span
+                            class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">4</span>
                         <div>
                             <div class="font-semibold text-gray-900">Send message from Sender page</div>
                             <p class="text-sm text-gray-600">Your mobile app should receive it in real-time</p>
@@ -577,10 +604,13 @@ const styles = StyleSheet.create({
                 <h4 class="font-semibold text-yellow-900 mb-2">Connection Failed</h4>
                 <ul class="text-sm text-yellow-800 space-y-1">
                     <li>• Verify the WebSocket host and port are correct</li>
-                    <li>• Make sure Reverb server is running: <code class="bg-yellow-100 px-2 py-1 rounded">php artisan reverb:start</code></li>
+                    <li>• Make sure Reverb server is running: <code class="bg-yellow-100 px-2 py-1 rounded">php artisan
+                            reverb:start</code></li>
                     <li>• Check if your device/emulator can reach the server</li>
                     <li>• For iOS Simulator: Use <code class="bg-yellow-100 px-2 py-1 rounded">localhost</code></li>
-                    <li>• For Android Emulator: Use <code class="bg-yellow-100 px-2 py-1 rounded">10.0.2.2</code> instead of localhost</li>
+                    <li>• For Android Emulator: Use <code class="bg-yellow-100 px-2 py-1 rounded">10.0.2.2</code>
+                        instead of localhost
+                    </li>
                     <li>• For Physical Device: Use your computer's IP address</li>
                 </ul>
             </div>
@@ -588,8 +618,10 @@ const styles = StyleSheet.create({
             <div class="p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
                 <h4 class="font-semibold text-red-900 mb-2">Messages Not Received</h4>
                 <ul class="text-sm text-red-800 space-y-1">
-                    <li>• Check if you're subscribed to the correct channel: <code class="bg-red-100 px-2 py-1 rounded">test-channel</code></li>
-                    <li>• Verify the event name is correct: <code class="bg-red-100 px-2 py-1 rounded">message.sent</code></li>
+                    <li>• Check if you're subscribed to the correct channel: <code class="bg-red-100 px-2 py-1 rounded">test-channel</code>
+                    </li>
+                    <li>• Verify the event name is correct: <code
+                            class="bg-red-100 px-2 py-1 rounded">message.sent</code></li>
                     <li>• Check console logs for connection/subscription errors</li>
                     <li>• Ensure the connection state is "connected" before sending</li>
                 </ul>
@@ -599,18 +631,25 @@ const styles = StyleSheet.create({
                 <h4 class="font-semibold text-blue-900 mb-2">API Requests Failing</h4>
                 <ul class="text-sm text-blue-800 space-y-1">
                     <li>• Add the required header: <code class="bg-blue-100 px-2 py-1 rounded">Language: en</code></li>
-                    <li>• Check the base URL points to: <code class="bg-blue-100 px-2 py-1 rounded">{{ config('broadcasting.connections.reverb.options.scheme') }}://{{ config('app.domains.api') }}</code></li>
+                    <li>• Check the base URL points to: <code
+                            class="bg-blue-100 px-2 py-1 rounded">{{ config('broadcasting.connections.reverb.options.scheme') }}
+                            ://{{ config('app.domains.api') }}</code></li>
                     <li>• For physical devices, replace the domain with your computer's IP address</li>
-                    <li>• Verify Content-Type is set to <code class="bg-blue-100 px-2 py-1 rounded">application/json</code></li>
+                    <li>• Verify Content-Type is set to <code
+                            class="bg-blue-100 px-2 py-1 rounded">application/json</code></li>
                 </ul>
             </div>
 
             <div class="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
                 <h4 class="font-semibold text-green-900 mb-2">Network Configuration for Physical Devices</h4>
                 <ul class="text-sm text-green-800 space-y-1">
-                    <li>• Find your computer's IP: <code class="bg-green-100 px-2 py-1 rounded">ipconfig</code> (Windows) or <code class="bg-green-100 px-2 py-1 rounded">ifconfig</code> (Mac/Linux)</li>
-                    <li>• Replace <code class="bg-green-100 px-2 py-1 rounded">localhost</code> with your IP in all URLs</li>
-                    <li>• Example: <code class="bg-green-100 px-2 py-1 rounded">http://192.168.1.100:9000/v1/test/send</code></li>
+                    <li>• Find your computer's IP: <code class="bg-green-100 px-2 py-1 rounded">ipconfig</code>
+                        (Windows) or <code class="bg-green-100 px-2 py-1 rounded">ifconfig</code> (Mac/Linux)
+                    </li>
+                    <li>• Replace <code class="bg-green-100 px-2 py-1 rounded">localhost</code> with your IP in all URLs
+                    </li>
+                    <li>• Example: <code
+                            class="bg-green-100 px-2 py-1 rounded">http://192.168.1.100:9000/v1/test/send</code></li>
                     <li>• Both devices must be on the same network</li>
                 </ul>
             </div>
@@ -620,7 +659,8 @@ const styles = StyleSheet.create({
     <!-- Footer -->
     <div class="text-center py-8 text-gray-600">
         <p class="mb-2">Laravel Reverb WebSocket API Documentation</p>
-        <p class="text-sm">Need help? Check our <a href="/test-socket" class="text-blue-600 hover:underline">Web Testing Tools</a></p>
+        <p class="text-sm">Need help? Check our <a href="/test-socket" class="text-blue-600 hover:underline">Web Testing
+                Tools</a></p>
     </div>
 </div>
 </body>
