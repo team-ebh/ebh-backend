@@ -6,7 +6,8 @@
     <title>WebSocket Test - Laravel Reverb</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 min-h-screen flex items-center justify-center p-8">
+<body
+    class="bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 min-h-screen flex items-center justify-center p-8">
 <div class="max-w-4xl w-full">
     <!-- Header -->
     <div class="text-center mb-12">
@@ -18,7 +19,8 @@
     <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-white/20">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <div id="status-indicator" class="w-12 h-12 rounded-full bg-gray-500/20 flex items-center justify-center">
+                <div id="status-indicator"
+                     class="w-12 h-12 rounded-full bg-gray-500/20 flex items-center justify-center">
                     <div class="w-6 h-6 rounded-full bg-gray-400 animate-pulse"></div>
                 </div>
                 <div>
@@ -27,8 +29,11 @@
                 </div>
             </div>
             <div class="text-right">
-                <div class="text-white text-sm">Channel: <span class="font-mono font-bold text-purple-300">test-channel</span></div>
-                <div class="text-white text-sm">Port: <span class="font-mono font-bold text-purple-300">{{ config('broadcasting.connections.reverb.options.port') }}</span></div>
+                <div class="text-white text-sm">Channel: <span
+                        class="font-mono font-bold text-purple-300">test-channel</span></div>
+                <div class="text-white text-sm">Port: <span
+                        class="font-mono font-bold text-purple-300">{{ config('broadcasting.connections.reverb.options.port') }}</span>
+                </div>
             </div>
         </div>
     </div>
@@ -80,15 +85,22 @@
 
         <div class="space-y-4">
             <div class="flex items-start gap-4">
-                <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold flex-shrink-0">1</div>
+                <div
+                    class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold flex-shrink-0">
+                    1
+                </div>
                 <div>
                     <div class="font-semibold text-gray-900">Start Reverb Server</div>
-                    <code class="text-sm bg-gray-100 px-3 py-1 rounded mt-1 inline-block">php artisan reverb:start</code>
+                    <code class="text-sm bg-gray-100 px-3 py-1 rounded mt-1 inline-block">php artisan
+                        reverb:start</code>
                 </div>
             </div>
 
             <div class="flex items-start gap-4">
-                <div class="w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold flex-shrink-0">2</div>
+                <div
+                    class="w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold flex-shrink-0">
+                    2
+                </div>
                 <div>
                     <div class="font-semibold text-gray-900">Open Receiver Page</div>
                     <p class="text-sm text-gray-600">In a separate tab to receive messages</p>
@@ -96,7 +108,10 @@
             </div>
 
             <div class="flex items-start gap-4">
-                <div class="w-8 h-8 rounded-full bg-pink-500 text-white flex items-center justify-center font-bold flex-shrink-0">3</div>
+                <div
+                    class="w-8 h-8 rounded-full bg-pink-500 text-white flex items-center justify-center font-bold flex-shrink-0">
+                    3
+                </div>
                 <div>
                     <div class="font-semibold text-gray-900">Open Sender Page</div>
                     <p class="text-sm text-gray-600">In another tab to send messages</p>
@@ -104,7 +119,10 @@
             </div>
 
             <div class="flex items-start gap-4">
-                <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold flex-shrink-0">4</div>
+                <div
+                    class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold flex-shrink-0">
+                    4
+                </div>
                 <div>
                     <div class="font-semibold text-gray-900">Send a message and see the results!</div>
                     <p class="text-sm text-gray-600">Your message should appear instantly in Receiver</p>
@@ -119,11 +137,12 @@
                 <div class="flex-1">
                     <div class="font-semibold text-yellow-900 mb-1">Quick Test with cURL:</div>
                     <code class="text-xs bg-yellow-100 px-2 py-1 rounded block overflow-x-auto">
-curl -X POST {{ config('broadcasting.connections.reverb.options.scheme') }}://{{ config('app.domains.api') }}/v1/test/send \<br>
-  -H "Content-Type: application/json" \<br>
-  -H "Accept: application/json" \<br>
-  -H "Language: en" \<br>
-  -d '{"message":"Test","sender":"cURL"}'
+                        curl -X POST {{ config('broadcasting.connections.reverb.options.scheme') }}
+                        ://{{ config('app.domains.api') }}/v1/test/send \<br>
+                        -H "Content-Type: application/json" \<br>
+                        -H "Accept: application/json" \<br>
+                        -H "Language: en" \<br>
+                        -d '{"message":"Test","sender":"cURL"}'
                     </code>
                 </div>
             </div>
@@ -131,13 +150,16 @@ curl -X POST {{ config('broadcasting.connections.reverb.options.scheme') }}://{{
 
         <!-- API Docs Link -->
         <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <a href="/websocket-docs" class="text-center bg-gradient-to-r from-blue-100 to-purple-100 hover:from-blue-200 hover:to-purple-200 text-blue-900 font-medium py-3 px-4 rounded-lg transition-colors">
+            <a href="/websocket-docs"
+               class="text-center bg-gradient-to-r from-blue-100 to-purple-100 hover:from-blue-200 hover:to-purple-200 text-blue-900 font-medium py-3 px-4 rounded-lg transition-colors">
                 📱 Mobile Developer Docs
             </a>
-            <a href="/docs/v1/riders" class="text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-lg transition-colors">
+            <a href="/docs/v1/riders"
+               class="text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-lg transition-colors">
                 📚 API Documentation
             </a>
-            <a href="https://laravel.com/docs/reverb" target="_blank" class="text-center bg-purple-100 hover:bg-purple-200 text-purple-800 font-medium py-3 px-4 rounded-lg transition-colors">
+            <a href="https://laravel.com/docs/reverb" target="_blank"
+               class="text-center bg-purple-100 hover:bg-purple-200 text-purple-800 font-medium py-3 px-4 rounded-lg transition-colors">
                 📖 Laravel Reverb Docs
             </a>
         </div>
@@ -160,7 +182,7 @@ curl -X POST {{ config('broadcasting.connections.reverb.options.scheme') }}://{{
         wsHost: '{{ config('broadcasting.connections.reverb.options.host') }}',
         wsPort: {{ config('broadcasting.connections.reverb.options.port') }},
         wssPort: {{ config('broadcasting.connections.reverb.options.port') }},
-        forceTLS: false,
+        forceTLS: {{ config('broadcasting.connections.reverb.options.scheme') === 'https' ? 'true' : 'false' }},
         enabledTransports: ['ws', 'wss'],
         cluster: 'mt1'
     });
@@ -195,13 +217,13 @@ curl -X POST {{ config('broadcasting.connections.reverb.options.scheme') }}://{{
         connectionStatus.textContent = text;
 
         const colors = {
-            connected: { bg: 'bg-green-500/20', dot: 'bg-green-500' },
-            connecting: { bg: 'bg-yellow-500/20', dot: 'bg-yellow-500 animate-pulse' },
-            disconnected: { bg: 'bg-red-500/20', dot: 'bg-red-500' },
-            error: { bg: 'bg-red-600/20', dot: 'bg-red-600 animate-pulse' }
+            connected: {bg: 'bg-green-500/20', dot: 'bg-green-500'},
+            connecting: {bg: 'bg-yellow-500/20', dot: 'bg-yellow-500 animate-pulse'},
+            disconnected: {bg: 'bg-red-500/20', dot: 'bg-red-500'},
+            error: {bg: 'bg-red-600/20', dot: 'bg-red-600 animate-pulse'}
         };
 
-        const color = colors[status] || { bg: 'bg-gray-500/20', dot: 'bg-gray-400' };
+        const color = colors[status] || {bg: 'bg-gray-500/20', dot: 'bg-gray-400'};
 
         statusIndicator.className = `w-12 h-12 rounded-full ${color.bg} flex items-center justify-center`;
         statusIndicator.innerHTML = `<div class="w-6 h-6 rounded-full ${color.dot}"></div>`;

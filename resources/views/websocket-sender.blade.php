@@ -119,7 +119,7 @@
         wsHost: '{{ config('broadcasting.connections.reverb.options.host') }}',
         wsPort: {{ config('broadcasting.connections.reverb.options.port') }},
         wssPort: {{ config('broadcasting.connections.reverb.options.port') }},
-        forceTLS: false,
+        forceTLS: {{ config('broadcasting.connections.reverb.options.scheme') === 'https' ? 'true' : 'false' }},
         enabledTransports: ['ws', 'wss'],
         cluster: 'mt1'
     });

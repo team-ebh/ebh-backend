@@ -37,7 +37,9 @@
             <h3 class="font-semibold text-yellow-900 mb-2">📋 Instructions:</h3>
             <ol class="text-sm text-yellow-800 space-y-1">
                 <li><strong>1.</strong> This page only receives messages</li>
-                <li><strong>2.</strong> To send messages use this link: <a href="/websocket-sender" target="_blank" class="underline font-medium">Sender Page</a></li>
+                <li><strong>2.</strong> To send messages use this link: <a href="/websocket-sender" target="_blank"
+                                                                           class="underline font-medium">Sender Page</a>
+                </li>
                 <li><strong>3.</strong> When Status shows "Connected", you're ready to receive</li>
                 <li><strong>4.</strong> New messages are added to the list automatically</li>
             </ol>
@@ -120,7 +122,7 @@
         wsHost: '{{ config('broadcasting.connections.reverb.options.host') }}',
         wsPort: {{ config('broadcasting.connections.reverb.options.port') }},
         wssPort: {{ config('broadcasting.connections.reverb.options.port') }},
-        forceTLS: false,
+        forceTLS: {{ config('broadcasting.connections.reverb.options.scheme') === 'https' ? 'true' : 'false' }},
         enabledTransports: ['ws', 'wss'],
         cluster: 'mt1'
     });
