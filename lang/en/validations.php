@@ -11,10 +11,12 @@ return [
     ],
     'trips' => [
         'origin_location_title' => [
+            'required' => 'Origin location title is required.',
             'string' => 'Origin location title must be a string.',
             'max' => 'Origin location title must not exceed :max characters.',
         ],
         'origin_location_sub_title' => [
+            'required' => 'Origin location subtitle is required.',
             'string' => 'Origin location subtitle must be a string.',
             'max' => 'Origin location subtitle must not exceed :max characters.',
         ],
@@ -31,10 +33,12 @@ return [
             'max' => 'Origin longitude must not exceed :max.',
         ],
         'destination_location_title' => [
+            'required' => 'Destination location title is required.',
             'string' => 'Destination location title must be a string.',
             'max' => 'Destination location title must not exceed :max characters.',
         ],
         'destination_location_sub_title' => [
+            'required' => 'Destination location subtitle is required.',
             'string' => 'Destination location subtitle must be a string.',
             'max' => 'Destination location subtitle must not exceed :max characters.',
         ],
@@ -82,10 +86,6 @@ return [
             'integer' => 'Return time must be an integer.',
             'min' => 'Return time must be at least :min minute.',
             'max' => 'Return time must not exceed :max minutes.',
-        ],
-        'cancellation_reason' => [
-            'string' => 'Cancellation reason must be a string.',
-            'max' => 'Cancellation reason must not exceed :max characters.',
         ],
     ],
 ];
