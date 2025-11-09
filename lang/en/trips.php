@@ -9,6 +9,20 @@ use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
 
 return [
+    'location_types' => [
+        'origin' => 'Origin',
+        'destination' => 'Destination',
+    ],
+    'location_statuses' => [
+        'draft' => 'Draft',
+        'pending_rider' => 'Pending Rider',
+        'accepted_rider' => 'Accepted by Rider',
+        'arrived' => 'Arrived',
+        'canceled_by_customer' => 'Cancelled by Customer',
+        'cancelled_by_rider' => 'Cancelled by Rider',
+        'picked_up' => 'Picked Up',
+        'completed' => 'Completed',
+    ],
     'api' => [
         'trip_types' => [
             TripTypeEnum::RIDE_NOW->name => 'Ride Now',
@@ -37,14 +51,14 @@ return [
             AccessibilityRequirementsEnum::PORTABLE_RAMP->name . '_description' => 'Equipped with ramp access',
         ],
         'trip_statuses' => [
-            TripStatusEnum::PENDING->name => 'Pending',
-            TripStatusEnum::CONFIRMED->name => 'Confirmed',
-            TripStatusEnum::DRIVER_ASSIGNED->name => 'Driver Assigned',
-            TripStatusEnum::IN_PROGRESS->name => 'In Progress',
+            TripStatusEnum::DRAFT->name => 'Draft',
+            TripStatusEnum::PENDING_RIDER->name => 'Pending Rider',
+            TripStatusEnum::ACCEPTED_RIDER->name => 'Accepted by Rider',
             TripStatusEnum::ARRIVED->name => 'Arrived',
+            TripStatusEnum::CANCELED_BY_CUSTOMER->name => 'Cancelled by Customer',
+            TripStatusEnum::CANCELLED_BY_RIDER->name => 'Cancelled by Rider',
+            TripStatusEnum::PICKED_UP->name => 'Picked Up',
             TripStatusEnum::COMPLETED->name => 'Completed',
-            TripStatusEnum::CANCELLED->name => 'Cancelled',
-            TripStatusEnum::CANCELLED_BY_DRIVER->name => 'Cancelled by Driver',
         ],
         'price_estimation' => 'Price Estimation',
         'waiting_time_rate_description' => ':price per :minutes minutes',
@@ -62,6 +76,12 @@ return [
             'accessibility_services' => 'Accessibility Services',
             'to_be_calculated' => 'To be calculated',
             'included' => 'Included',
+        ],
+        'exceptions' => [
+            'trip_not_pending' => 'This trip cannot be confirmed. Only draft trips can be confirmed.',
+            'trip_cannot_be_cancelled' => 'This trip cannot be cancelled. Only draft or pending rider trips can be cancelled.',
+            'rider_location_not_available' => 'Rider location is not available. Location tracking is only available when rider is accepted, arrived, or picked up.',
+            'trip_status_cannot_be_checked' => 'Trip status cannot be checked. Status checking is not available for draft, cancelled, or completed trips.',
         ],
     ],
 ];

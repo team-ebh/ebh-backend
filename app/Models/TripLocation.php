@@ -30,6 +30,8 @@ class TripLocation extends Model
 
     public const string COLUMN_SEQUENCE = 'sequence';
 
+    public const string COLUMN_STATUS = 'status';
+
     protected function casts(): array
     {
         return [

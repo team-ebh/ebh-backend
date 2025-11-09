@@ -28,7 +28,7 @@ class TripRepository implements TripRepositoryInterface
             Trip::COLUMN_WAITING_PRICE => null,
             Trip::COLUMN_TOTAL_PRICE => $totalPrice,
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD,
-            Trip::COLUMN_STATUS => TripStatusEnum::PENDING,
+            Trip::COLUMN_STATUS => TripStatusEnum::DRAFT,
         ]);
 
         // Bulk insert trip locations
@@ -94,7 +94,7 @@ class TripRepository implements TripRepositoryInterface
             ->get();
     }
 
-    public function updateStatus(Trip $trip, string $status): Trip
+    public function updateStatus(Trip $trip, TripStatusEnum $status): Trip
     {
         $trip->update([
             Trip::COLUMN_STATUS => $status,

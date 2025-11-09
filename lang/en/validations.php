@@ -83,5 +83,9 @@ return [
             'min' => 'Return time must be at least :min minute.',
             'max' => 'Return time must not exceed :max minutes.',
         ],
+        'cancellation_reason' => [
+            'string' => 'Cancellation reason must be a string.',
+            'max' => 'Cancellation reason must not exceed :max characters.',
+        ],
     ],
 ];

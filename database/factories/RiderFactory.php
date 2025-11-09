@@ -19,7 +19,7 @@ class RiderFactory extends Factory
     {
         return [
             Rider::COLUMN_FULL_NAME => fake()->name(),
-            Rider::COLUMN_EMAIL => fake()->optional()->email(),
+            Rider::COLUMN_EMAIL => fake()->unique()->safeEmail(),
             Rider::COLUMN_PHONE_NUMBER => fake()->unique()->phoneNumber(),
             Rider::COLUMN_COMPANY_ID => null,
             Rider::COLUMN_STATUS => RiderStatusEnum::OFFLINE,

@@ -4,18 +4,29 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Customer;
 
+use App\Actions\Api\V1\Customer\Trip\CancelTripAction;
 use App\Actions\Api\V1\Customer\Trip\ChangeRideTypeAction;
+use App\Actions\Api\V1\Customer\Trip\ConfirmTripAction;
+use App\Actions\Api\V1\Customer\Trip\GetRiderLocationAction;
 use App\Actions\Api\V1\Customer\Trip\GetTripFormDataAction;
+use App\Actions\Api\V1\Customer\Trip\GetTripStatusAction;
 use App\Actions\Api\V1\Customer\Trip\StoreTripAction;
+use App\DTOs\Api\V1\Customer\Trip\CancelTripDTO;
 use App\DTOs\Api\V1\Customer\Trip\ChangeRideTypeDTO;
+use App\DTOs\Api\V1\Customer\Trip\ConfirmTripDTO;
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Customer\Trip\CancelTripRequest;
 use App\Http\Requests\Api\V1\Customer\Trip\ChangeRideTypeRequest;
 use App\Http\Requests\Api\V1\Customer\Trip\TripStoreRequest;
 use App\Http\Resources\Api\V1\Customer\Trip\ChangeRideTypeResource;
+use App\Http\Resources\Api\V1\Customer\Trip\RiderLocationResource;
 use App\Http\Resources\Api\V1\Customer\Trip\TripFormDataResource;
 use App\Http\Resources\Api\V1\Customer\Trip\TripResource;
+use App\Http\Resources\Api\V1\Customer\Trip\TripStatusResource;
 use App\Models\Trip;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * @tags Trip
@@ -71,5 +82,77 @@ class TripController extends Controller
         $dto->getDataFromRequest($request);
 
         return new ChangeRideTypeResource($action($dto));
+    }
+
+    /**
+     * Confirm trip
+     *
+     * Confirms the trip and changes status to CONFIRMED (searching for taxi).
+     * After confirmation, customer should poll getTripStatus endpoint to track the driver.
+     *
+     * @authenticated
+     */
+    public function confirm(
+        Trip $trip,
+        Request $request,
+        ConfirmTripDTO $dto,
+        ConfirmTripAction $action
+    ): JsonResponse {
+        $dto->getDataFromRequest($request);
+
+        $action($dto);
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Get trip status
+     *
+     * Returns comprehensive trip status including rider details, vehicle information, and location history.
+     * Customer app should poll this endpoint every few seconds after confirming trip to track the driver.
+     *
+     * @authenticated
+     */
+    public function getTripStatus(Trip $trip, GetTripStatusAction $action): TripStatusResource
+    {
+        return new TripStatusResource($action($trip));
+    }
+
+    /**
+     * Cancel trip
+     *
+     * Cancels the trip and changes status to CANCEL.
+     * Only PENDING_RIDER or ACCEPTED_RIDER trips can be cancelled.
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function cancel(
+        Trip $trip,
+        CancelTripRequest $request,
+        CancelTripDTO $dto,
+        CancelTripAction $action
+    ): JsonResponse {
+        $dto->getDataFromRequest($request);
+
+        $action($dto);
+
+        return $this->successResponse();
+    }
+
+    /**
+     * Get rider location
+     *
+     * Returns the current location of the rider assigned to the trip.
+     * Only available when trip has status ACCEPTED_RIDER, ARRIVED, or PICKED_UP.
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function getRiderLocation(Trip $trip, GetRiderLocationAction $action): RiderLocationResource
+    {
+        return new RiderLocationResource($action($trip));
     }
 }

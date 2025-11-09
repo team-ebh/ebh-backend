@@ -7,10 +7,12 @@ namespace App\Providers;
 use App\Exceptions\Handler;
 use App\Http\Responses\LoginResponse;
 use App\Interfaces\Repositories\Api\V1\Customer\CustomerRepositoryInterface;
+use App\Interfaces\Repositories\Api\V1\Customer\Trip\RiderLocationRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
 use App\Models\Admin;
 use App\Repositories\Api\V1\Customer\CustomerRepository;
+use App\Repositories\Api\V1\Customer\Trip\RiderLocationRepository;
 use App\Repositories\Api\V1\Customer\Trip\TripRepository;
 use App\Repositories\Api\V1\Rider\RiderRepository;
 use Carbon\CarbonImmutable;
@@ -55,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
         FilamentLoginResponse::class => LoginResponse::class,
         CustomerRepositoryInterface::class => CustomerRepository::class,
         TripRepositoryInterface::class => TripRepository::class,
+        RiderLocationRepositoryInterface::class => RiderLocationRepository::class,
         RiderRepositoryInterface::class => RiderRepository::class,
     ];
 
