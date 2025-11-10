@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Riders\Tables;
 
+use App\Enums\Rider\RiderStatusEnum;
 use App\Filament\Resources\Riders\RiderResource;
 use App\Models\Company;
 use App\Models\Rider;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class RidersTable
@@ -18,6 +21,17 @@ class RidersTable
     {
         return $table
             ->columns([
+                SpatieMediaLibraryImageColumn::make(Rider::PROFILE_PHOTO)
+                    ->label(trans('riders.admin.fields.profile_photo'))
+                    ->circular()
+                    ->collection(Rider::MEDIA_COLLECTION_NAME)
+                    ->stacked()
+                    ->searchable(false)
+                    ->limitedRemainingText()
+                    ->extraImgAttributes(['loading' => 'lazy'])
+                    ->defaultImageUrl(getDefaultImageUrl())
+                    ->checkFileExistence(false),
+
                 TextColumn::make(Rider::COLUMN_FULL_NAME)
                     ->label(trans('riders.admin.fields.full_name'))
                     ->icon('heroicon-o-user')
@@ -77,6 +91,23 @@ class RidersTable
                     ->dateTime(adminPanelDataFormat())
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                SelectFilter::make(Rider::COLUMN_COMPANY_ID)
+                    ->label(trans('riders.admin.fields.company'))
+                    ->relationship('company', Company::COLUMN_NAME)
+                    ->searchable()
+                    ->preload()
+                    ->native(false),
+
+                SelectFilter::make(Rider::COLUMN_STATUS)
+                    ->label(trans('riders.admin.fields.status'))
+                    ->options([
+                        RiderStatusEnum::ONLINE->value => RiderStatusEnum::ONLINE->getLabel(),
+                        RiderStatusEnum::OFFLINE->value => RiderStatusEnum::OFFLINE->getLabel(),
+                        RiderStatusEnum::BUSY->value => RiderStatusEnum::BUSY->getLabel(),
+                    ])
+                    ->native(false),
             ])
             ->recordActions([
                 ViewAction::make()

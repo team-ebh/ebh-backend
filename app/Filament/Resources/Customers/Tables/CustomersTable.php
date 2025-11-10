@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Customers\Tables;
 
+use App\Enums\Customer\CustomerStatusEnum;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Models\Customer;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class CustomersTable
@@ -71,6 +73,16 @@ class CustomersTable
                     ->dateTime(adminPanelDataFormat())
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                SelectFilter::make(Customer::COLUMN_STATUS)
+                    ->label(trans('customers.admin.fields.status'))
+                    ->options([
+                        CustomerStatusEnum::ACTIVE->value => CustomerStatusEnum::ACTIVE->getLabel(),
+                        CustomerStatusEnum::INACTIVE->value => CustomerStatusEnum::INACTIVE->getLabel(),
+                        CustomerStatusEnum::SUSPENDED->value => CustomerStatusEnum::SUSPENDED->getLabel(),
+                    ])
+                    ->native(false),
             ])
             ->recordActions([
                 ViewAction::make()
