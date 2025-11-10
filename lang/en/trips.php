@@ -79,6 +79,7 @@ return [
         ],
         'exceptions' => [
             'trip_not_pending' => 'This trip cannot be confirmed. Only draft trips can be confirmed.',
+            'trip_not_draft' => 'Ride type can only be changed for draft trips.',
             'trip_cannot_be_cancelled' => 'This trip cannot be cancelled. Only draft or pending rider trips can be cancelled.',
             'rider_location_not_available' => 'Rider location is not available. Location tracking is only available when rider is accepted, arrived, or picked up.',
             'trip_status_cannot_be_checked' => 'Trip status cannot be checked. Status checking is not available for draft, cancelled, or completed trips.',

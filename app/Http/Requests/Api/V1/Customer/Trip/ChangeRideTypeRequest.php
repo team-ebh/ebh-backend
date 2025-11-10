@@ -17,7 +17,7 @@ class ChangeRideTypeRequest extends FormRequest
 {
     public function rules(): array
     {
-        $rideTypeId = $this->input('ride_type_id');
+        $rideTypeId = $this->post('ride_type_id');
         $isRoundTrip = $rideTypeId === RideTypeEnum::ROUND_TRIP->value;
         $isRoundTripWait = $rideTypeId === RideTypeEnum::ROUND_TRIP_WAIT->value;
 

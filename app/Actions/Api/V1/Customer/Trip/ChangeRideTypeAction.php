@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\ChangeRideTypeDTO;
+use App\Exceptions\Trip\TripNotDraftException;
 use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\BuildRideTypeBreakdownPipe;
 use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\CalculateDistancePipe;
 use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\CalculateRidePricingPipe;
@@ -23,10 +24,13 @@ readonly class ChangeRideTypeAction
     /**
      * Execute the action
      *
+     * @throws TripNotDraftException
      * @throws \Throwable
      */
     public function __invoke(ChangeRideTypeDTO $dto): array
     {
+        throw_if(! $dto->trip->isDraft(), TripNotDraftException::class);
+
         // Load accessibility requirements for the trip
         $dto->trip->load('accessibility');
 
