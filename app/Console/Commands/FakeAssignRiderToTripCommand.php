@@ -31,56 +31,26 @@ class FakeAssignRiderToTripCommand extends Command
      */
     public function handle(): int
     {
-        $this->warn('⚠️  FAKE COMMAND RUNNING - FOR DEVELOPMENT ONLY');
-        $this->info('Checking for pending trips every 10 seconds...');
-        $this->info('Press Ctrl+C to stop');
-        $this->newLine();
+        $pendingTrips = Trip::query()
+            ->where(Trip::COLUMN_STATUS, TripStatusEnum::PENDING_RIDER)
+            ->get();
 
-        $iteration = 0;
+        if ($pendingTrips->isNotEmpty()) {
 
-        while (true) {
-            $iteration++;
-            $this->info("[{$iteration}] Checking at " . now()->format('Y-m-d H:i:s'));
-
-            // Get all riders
             $riders = Rider::all();
 
-            if ($riders->isEmpty()) {
-                $this->warn('No riders found in the database');
-                sleep(10);
+            foreach ($pendingTrips as $pendingTrip) {
+                $randomRider = $riders->random();
 
-                continue;
-            }
-
-            // Get all pending rider trips
-            $pendingTrips = Trip::query()->where(Trip::COLUMN_STATUS, TripStatusEnum::PENDING_RIDER)
-                ->get();
-
-            if ($pendingTrips->isEmpty()) {
-                $this->comment('No pending trips found');
-            } else {
-                foreach ($pendingTrips as $trip) {
-
-                    // Get random rider
-                    $randomRider = $riders->random();
-
-                    // Update trip status to ACCEPTED_RIDER
-                    $trip->update([
+                if ($randomRider) {
+                    $pendingTrip->update([
                         Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER,
-                        // Note: If you have a rider_id column, add it here
                         'rider_id' => $randomRider->id,
                     ]);
-
-                    $this->line("✓ Trip #{$trip->id} assigned to Rider #{$randomRider->id} ({$randomRider->full_name})");
                 }
 
-                $this->info("Assigned {$pendingTrips->count()} trip(s)");
             }
 
-            $this->newLine();
-
-            // Wait 10 seconds before next check
-            sleep(10);
         }
 
         return 0;
