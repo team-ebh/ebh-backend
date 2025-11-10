@@ -74,13 +74,22 @@ class TripStatusResource extends JsonResource
             ),
 
             /**
-             * Trip Locations
+             * Map Locations
              *
-             * Array of trip location points (1:origin, 2:destination) sorted by sequence
+             * Simplified location coordinates for map display (lat, lng, type, sequence only)
              *
-             * @var StatusLocationResource[]
+             * @var MapLocationResource[]
              */
-            'locations' => StatusLocationResource::collection($this->resource['locations']),
+            'map_locations' => MapLocationResource::collection($this->resource['map_locations']),
+
+            /**
+             * Formatted Locations
+             *
+             * Location data structured as from/to pairs with full details
+             *
+             * @var FormattedLocationResource[]
+             */
+            'formatted_locations' => FormattedLocationResource::collection($this->resource['formatted_locations']),
         ];
     }
 }

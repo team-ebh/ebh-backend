@@ -23,6 +23,10 @@ class TripStatusContext
 
     public array $locations = [];
 
+    public array $mapLocations = [];
+
+    public array $formattedLocations = [];
+
     public function __construct(
         public readonly Trip $trip,
     ) {}

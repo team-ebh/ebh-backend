@@ -55,7 +55,8 @@ readonly class GetTripStatusAction
             'arrived_time' => $result->arrivedTime,
             'rider' => $result->rider,
             'vehicle' => $result->vehicle,
-            'locations' => $result->locations,
+            'map_locations' => $result->mapLocations,
+            'formatted_locations' => $result->formattedLocations,
         ];
     }
 }
