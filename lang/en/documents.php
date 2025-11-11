@@ -16,5 +16,10 @@ return [
             'is_required_helper' => 'If enabled, this document will be required when creating or editing a rider',
             'enabled' => 'Is Enabled?',
         ],
+        'status' => [
+            'no_file_uploaded' => 'No file uploaded',
+            'expired' => 'Expired',
+            'expires_soon' => 'Expires in :days days',
+        ],
     ],
 ];
