@@ -25,6 +25,11 @@ class EditRider extends EditRecord
         ];
     }
 
+    public function hasDatabaseTransactions(): bool
+    {
+        return true;
+    }
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $rider = $this->record;
@@ -90,9 +95,16 @@ class EditRider extends EditRecord
 
     protected array $documentsData = [];
 
+    public array $accessibilityFeatureIds = [];
+
     protected function afterSave(): void
     {
         $rider = $this->record;
+
+        // Sync vehicle accessibility features
+        if ($rider->vehicle) {
+            $rider->vehicle->syncAccessibilityFeatures($this->accessibilityFeatureIds);
+        }
 
         // Get all enabled documents
         $enabledDocuments = Document::query()
@@ -145,7 +157,10 @@ class EditRider extends EditRecord
 
     protected function beforeFill(): void
     {
-        // Ensure documents relation is loaded
-        $this->record->load('documents.media');
+        // Ensure documents and vehicle relations are loaded
+        $this->record->load([
+            'documents.media',
+            'vehicle.accessibilityFeatures',
+        ]);
     }
 }

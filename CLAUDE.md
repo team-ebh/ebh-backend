@@ -282,7 +282,17 @@ app/
 │   ├── Customer/         # Customer repositories
 │   └── Rider/            # Rider repositories
 ├── Services/             # Reusable services
-├── Traits/               # Shared traits (HasTranslatable, HasMediaTrait)
+├── Traits/               # Shared traits
+│   ├── Model/            # Model-specific traits
+│   │   ├── Aggregates/   # Relationship aggregator traits
+│   │   │   ├── VehicleAggregate.php
+│   │   │   ├── RiderAggregate.php
+│   │   │   ├── TripAggregate.php
+│   │   │   └── CompanyAggregate.php
+│   │   ├── HasTranslatable.php
+│   │   ├── HasMediaTrait.php
+│   │   └── HasDefaultColumnModelTrait.php
+│   └── Filament/         # Filament-specific traits
 ├── Interfaces/           # Contracts and interfaces
 └── Helpers/              # Helper functions (app/Helpers/general.php)
 ```
@@ -326,6 +336,39 @@ app/
 4. **All Actions must use `__invoke()` method**
 
 5. **Resource fields must be documented** with description, type, and example
+
+6. **Model relationships should be aggregated in traits** for better organization:
+   - Create relationship aggregate traits in `app/Traits/Model/Aggregates/`
+   - Name pattern: `{ModelName}Aggregate`
+   - Keep all `BelongsTo`, `HasMany`, `BelongsToMany` relationships in the aggregate trait
+   - Add PHPDoc comment describing the aggregate
+   - Use the aggregate trait in the model with `use {ModelName}Aggregate;`
+
+   ```php
+   // app/Traits/Model/Aggregates/VehicleAggregate.php
+   /**
+    * Vehicle Aggregate Trait
+    *
+    * Contains all relationship methods for the Vehicle model
+    */
+   trait VehicleAggregate {
+       public function rider(): BelongsTo {
+           return $this->belongsTo(Rider::class, Vehicle::COLUMN_RIDER_ID);
+       }
+
+       public function carType(): BelongsTo {
+           return $this->belongsTo(VehicleSetting::class, Vehicle::COLUMN_CAR_TYPE_ID);
+       }
+   }
+
+   // app/Models/Vehicle.php
+   use App\Traits\Model\Aggregates\VehicleAggregate;
+
+   class Vehicle extends Model {
+       use HasDefaultColumnModelTrait;
+       use VehicleAggregate;
+   }
+   ```
 
 ## Special Features
 

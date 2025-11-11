@@ -10,6 +10,8 @@ use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\HasMediaTrait;
 use App\Traits\Model\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\MediaLibrary\HasMedia;
@@ -80,5 +82,15 @@ class Rider extends User implements HasMedia
     public function isBusy(): bool
     {
         return $this->{self::COLUMN_STATUS} === RiderStatusEnum::BUSY;
+    }
+
+    public function vehicle(): HasOne
+    {
+        return $this->hasOne(Vehicle::class, Vehicle::COLUMN_RIDER_ID);
+    }
+
+    public function vehicles(): HasMany
+    {
+        return $this->hasMany(Vehicle::class, Vehicle::COLUMN_RIDER_ID);
     }
 }

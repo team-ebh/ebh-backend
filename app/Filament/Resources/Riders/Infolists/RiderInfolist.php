@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Riders\Infolists;
 
 use App\Enums\Rider\AccessibilityCertificationEnum;
+use App\Enums\Trip\AccessibilityRequirementsEnum;
 use App\Models\Company;
 use App\Models\Document;
 use App\Models\Rider;
 use App\Models\RiderDocument;
+use App\Models\Vehicle;
+use App\Models\VehicleSetting;
 use Filament\Infolists\Components\SpatieMediaLibraryImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -66,6 +69,165 @@ class RiderInfolist
                             ->columnSpan(1),
                     ]),
 
+                Section::make(trans('riders.admin.infolist.vehicle_information'))
+                    ->icon('heroicon-o-truck')
+                    ->description(trans('riders.admin.infolist.vehicle_information_description'))
+                    ->columns(3)
+                    ->schema([
+                        TextEntry::make('vehicle.' . Vehicle::COLUMN_PLATE_NUMBER)
+                            ->label(trans('vehicles.admin.fields.plate_number'))
+                            ->icon('heroicon-o-identification')
+                            ->weight('bold')
+                            ->placeholder('-'),
+
+                        TextEntry::make('vehicle.' . Vehicle::COLUMN_YEAR)
+                            ->label(trans('vehicles.admin.fields.year'))
+                            ->icon('heroicon-o-calendar')
+                            ->placeholder('-'),
+
+                        TextEntry::make('vehicle.carMake.' . VehicleSetting::COLUMN_NAME)
+                            ->label(trans('vehicles.admin.fields.car_make'))
+                            ->icon('heroicon-o-building-office-2')
+                            ->placeholder('-'),
+
+                        TextEntry::make('vehicle.carModel.' . VehicleSetting::COLUMN_NAME)
+                            ->label(trans('vehicles.admin.fields.car_model'))
+                            ->icon('heroicon-o-wrench-screwdriver')
+                            ->placeholder('-'),
+
+                        TextEntry::make('vehicle.carType.' . VehicleSetting::COLUMN_NAME)
+                            ->label(trans('vehicles.admin.fields.car_type'))
+                            ->icon('heroicon-o-truck')
+                            ->placeholder('-'),
+
+                        TextEntry::make('vehicle.carColor.' . VehicleSetting::COLUMN_NAME)
+                            ->label(trans('vehicles.admin.fields.car_color'))
+                            ->icon('heroicon-o-paint-brush')
+                            ->badge()
+                            ->placeholder('-'),
+
+                        TextEntry::make('vehicle.vehicleType.' . VehicleSetting::COLUMN_NAME)
+                            ->label(trans('vehicles.admin.fields.vehicle_type'))
+                            ->icon('heroicon-o-squares-2x2')
+                            ->placeholder('-'),
+
+                        TextEntry::make('vehicle.passengerCapacity.' . VehicleSetting::COLUMN_CAPACITY)
+                            ->label(trans('vehicles.admin.fields.passenger_capacity'))
+                            ->icon('heroicon-o-users')
+                            ->suffix(' ' . trans('vehicle_settings.admin.labels.passengers'))
+                            ->placeholder('-'),
+
+                        TextEntry::make('vehicle.accessibility_feature_ids')
+                            ->label(trans('vehicles.admin.fields.accessibility_features'))
+                            ->icon('heroicon-o-heart')
+                            ->listWithLineBreaks()
+                            ->formatStateUsing(function ($state) {
+                                if (empty($state)) {
+                                    return null;
+                                }
+
+                                return collect($state)
+                                    ->map(fn ($value) => AccessibilityRequirementsEnum::tryFrom($value)?->getLabel() ?? $value)
+                                    ->join(', ');
+                            })
+                            ->columnSpanFull()
+                            ->placeholder('-'),
+                    ]),
+
+                Section::make(trans('riders.admin.infolist.documents'))
+                    ->icon('heroicon-o-document-text')
+                    ->description(trans('riders.admin.infolist.documents_description'))
+                    ->columns(2)
+                    ->schema(function ($record) {
+                        $fields = [];
+
+                        // Get all enabled documents
+                        $enabledDocuments = Document::query()
+                            ->where(Document::COLUMN_ENABLED, true)
+                            ->orderBy(Document::COLUMN_NAME)
+                            ->get();
+
+                        // Get rider documents
+                        $riderDocuments = $record->documents()
+                            ->with(['document', 'media'])
+                            ->get()
+                            ->keyBy('document_id');
+
+                        foreach ($enabledDocuments as $document) {
+                            $riderDocument = $riderDocuments->get($document->id);
+
+                            if ($riderDocument && $riderDocument->hasMedia('rider_documents')) {
+                                $media = $riderDocument->getFirstMedia('rider_documents');
+
+                                // Show download link for all files
+                                $fields[] = TextEntry::make("documents.{$document->id}")
+                                    ->label($document->{Document::COLUMN_NAME})
+                                    ->state('file')
+                                    ->formatStateUsing(function ($state) use ($media, $riderDocument) {
+                                        $url = $media->getUrl();
+                                        $fileName = $media->file_name;
+                                        $size = number_format($media->size / 1024, 2) . ' KB';
+                                        $extension = strtoupper(pathinfo($fileName, PATHINFO_EXTENSION));
+
+                                        // Add expiry info
+                                        $expiryInfo = '';
+                                        if ($riderDocument->{RiderDocument::COLUMN_EXPIRES_AT}) {
+                                            $expiryDate = $riderDocument->{RiderDocument::COLUMN_EXPIRES_AT};
+                                            $daysUntilExpiry = now()->diffInDays($expiryDate, false);
+
+                                            if ($daysUntilExpiry < 0) {
+                                                $expiryInfo = "<span class='inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-md ml-2'>
+                                                    <svg class='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                                        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'></path>
+                                                    </svg>
+                                                    " . trans('documents.admin.status.expired') . '
+                                                </span>';
+                                            } elseif ($daysUntilExpiry <= 30) {
+                                                $expiryInfo = "<span class='inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-100 text-orange-700 rounded-md ml-2'>
+                                                    <svg class='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                                        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'></path>
+                                                    </svg>
+                                                    " . trans('documents.admin.status.expires_soon', ['days' => $daysUntilExpiry]) . '
+                                                </span>';
+                                            } else {
+                                                $expiryInfo = "<span class='inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-md ml-2'>
+                                                    <svg class='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                                        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'></path>
+                                                    </svg>
+                                                    {$expiryDate->format('Y-m-d')}
+                                                </span>";
+                                            }
+                                        }
+
+                                        return new HtmlString("
+                                            <div class='flex items-center gap-2'>
+                                                <a href='{$url}' target='_blank' download class='inline-flex items-center gap-2 text-primary-600 hover:text-primary-800 font-medium'>
+                                                    <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                                        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'></path>
+                                                    </svg>
+                                                    <span>{$fileName}</span>
+                                                    <span class='text-xs text-gray-500'>({$extension} • {$size})</span>
+                                                </a>
+                                                {$expiryInfo}
+                                            </div>
+                                        ");
+                                    })
+                                    ->html()
+                                    ->columnSpan(2);
+                            } else {
+                                // Document not uploaded
+                                $fields[] = TextEntry::make("documents.{$document->id}_placeholder")
+                                    ->label($document->{Document::COLUMN_NAME})
+                                    ->state(trans('documents.admin.status.no_file_uploaded'))
+                                    ->color('gray')
+                                    ->icon('heroicon-o-document')
+                                    ->columnSpan(2);
+                            }
+                        }
+
+                        return $fields;
+                    }),
+
                 Section::make(trans('riders.admin.infolist.status_information'))
                     ->icon('heroicon-o-signal')
                     ->description(trans('riders.admin.infolist.status_information_description'))
@@ -84,94 +246,6 @@ class RiderInfolist
                             ->formatStateUsing(function ($state) {
                                 return AccessibilityCertificationEnum::from($state)->getLabel();
                             })
-                            ->columnSpanFull(),
-                    ]),
-
-                Section::make(trans('riders.admin.infolist.documents'))
-                    ->hidden()
-                    ->icon('heroicon-o-document-text')
-                    ->description(trans('riders.admin.infolist.documents_description'))
-                    ->columnSpanFull()
-                    ->schema([
-                        TextEntry::make('documents_list')
-                            ->label('')
-                            ->formatStateUsing(function ($record) {
-                                // Load documents with their document relation and media
-                                $riderDocuments = $record->documents()
-                                    ->with(['document'])
-                                    ->get();
-
-                                if ($riderDocuments->isEmpty()) {
-                                    return new HtmlString('<span class="text-gray-400 italic">' . trans('general.admin.none') . '</span>');
-                                }
-
-                                $items = [];
-                                foreach ($riderDocuments as $riderDocument) {
-                                    $document = $riderDocument->document;
-                                    if (! $document) {
-                                        continue;
-                                    }
-
-                                    // Load media for this riderDocument
-                                    // Use getMedia from Spatie Media Library which queries by collection name
-                                    $riderDocument->loadMissing('media');
-                                    $media = $riderDocument->getMedia('rider_documents')->first();
-
-                                    if ($media) {
-                                        try {
-                                            $url = $media->getUrl();
-                                            $name = $document->{Document::COLUMN_NAME};
-                                            $size = number_format($media->size / 1024, 2) . ' KB';
-                                            $type = strtoupper(pathinfo($media->file_name, PATHINFO_EXTENSION));
-
-                                            // Check expiry date
-                                            $expiryInfo = '';
-                                            if ($riderDocument->{RiderDocument::COLUMN_EXPIRES_AT}) {
-                                                $expiryDate = $riderDocument->{RiderDocument::COLUMN_EXPIRES_AT};
-                                                $daysUntilExpiry = now()->diffInDays($expiryDate, false);
-
-                                                if ($daysUntilExpiry < 0) {
-                                                    $expiryInfo = '<span class="text-xs text-red-600 ml-2">(' . trans('documents.admin.status.expired') . ')</span>';
-                                                } elseif ($daysUntilExpiry <= 30) {
-                                                    $expiryInfo = '<span class="text-xs text-orange-600 ml-2">(' . trans('documents.admin.status.expires_soon', ['days' => $daysUntilExpiry]) . ')</span>';
-                                                } else {
-                                                    $expiryInfo = '<span class="text-xs text-gray-500 ml-2">(' . trans('documents.admin.fields.expires_at') . ': ' . $expiryDate->format('Y-m-d') . ')</span>';
-                                                }
-                                            }
-
-                                            $icon = '<svg class="w-5 h-5 inline mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
-                                            $downloadIcon = '<svg class="w-4 h-4 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path></svg>';
-
-                                            $items[] = "<div class='mb-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors'>
-                                                <a href='{$url}' target='_blank' download class='inline-flex items-center justify-between w-full'>
-                                                    <span class='inline-flex items-center text-primary-600 hover:text-primary-800 font-medium'>
-                                                        {$icon}
-                                                        <span>{$name}</span>
-                                                        <span class='text-xs text-gray-500 ml-2'>({$type} • {$size})</span>
-                                                        {$expiryInfo}
-                                                    </span>
-                                                    <span class='text-primary-600 hover:text-primary-800'>{$downloadIcon}</span>
-                                                </a>
-                                            </div>";
-                                        } catch (\Exception $e) {
-                                            // If URL generation fails, show document name without link
-                                            $name = $document->{Document::COLUMN_NAME};
-                                            $icon = '<svg class="w-5 h-5 inline mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
-                                            $items[] = "<div class='mb-3 p-3 bg-gray-50 rounded-lg'><span class='inline-flex items-center text-gray-500 font-medium'>{$icon}<span>{$name} <span class=\"text-xs text-gray-400\">(" . trans('documents.admin.status.file_error') . ')</span></span></span></div>';
-                                        }
-                                    } else {
-                                        // Show document name even if no file uploaded
-                                        $name = $document->{Document::COLUMN_NAME};
-                                        $isRequired = $document->{Document::COLUMN_IS_REQUIRED};
-                                        $requiredBadge = $isRequired ? '<span class="text-xs text-red-600 ml-2">(' . trans('documents.admin.status.required') . ')</span>' : '';
-                                        $icon = '<svg class="w-5 h-5 inline mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
-                                        $items[] = "<div class='mb-3 p-3 bg-gray-50 rounded-lg'><span class='inline-flex items-center text-gray-500 font-medium'>{$icon}<span>{$name} <span class=\"text-xs text-gray-400\">(" . trans('documents.admin.status.no_file_uploaded') . ")</span>{$requiredBadge}</span></span></div>";
-                                    }
-                                }
-
-                                return ! empty($items) ? new HtmlString(implode('', $items)) : new HtmlString('<span class="text-gray-400 italic">' . trans('general.admin.none') . '</span>');
-                            })
-                            ->html()
                             ->columnSpanFull(),
                     ]),
             ]);
