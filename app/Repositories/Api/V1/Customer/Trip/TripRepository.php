@@ -66,7 +66,7 @@ class TripRepository implements TripRepositoryInterface
     public function attachAccessibilityRequirements(Trip $trip, array $requirements): void
     {
         $data = array_map(
-            fn ($requirement) => [
+            fn($requirement) => [
                 TripAccessibility::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
                 TripAccessibility::COLUMN_ACCESSIBILITY_REQUIREMENT => $requirement,
                 'created_at' => now(),
@@ -75,7 +75,9 @@ class TripRepository implements TripRepositoryInterface
             $requirements
         );
 
-        TripAccessibility::insert($data);
+        TripAccessibility::query()->insert($data);
+
+        $trip->refresh();
     }
 
     public function findById(int $id): ?Trip
