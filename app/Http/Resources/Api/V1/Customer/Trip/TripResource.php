@@ -25,7 +25,7 @@ class TripResource extends JsonResource
          * @var Trip $trip
          */
         $trip = $this->resource['trip'];
-        dd($trip->loadMissing('accessibility')->accessibility);
+
         // Get origin and destination locations from trip_locations table
         $originLocation = $trip->locations->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::ORIGIN)->first();
         $destinationLocation = $trip->locations->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)->first();
