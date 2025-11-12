@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Trip\AccessibilityRequirementsEnum;
+use App\Enums\Trip\RideTypeEnum;
+use App\Enums\Trip\TripLocationTypeEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
+use App\Models\Customer;
 use App\Models\Trip;
+use App\Models\TripLocation;
 use Laravel\Sanctum\Sanctum;
-use function Pest\Laravel\{get, withHeaders, getJson};
+use function Pest\Laravel\{get, postJson, withHeaders, getJson};
 
 describe('V1 Customer Trip API', function () {
     it('can get trip form data', function () {
@@ -213,8 +217,8 @@ describe('Trip Store API', function () {
         app()->instance(\App\Services\GeocodingService::class, $this->mockGeocodingService);
 
         // Authenticate a customer
-        $this->customer = \App\Models\Customer::factory()->create();
-        Sanctum::actingAs($this->customer, ['*'], 'api');
+        $this->customer = Customer::factory()->create();
+        Sanctum::actingAs($this->customer, ['*'], 'customer');
     });
 
     it('can create a trip with valid data', function () {
@@ -237,7 +241,7 @@ describe('Trip Store API', function () {
                 'location_sub_title' => 'Terminal 1',
             ]);
 
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        $response = postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
@@ -271,16 +275,16 @@ describe('Trip Store API', function () {
 
         // Verify origin location
         $this->assertDatabaseHas('trip_locations', [
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Hospital',
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::ORIGIN->value,
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Hospital',
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
         ]);
 
         // Verify destination location
         $this->assertDatabaseHas('trip_locations', [
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Airport',
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::DESTINATION->value,
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Airport',
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
         ]);
 
         // Verify accessibility
@@ -288,7 +292,7 @@ describe('Trip Store API', function () {
     });
 
     it('validates required fields', function () {
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.store'), [])
+        $response = postJson(route('v1.customers.trips.store'), [])
             ->assertStatus(422);
 
         // Check that error response has validation errors
@@ -298,7 +302,7 @@ describe('Trip Store API', function () {
     });
 
     it('validates trip type enum', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
@@ -311,7 +315,7 @@ describe('Trip Store API', function () {
     });
 
     it('validates vehicle type enum', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
@@ -325,7 +329,7 @@ describe('Trip Store API', function () {
 
     it('validates passenger count range', function () {
         // Test min constraint
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
@@ -337,7 +341,7 @@ describe('Trip Store API', function () {
         ])->assertStatus(422);
 
         // Test max constraint
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
@@ -350,7 +354,7 @@ describe('Trip Store API', function () {
     });
 
     it('validates accessibility requirements enum', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
@@ -369,7 +373,7 @@ describe('Trip Store API', function () {
             ->once()
             ->andThrow(new \App\Exceptions\GeocodingFailedException());
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
@@ -391,7 +395,7 @@ describe('Trip Store API', function () {
                 'location_sub_title' => null,
             ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
@@ -413,7 +417,7 @@ describe('Trip Store API', function () {
                 'location_sub_title' => null,
             ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
@@ -428,7 +432,7 @@ describe('Trip Store API', function () {
 
 describe('Trip Show API', function () {
     it('can retrieve trip by id', function () {
-        $customer = \App\Models\Customer::factory()->create();
+        $customer = Customer::factory()->create();
 
         $trip = Trip::create([
             Trip::COLUMN_CUSTOMER_ID => $customer->id,
@@ -443,25 +447,25 @@ describe('Trip Show API', function () {
         ]);
 
         // Create origin location
-        \App\Models\TripLocation::create([
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Hospital',
-            \App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Sabah medical district',
-            \App\Models\TripLocation::COLUMN_LATITUDE => 29.37694,
-            \App\Models\TripLocation::COLUMN_LONGITUDE => 47.98306,
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::ORIGIN,
-            \App\Models\TripLocation::COLUMN_SEQUENCE => 1,
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Hospital',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Sabah medical district',
+            TripLocation::COLUMN_LATITUDE => 29.37694,
+            TripLocation::COLUMN_LONGITUDE => 47.98306,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_SEQUENCE => 1,
         ]);
 
         // Create destination location
-        \App\Models\TripLocation::create([
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Airport',
-            \App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Terminal 1',
-            \App\Models\TripLocation::COLUMN_LATITUDE => 29.22667,
-            \App\Models\TripLocation::COLUMN_LONGITUDE => 47.96889,
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::DESTINATION,
-            \App\Models\TripLocation::COLUMN_SEQUENCE => 2,
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Airport',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Terminal 1',
+            TripLocation::COLUMN_LATITUDE => 29.22667,
+            TripLocation::COLUMN_LONGITUDE => 47.96889,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_SEQUENCE => 2,
         ]);
 
         \Pest\Laravel\getJson(route('v1.customers.trips.show', $trip->id))
@@ -555,8 +559,8 @@ describe('Ride Types API', function () {
 describe('Change Ride Type API', function () {
     beforeEach(function () {
         // Authenticate a customer
-        $this->customer = \App\Models\Customer::factory()->create();
-        Sanctum::actingAs($this->customer, ['*'], 'api');
+        $this->customer = Customer::factory()->create();
+        Sanctum::actingAs($this->customer, ['*'], 'customer');
 
         // Create a trip for testing
         $this->trip = Trip::create([
@@ -572,31 +576,31 @@ describe('Change Ride Type API', function () {
         ]);
 
         // Create origin location
-        \App\Models\TripLocation::create([
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $this->trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait City',
-            \App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Salmiya',
-            \App\Models\TripLocation::COLUMN_LATITUDE => 29.37694,
-            \App\Models\TripLocation::COLUMN_LONGITUDE => 47.98306,
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::ORIGIN,
-            \App\Models\TripLocation::COLUMN_SEQUENCE => 1,
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $this->trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait City',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Salmiya',
+            TripLocation::COLUMN_LATITUDE => 29.37694,
+            TripLocation::COLUMN_LONGITUDE => 47.98306,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_SEQUENCE => 1,
         ]);
 
         // Create destination location
-        \App\Models\TripLocation::create([
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $this->trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Ahmadi',
-            \App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Fahaheel',
-            \App\Models\TripLocation::COLUMN_LATITUDE => 29.22667,
-            \App\Models\TripLocation::COLUMN_LONGITUDE => 47.96889,
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::DESTINATION,
-            \App\Models\TripLocation::COLUMN_SEQUENCE => 2,
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $this->trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Ahmadi',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Fahaheel',
+            TripLocation::COLUMN_LATITUDE => 29.22667,
+            TripLocation::COLUMN_LONGITUDE => 47.96889,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_SEQUENCE => 2,
         ]);
     });
 
     it('can calculate pricing for ONE_WAY ride type', function () {
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+        $response = postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+            'ride_type_id' => RideTypeEnum::ONE_WAY->value,
         ])->assertStatus(200);
 
         $response->assertJsonStructure([
@@ -618,8 +622,8 @@ describe('Change Ride Type API', function () {
     });
 
     it('can calculate pricing for ROUND_TRIP ride type', function () {
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
+        $response = postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+            'ride_type_id' => RideTypeEnum::ROUND_TRIP->value,
         ])->assertStatus(200);
 
         // Verify ROUND_TRIP has base fare and round trip fee
@@ -633,8 +637,8 @@ describe('Change Ride Type API', function () {
     });
 
     it('can calculate pricing for ROUND_TRIP_WAIT with waiting time', function () {
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP_WAIT->value,
+        $response = postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+            'ride_type_id' => RideTypeEnum::ROUND_TRIP_WAIT->value,
             'return_time' => 60,
         ])->assertStatus(200);
 
@@ -662,8 +666,8 @@ describe('Change Ride Type API', function () {
         $newLatitude = 29.3117;
         $newLongitude = 47.4818;
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
+        postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+            'ride_type_id' => RideTypeEnum::ROUND_TRIP->value,
             'destination_location_title' => $newTitle,
             'destination_location_sub_title' => $newSubTitle,
             'destination_latitude' => $newLatitude,
@@ -675,7 +679,7 @@ describe('Change Ride Type API', function () {
         $this->trip->load('locations');
 
         $destination = $this->trip->locations
-            ->where(\App\Models\TripLocation::COLUMN_TYPE, \App\Enums\Trip\TripLocationTypeEnum::DESTINATION)
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)
             ->first();
 
         expect($destination->{App\Models\TripLocation::COLUMN_LOCATION_TITLE})->toBe($newTitle);
@@ -685,7 +689,7 @@ describe('Change Ride Type API', function () {
     });
 
     it('validates required fields for change ride type', function () {
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [])
+        $response = postJson(route('v1.customers.trips.change-ride-type', $this->trip), [])
             ->assertStatus(422);
 
         // Check that error response has validation errors
@@ -695,30 +699,30 @@ describe('Change Ride Type API', function () {
     });
 
     it('validates ride type enum', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+        postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
             'ride_type_id' => 99999,
         ])->assertStatus(422);
     });
 
     it('validates latitude and longitude ranges when provided', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+        postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
             'destination_latitude' => 999,
             'destination_longitude' => 47.96889,
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+            'ride_type_id' => RideTypeEnum::ONE_WAY->value,
         ])->assertStatus(422);
     });
 
     it('validates return time range when provided', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP_WAIT->value,
+        postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+            'ride_type_id' => RideTypeEnum::ROUND_TRIP_WAIT->value,
             'return_time' => 9999,
         ])->assertStatus(422);
     });
 
     it('requires authentication', function () {
         $trip = Trip::factory()->create();
-        \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+        postJson(route('v1.customers.trips.change-ride-type', $trip), [
+            'ride_type_id' => RideTypeEnum::ONE_WAY->value,
         ])->assertStatus(401);
     })->skip(); // Skip this test as actingAs is set in beforeEach
 });
@@ -726,7 +730,7 @@ describe('Change Ride Type API', function () {
 describe('Cancel Trip API', function () {
     beforeEach(function () {
         // Authenticate a customer
-        $this->customer = \App\Models\Customer::factory()->create();
+        $this->customer = Customer::factory()->create();
         Sanctum::actingAs($this->customer, ['*'], 'customer');
     });
 
@@ -743,7 +747,7 @@ describe('Cancel Trip API', function () {
             'status' => TripStatusEnum::DRAFT->value,
         ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.cancel', $trip), [
+        postJson(route('v1.customers.trips.cancel', $trip), [
             'cancellation_reason' => 'Changed my mind',
         ])->assertStatus(200);
 
@@ -765,7 +769,7 @@ describe('Cancel Trip API', function () {
             'status' => TripStatusEnum::PENDING_RIDER->value,
         ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.cancel', $trip))
+        postJson(route('v1.customers.trips.cancel', $trip))
             ->assertStatus(200);
 
         // Verify trip status was updated
@@ -786,7 +790,7 @@ describe('Cancel Trip API', function () {
             'status' => TripStatusEnum::ACCEPTED_RIDER->value,
         ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.cancel', $trip))
+        postJson(route('v1.customers.trips.cancel', $trip))
             ->assertStatus(406)
             ->assertJson([
                 'meta' => [
@@ -812,7 +816,7 @@ describe('Cancel Trip API', function () {
             'status' => TripStatusEnum::PICKED_UP->value,
         ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.cancel', $trip))
+        postJson(route('v1.customers.trips.cancel', $trip))
             ->assertStatus(406);
 
         // Verify trip status was NOT updated
@@ -833,7 +837,7 @@ describe('Cancel Trip API', function () {
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.cancel', $trip))
+        postJson(route('v1.customers.trips.cancel', $trip))
             ->assertStatus(406);
 
         // Verify trip status was NOT updated
@@ -854,7 +858,7 @@ describe('Cancel Trip API', function () {
             'status' => TripStatusEnum::CANCELED_BY_CUSTOMER->value,
         ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.cancel', $trip))
+        postJson(route('v1.customers.trips.cancel', $trip))
             ->assertStatus(406);
 
         // Verify trip status remains cancelled
@@ -875,7 +879,7 @@ describe('Cancel Trip API', function () {
             'status' => TripStatusEnum::DRAFT->value,
         ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.cancel', $trip), [
+        postJson(route('v1.customers.trips.cancel', $trip), [
             'cancellation_reason' => str_repeat('a', 501),
         ])->assertStatus(422);
     });
@@ -893,7 +897,7 @@ describe('Cancel Trip API', function () {
             'status' => TripStatusEnum::DRAFT->value,
         ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.cancel', $trip))
+        postJson(route('v1.customers.trips.cancel', $trip))
             ->assertStatus(200);
 
         // Verify trip status was updated
@@ -905,7 +909,7 @@ describe('Cancel Trip API', function () {
 describe('Get Trip Status API', function () {
     beforeEach(function () {
         // Authenticate a customer
-        $this->customer = \App\Models\Customer::factory()->create();
+        $this->customer = Customer::factory()->create();
         \Laravel\Sanctum\Sanctum::actingAs($this->customer, ['*'], 'customer');
     });
 

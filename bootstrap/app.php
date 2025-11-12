@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Enums\ApplicationEnvironmentEnum;
 use App\Exceptions\BaseException;
-use App\Http\Middleware\ForceApiGuardMiddleware;
 use App\Http\Middleware\LocalizationMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -26,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ];
 
             // Add test routes only in non-risky environments
-            if (! ApplicationEnvironmentEnum::isRiskyEnvironment()) {
+            if (!ApplicationEnvironmentEnum::isRiskyEnvironment()) {
                 $routeGroups['test'] = glob(base_path('routes/api/v*/test/*.php'));
             }
 
@@ -39,9 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
                         ->domain(config('app.domains.api'))
                         ->name("{$version}.{$group}.")
                         ->middleware([
-                            'api',
                             'throttle:limiter',
-                            ForceApiGuardMiddleware::class,
                             LocalizationMiddleware::class,
                         ])
                         ->group($file);
@@ -68,11 +65,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 Response::HTTP_INTERNAL_SERVER_ERROR,
             ];
 
-            if ($exception instanceof BaseException && ! in_array(
-                $exception->statusCode(),
-                $reportWhiteListStatusCode,
-                true
-            )) {
+            if ($exception instanceof BaseException && !in_array(
+                    $exception->statusCode(),
+                    $reportWhiteListStatusCode,
+                    true
+                )) {
                 return false;
             }
 
