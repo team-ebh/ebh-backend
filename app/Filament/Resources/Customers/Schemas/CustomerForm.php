@@ -48,6 +48,7 @@ class CustomerForm
                         TextInput::make(Customer::COLUMN_PHONE_NUMBER)
                             ->label(trans('customers.admin.fields.phone_number'))
                             ->tel()
+                            ->disabledOn('edit')
                             ->unique(table: Customer::class, column: Customer::COLUMN_PHONE_NUMBER, ignoreRecord: true)
                             ->prefix(defaultPrefixPhoneNumber())
                             ->telRegex('/^[0-9]{8}$/')
