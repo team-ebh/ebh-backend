@@ -121,7 +121,7 @@ class RiderForm
                         Select::make(Vehicle::COLUMN_CAR_MAKE_ID)
                             ->required()
                             ->label(trans('vehicles.admin.fields.car_make'))
-                            ->options(fn() => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_CAR_MAKES))
+                            ->options(fn () => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_CAR_MAKES))
                             ->searchable()
                             ->createOptionForm([
                                 TextInput::make('name')
@@ -133,7 +133,7 @@ class RiderForm
                                     ->required()
                                     ->maxLength(255),
                             ])
-                            ->createOptionUsing(fn(array $data): int => VehicleSetting::addItem(
+                            ->createOptionUsing(fn (array $data): int => VehicleSetting::addItem(
                                 VehicleSetting::TYPE_CAR_MAKES,
                                 $data['name'],
                                 $data['name_ar']
@@ -148,8 +148,8 @@ class RiderForm
                                     ->required()
                                     ->maxLength(255),
                             ])
-                            ->fillEditOptionActionFormUsing(fn($state): array => VehicleSetting::findItemById($state) ?? ['name' => '', 'name_ar' => ''])
-                            ->updateOptionUsing(fn(array $data, $state): int => VehicleSetting::updateItemById(
+                            ->fillEditOptionActionFormUsing(fn ($state): array => VehicleSetting::findItemById($state) ?? ['name' => '', 'name_ar' => ''])
+                            ->updateOptionUsing(fn (array $data, $state): int => VehicleSetting::updateItemById(
                                 $state,
                                 $data['name'],
                                 $data['name_ar']
@@ -159,7 +159,7 @@ class RiderForm
                         Select::make(Vehicle::COLUMN_CAR_MODEL_ID)
                             ->required()
                             ->label(trans('vehicles.admin.fields.car_model'))
-                            ->options(fn() => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_CAR_MODELS))
+                            ->options(fn () => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_CAR_MODELS))
                             ->searchable()
                             ->createOptionForm([
                                 TextInput::make('name')
@@ -171,7 +171,7 @@ class RiderForm
                                     ->required()
                                     ->maxLength(255),
                             ])
-                            ->createOptionUsing(fn(array $data): int => VehicleSetting::addItem(
+                            ->createOptionUsing(fn (array $data): int => VehicleSetting::addItem(
                                 VehicleSetting::TYPE_CAR_MODELS,
                                 $data['name'],
                                 $data['name_ar']
@@ -186,8 +186,8 @@ class RiderForm
                                     ->required()
                                     ->maxLength(255),
                             ])
-                            ->fillEditOptionActionFormUsing(fn($state): array => VehicleSetting::findItemById($state) ?? ['name' => '', 'name_ar' => ''])
-                            ->updateOptionUsing(fn(array $data, $state): int => VehicleSetting::updateItemById(
+                            ->fillEditOptionActionFormUsing(fn ($state): array => VehicleSetting::findItemById($state) ?? ['name' => '', 'name_ar' => ''])
+                            ->updateOptionUsing(fn (array $data, $state): int => VehicleSetting::updateItemById(
                                 $state,
                                 $data['name'],
                                 $data['name_ar']
@@ -197,7 +197,7 @@ class RiderForm
                         Select::make(Vehicle::COLUMN_CAR_TYPE_ID)
                             ->required()
                             ->label(trans('vehicles.admin.fields.car_type'))
-                            ->options(fn() => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_CAR_TYPES))
+                            ->options(fn () => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_CAR_TYPES))
                             ->searchable()
                             ->createOptionForm([
                                 TextInput::make('name')
@@ -209,7 +209,7 @@ class RiderForm
                                     ->required()
                                     ->maxLength(255),
                             ])
-                            ->createOptionUsing(fn(array $data): string => VehicleSetting::addItem(
+                            ->createOptionUsing(fn (array $data): string => VehicleSetting::addItem(
                                 VehicleSetting::TYPE_CAR_TYPES,
                                 $data['name'],
                                 $data['name_ar']
@@ -224,8 +224,8 @@ class RiderForm
                                     ->required()
                                     ->maxLength(255),
                             ])
-                            ->fillEditOptionActionFormUsing(fn($state): array => VehicleSetting::findItemById($state) ?? ['name' => '', 'name_ar' => ''])
-                            ->updateOptionUsing(fn(array $data, $state): int => VehicleSetting::updateItemById(
+                            ->fillEditOptionActionFormUsing(fn ($state): array => VehicleSetting::findItemById($state) ?? ['name' => '', 'name_ar' => ''])
+                            ->updateOptionUsing(fn (array $data, $state): int => VehicleSetting::updateItemById(
                                 $state,
                                 $data['name'],
                                 $data['name_ar']
@@ -243,12 +243,12 @@ class RiderForm
                             ->required()
                             ->numeric()
                             ->minValue(1900)
-                            ->maxValue((int)date('Y') + 1)
+                            ->maxValue((int) date('Y') + 1)
                             ->columnSpan(1),
 
                         Select::make(Vehicle::COLUMN_VEHICLE_TYPE_ID)
                             ->label(trans('vehicles.admin.fields.vehicle_type'))
-                            ->options(fn() => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_VEHICLE_TYPES))
+                            ->options(fn () => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_VEHICLE_TYPES))
                             ->required()
                             ->searchable()
                             ->createOptionForm([
@@ -261,7 +261,7 @@ class RiderForm
                                     ->required()
                                     ->maxLength(255),
                             ])
-                            ->createOptionUsing(fn(array $data): string => VehicleSetting::addItem(
+                            ->createOptionUsing(fn (array $data): string => VehicleSetting::addItem(
                                 VehicleSetting::TYPE_VEHICLE_TYPES,
                                 $data['name'],
                                 $data['name_ar']
@@ -276,8 +276,8 @@ class RiderForm
                                     ->required()
                                     ->maxLength(255),
                             ])
-                            ->fillEditOptionActionFormUsing(fn($state): array => VehicleSetting::findItemById($state) ?? ['name' => '', 'name_ar' => ''])
-                            ->updateOptionUsing(fn(array $data, $state): int => VehicleSetting::updateItemById(
+                            ->fillEditOptionActionFormUsing(fn ($state): array => VehicleSetting::findItemById($state) ?? ['name' => '', 'name_ar' => ''])
+                            ->updateOptionUsing(fn (array $data, $state): int => VehicleSetting::updateItemById(
                                 $state,
                                 $data['name'],
                                 $data['name_ar']
@@ -286,7 +286,7 @@ class RiderForm
 
                         Select::make(Vehicle::COLUMN_CAR_COLOR_ID)
                             ->label(trans('vehicles.admin.fields.car_color'))
-                            ->options(fn() => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_CAR_COLORS))
+                            ->options(fn () => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_CAR_COLORS))
                             ->searchable()
                             ->required()
                             ->createOptionForm([
@@ -299,7 +299,7 @@ class RiderForm
                                     ->required()
                                     ->maxLength(255),
                             ])
-                            ->createOptionUsing(fn(array $data): string => VehicleSetting::addItem(
+                            ->createOptionUsing(fn (array $data): string => VehicleSetting::addItem(
                                 VehicleSetting::TYPE_CAR_COLORS,
                                 $data['name'],
                                 $data['name_ar']
@@ -314,8 +314,8 @@ class RiderForm
                                     ->required()
                                     ->maxLength(255),
                             ])
-                            ->fillEditOptionActionFormUsing(fn($state): array => VehicleSetting::findItemById($state) ?? ['name' => '', 'name_ar' => ''])
-                            ->updateOptionUsing(fn(array $data, $state): int => VehicleSetting::updateItemById(
+                            ->fillEditOptionActionFormUsing(fn ($state): array => VehicleSetting::findItemById($state) ?? ['name' => '', 'name_ar' => ''])
+                            ->updateOptionUsing(fn (array $data, $state): int => VehicleSetting::updateItemById(
                                 $state,
                                 $data['name'],
                                 $data['name_ar']
@@ -324,7 +324,7 @@ class RiderForm
 
                         Select::make(Vehicle::COLUMN_PASSENGER_CAPACITY_ID)
                             ->label(trans('vehicles.admin.fields.passenger_capacity'))
-                            ->options(fn() => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_PASSENGER_CAPACITY, VehicleSetting::COLUMN_CAPACITY))
+                            ->options(fn () => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_PASSENGER_CAPACITY, VehicleSetting::COLUMN_CAPACITY))
                             ->searchable()
                             ->required()
                             ->columnSpan(1),
@@ -368,10 +368,10 @@ class RiderForm
                             if ($document->{Document::COLUMN_VALIDITY_PERIOD}) {
                                 $helperParts[] = trans('documents.admin.fields.validity_period') . ': ' . $document->{Document::COLUMN_VALIDITY_PERIOD};
                             }
-                            if (!empty($acceptedFormats)) {
-                                $helperParts[] = trans('documents.admin.fields.accepted_formats') . ': ' . implode(', ', array_map(fn($format) => strtoupper($format), $acceptedFormats));
+                            if (! empty($acceptedFormats)) {
+                                $helperParts[] = trans('documents.admin.fields.accepted_formats') . ': ' . implode(', ', array_map(fn ($format) => strtoupper($format), $acceptedFormats));
                             }
-                            $helperText = !empty($helperParts) ? implode(' • ', $helperParts) : null;
+                            $helperText = ! empty($helperParts) ? implode(' • ', $helperParts) : null;
 
                             $isRequired = $document->{Document::COLUMN_IS_REQUIRED};
 
