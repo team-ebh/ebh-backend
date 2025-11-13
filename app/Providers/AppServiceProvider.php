@@ -110,7 +110,7 @@ class AppServiceProvider extends ServiceProvider
         Column::configureUsing(function (Column $column): void {
             if ($column instanceof TextColumn) {
                 $column
-                    ->formatStateUsing(fn ($state) => is_string($state) ? Str::limit($state, 40, '…') : $state)
+                    ->formatStateUsing(fn ($state) => is_string($state) ? Str::limit($state, 25, '…') : $state)
                     ->placeholder('-')
                     ->searchable();
             }
