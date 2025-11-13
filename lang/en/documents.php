@@ -18,6 +18,7 @@ return [
         ],
         'status' => [
             'no_file_uploaded' => 'No file uploaded',
+            'file_not_accessible' => 'File exists but is not accessible. Please check server configuration.',
             'expired' => 'Expired',
             'expires_soon' => 'Expires in :days days',
         ],

@@ -158,12 +158,37 @@ class RiderInfolist
                             if ($riderDocument && $riderDocument->hasMedia('rider_documents')) {
                                 $media = $riderDocument->getFirstMedia('rider_documents');
 
+                                // Check if media and URL are valid
+                                if (! $media) {
+                                    $fields[] = TextEntry::make("documents.{$document->id}_placeholder")
+                                        ->label($document->{Document::COLUMN_NAME})
+                                        ->state(trans('documents.admin.status.no_file_uploaded'))
+                                        ->color('gray')
+                                        ->icon('heroicon-o-document')
+                                        ->columnSpan(2);
+
+                                    continue;
+                                }
+
+                                $url = $media->getUrl();
+
+                                // If URL is empty or invalid, skip this document
+                                if (empty($url)) {
+                                    $fields[] = TextEntry::make("documents.{$document->id}_placeholder")
+                                        ->label($document->{Document::COLUMN_NAME})
+                                        ->state(trans('documents.admin.status.file_not_accessible'))
+                                        ->color('warning')
+                                        ->icon('heroicon-o-exclamation-triangle')
+                                        ->columnSpan(2);
+
+                                    continue;
+                                }
+
                                 // Show download link for all files
                                 $fields[] = TextEntry::make("documents.{$document->id}")
                                     ->label($document->{Document::COLUMN_NAME})
                                     ->state('file')
-                                    ->formatStateUsing(function ($state) use ($media, $riderDocument) {
-                                        $url = $media->getUrl();
+                                    ->formatStateUsing(function ($state) use ($media, $riderDocument, $url) {
                                         $fileName = $media->file_name;
                                         $size = number_format($media->size / 1024, 2) . ' KB';
                                         $extension = strtoupper(pathinfo($fileName, PATHINFO_EXTENSION));
