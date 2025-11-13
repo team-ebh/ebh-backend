@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Traits\Model\Aggregates\RiderDocumentAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\HasMediaTrait;
+use App\Traits\Model\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
@@ -16,6 +17,7 @@ class RiderDocument extends Model implements HasMedia
     use HasDefaultColumnModelTrait;
     use HasFactory;
     use HasMediaTrait;
+    use LogsActivity;
     use RiderDocumentAggregate;
 
     public const string COLUMN_RIDER_ID = 'rider_id';

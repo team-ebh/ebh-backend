@@ -6,11 +6,13 @@ namespace App\Models;
 
 use App\Traits\Model\Aggregates\VehicleAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use App\Traits\Model\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class Vehicle extends Model
 {
     use HasDefaultColumnModelTrait;
+    use LogsActivity;
     use VehicleAggregate;
 
     public const string COLUMN_RIDER_ID = 'rider_id';

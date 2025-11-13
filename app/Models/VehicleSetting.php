@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Interfaces\Model\TranslatableInterface;
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\HasTranslatable;
+use App\Traits\Model\LogsActivity;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -15,6 +16,7 @@ class VehicleSetting extends Model implements TranslatableInterface
 {
     use HasDefaultColumnModelTrait;
     use HasTranslatable;
+    use LogsActivity;
     use SoftDeletes;
 
     public const string COLUMN_TYPE = 'type';
