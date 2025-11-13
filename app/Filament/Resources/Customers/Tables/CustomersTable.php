@@ -18,6 +18,7 @@ class CustomersTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->where(Customer::COLUMN_STATUS, '<>', CustomerStatusEnum::PENDING_VERIFICATION))
             ->columns([
                 TextColumn::make('full_name')
                     ->label(trans('customers.admin.fields.full_name'))
