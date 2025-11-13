@@ -143,7 +143,6 @@ class RiderInfolist
 
                         // Get all enabled documents
                         $enabledDocuments = Document::query()
-                            ->where(Document::COLUMN_ENABLED, true)
                             ->orderBy(Document::COLUMN_NAME)
                             ->get();
 
