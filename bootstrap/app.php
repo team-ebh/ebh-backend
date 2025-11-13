@@ -38,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
                         ->domain(config('app.domains.api'))
                         ->name("{$version}.{$group}.")
                         ->middleware([
+                            'api',
                             'throttle:limiter',
                             LocalizationMiddleware::class,
                         ])
