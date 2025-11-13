@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\ApplicationEnvironmentEnum;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Support\Facades\Route;
 
@@ -14,4 +15,23 @@ Route::domain(config('app.domains.api'))
         Scramble::registerJsonSpecificationRoute('docs/v1/customers.json', 'v1-customers');
 
         Route::redirect('/', 'docs/v1/riders');
+
+        // WebSocket test pages (only available in non-risky environments)
+        if (! ApplicationEnvironmentEnum::isRiskyEnvironment()) {
+            Route::domain(config('app.domains.admin'))->get('/test-socket', function () {
+                return view('test-socket');
+            });
+
+            Route::domain(config('app.domains.admin'))->get('/websocket-sender', function () {
+                return view('websocket-sender');
+            });
+
+            Route::domain(config('app.domains.admin'))->get('/websocket-receiver', function () {
+                return view('websocket-receiver');
+            });
+
+            Route::domain(config('app.domains.admin'))->get('/websocket-docs', function () {
+                return view('websocket-docs');
+            });
+        }
     });

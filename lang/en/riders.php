@@ -53,6 +53,8 @@ return [
             'personal_information_description' => 'Basic personal details of the rider',
             'status_information' => 'Status Information',
             'status_information_description' => 'Current status and accessibility certifications',
+            'vehicle_information' => 'Vehicle Information',
+            'vehicle_information_description' => 'Details about the rider\'s vehicle',
             'documents' => 'Documents',
             'documents_description' => 'Uploaded documents and certificates',
             'timestamps' => 'Timestamps',

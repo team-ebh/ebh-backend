@@ -11,10 +11,12 @@ return [
     ],
     'trips' => [
         'origin_location_title' => [
+            'required' => 'Origin location title is required.',
             'string' => 'Origin location title must be a string.',
             'max' => 'Origin location title must not exceed :max characters.',
         ],
         'origin_location_sub_title' => [
+            'required' => 'Origin location subtitle is required.',
             'string' => 'Origin location subtitle must be a string.',
             'max' => 'Origin location subtitle must not exceed :max characters.',
         ],
@@ -31,10 +33,12 @@ return [
             'max' => 'Origin longitude must not exceed :max.',
         ],
         'destination_location_title' => [
+            'required' => 'Destination location title is required.',
             'string' => 'Destination location title must be a string.',
             'max' => 'Destination location title must not exceed :max characters.',
         ],
         'destination_location_sub_title' => [
+            'required' => 'Destination location subtitle is required.',
             'string' => 'Destination location subtitle must be a string.',
             'max' => 'Destination location subtitle must not exceed :max characters.',
         ],
@@ -78,10 +82,11 @@ return [
             'integer' => 'Ride type must be an integer.',
             'enum' => 'The selected ride type is invalid.',
         ],
-        'waiting_time_minutes' => [
-            'integer' => 'Waiting time must be an integer.',
-            'min' => 'Waiting time must be at least :min minute.',
-            'max' => 'Waiting time must not exceed :max minutes.',
+        'return_time' => [
+            'required' => 'Return time is required.',
+            'integer' => 'Return time must be an integer.',
+            'min' => 'Return time must be at least :min minute.',
+            'max' => 'Return time must not exceed :max minutes.',
         ],
     ],
 ];

@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Enums\ApplicationEnvironmentEnum;
 use App\Exceptions\BaseException;
-use App\Http\Middleware\ForceApiGuardMiddleware;
 use App\Http\Middleware\LocalizationMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -24,6 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 'customers' => glob(base_path('routes/api/v*/customers/*.php')),
             ];
 
+            // Add test routes only in non-risky environments
+            if (! ApplicationEnvironmentEnum::isRiskyEnvironment()) {
+                $routeGroups['test'] = glob(base_path('routes/api/v*/test/*.php'));
+            }
+
             foreach ($routeGroups as $group => $files) {
                 foreach ($files as $file) {
                     $parts = explode('/', $file);
@@ -35,7 +40,6 @@ return Application::configure(basePath: dirname(__DIR__))
                         ->middleware([
                             'api',
                             'throttle:limiter',
-                            ForceApiGuardMiddleware::class,
                             LocalizationMiddleware::class,
                         ])
                         ->group($file);

@@ -9,6 +9,20 @@ use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
 
 return [
+    'location_types' => [
+        'origin' => 'نقطة الانطلاق',
+        'destination' => 'الوجهة',
+    ],
+    'location_statuses' => [
+        'draft' => 'مسودة',
+        'pending_rider' => 'في انتظار السائق',
+        'accepted_rider' => 'مقبولة من السائق',
+        'arrived' => 'وصل',
+        'canceled_by_customer' => 'ملغاة من قبل العميل',
+        'cancelled_by_rider' => 'ملغاة من قبل السائق',
+        'picked_up' => 'تم الاستلام',
+        'completed' => 'مكتملة',
+    ],
     'api' => [
         'trip_types' => [
             TripTypeEnum::RIDE_NOW->name => 'رحلة الآن',
@@ -37,14 +51,14 @@ return [
             AccessibilityRequirementsEnum::PORTABLE_RAMP->name . '_description' => 'مجهز بمنحدر للوصول',
         ],
         'trip_statuses' => [
-            TripStatusEnum::PENDING->name => 'قيد الانتظار',
-            TripStatusEnum::CONFIRMED->name => 'مؤكدة',
-            TripStatusEnum::DRIVER_ASSIGNED->name => 'تم تعيين السائق',
-            TripStatusEnum::IN_PROGRESS->name => 'قيد التنفيذ',
+            TripStatusEnum::DRAFT->name => 'مسودة',
+            TripStatusEnum::PENDING_RIDER->name => 'في انتظار السائق',
+            TripStatusEnum::ACCEPTED_RIDER->name => 'مقبولة من السائق',
             TripStatusEnum::ARRIVED->name => 'وصل',
+            TripStatusEnum::CANCELED_BY_CUSTOMER->name => 'ملغاة من قبل العميل',
+            TripStatusEnum::CANCELLED_BY_RIDER->name => 'ملغاة من قبل السائق',
+            TripStatusEnum::PICKED_UP->name => 'تم الاستلام',
             TripStatusEnum::COMPLETED->name => 'مكتملة',
-            TripStatusEnum::CANCELLED->name => 'ملغاة',
-            TripStatusEnum::CANCELLED_BY_DRIVER->name => 'ملغاة من قبل السائق',
         ],
         'price_estimation' => 'تقدير السعر',
         'waiting_time_rate_description' => ':price لكل :minutes دقيقة',
@@ -62,6 +76,13 @@ return [
             'accessibility_services' => 'خدمات إمكانية الوصول',
             'to_be_calculated' => 'سيتم حسابها',
             'included' => 'مشمول',
+        ],
+        'exceptions' => [
+            'trip_not_pending' => 'لا يمكن تأكيد هذه الرحلة. يمكن فقط تأكيد الرحلات المسودة.',
+            'trip_not_draft' => 'يمكن تغيير نوع الرحلة فقط للرحلات المسودة.',
+            'trip_cannot_be_cancelled' => 'لا يمكن إلغاء هذه الرحلة. يمكن فقط إلغاء الرحلات المسودة أو في انتظار السائق.',
+            'rider_location_not_available' => 'موقع السائق غير متاح. تتبع الموقع متاح فقط عندما يقبل السائق أو يصل أو يتم الاستلام.',
+            'trip_status_cannot_be_checked' => 'لا يمكن التحقق من حالة الرحلة. التحقق من الحالة غير متاح للرحلات المسودة أو الملغاة أو المكتملة.',
         ],
     ],
 ];

@@ -18,13 +18,17 @@ class TripCreationContext
 
     public ?array $destinationLocation = null;
 
-    public ?float $baseFare = null;
+    public float $baseFare;
 
     public ?float $accessibilityCost = null;
 
-    public ?float $estimatedPrice = null;
+    public float $estimatedPrice;
 
     public ?Trip $trip = null;
+
+    public ?array $priceBreakdown = null;
+
+    public ?array $priceEstimation = null;
 
     public function __construct(
         public readonly TripStoreDTO $dto,

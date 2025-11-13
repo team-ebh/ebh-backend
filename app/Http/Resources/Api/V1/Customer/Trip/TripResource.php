@@ -71,7 +71,7 @@ class TripResource extends JsonResource
              */
             'accessibility' => $this->when(
                 count($this->resource['dto']->accessibilityRequirements),
-                fn () => AccessibilityRequirementsResource::collection($trip->accessibility)
+                fn () => AccessibilityRequirementsResource::collection($trip->loadMissing('accessibility')->accessibility)
             ),
 
             /**

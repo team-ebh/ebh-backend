@@ -29,7 +29,19 @@ class ViewRider extends BaseViewRecord
     protected function mutateInfolistDataBeforeFill(array $data): array
     {
         // Eager load documents with their relations and media for better performance
-        $this->record->load(['documents.document', 'documents.media', 'company', 'media']);
+        $this->record->load([
+            'documents.document',
+            'documents.media',
+            'company',
+            'media',
+            'vehicle.carType',
+            'vehicle.carColor',
+            'vehicle.carMake',
+            'vehicle.carModel',
+            'vehicle.vehicleType',
+            'vehicle.passengerCapacity',
+            'vehicle.accessibilityFeatures',
+        ]);
 
         return $data;
     }

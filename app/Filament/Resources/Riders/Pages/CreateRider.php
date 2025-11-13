@@ -20,6 +20,11 @@ class CreateRider extends CreateRecord
 
     protected static string $resource = RiderResource::class;
 
+    public function hasDatabaseTransactions(): bool
+    {
+        return true;
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Store documents data for afterCreate
@@ -33,9 +38,16 @@ class CreateRider extends CreateRecord
 
     protected array $documentsData = [];
 
+    public array $accessibilityFeatureIds = [];
+
     protected function afterCreate(): void
     {
         $rider = $this->record;
+
+        // Sync vehicle accessibility features
+        if ($rider->vehicle) {
+            $rider->vehicle->syncAccessibilityFeatures($this->accessibilityFeatureIds);
+        }
 
         // Get all enabled documents
         $enabledDocuments = Document::query()
@@ -48,7 +60,7 @@ class CreateRider extends CreateRecord
             // Check if there's any data for this document
             if (! empty($documentData['file']) || isset($documentData['expires_at'])) {
                 // Create RiderDocument
-                $riderDocument = RiderDocument::create([
+                $riderDocument = RiderDocument::query()->create([
                     RiderDocument::COLUMN_RIDER_ID => $rider->id,
                     RiderDocument::COLUMN_DOCUMENT_ID => $document->id,
                     RiderDocument::COLUMN_EXPIRES_AT => $documentData['expires_at'] ?? null,

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\HasEnabledTrait;
+use App\Traits\Model\LogsActivity;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,6 +18,7 @@ class Admin extends Authenticatable implements FilamentUser
     use HasDefaultColumnModelTrait;
     use HasEnabledTrait;
     use HasFactory;
+    use LogsActivity;
     use Notifiable;
 
     public const string COLUMN_NAME = 'name';

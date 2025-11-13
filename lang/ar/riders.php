@@ -51,6 +51,8 @@ return [
             'personal_information_description' => 'التفاصيل الشخصية الأساسية للسائق',
             'status_information' => 'معلومات الحالة',
             'status_information_description' => 'الحالة الحالية وشهادات إمكانية الوصول',
+            'vehicle_information' => 'معلومات المركبة',
+            'vehicle_information_description' => 'تفاصيل حول مركبة السائق',
             'documents' => 'المستندات',
             'documents_description' => 'المستندات والشهادات المرفوعة',
             'timestamps' => 'طوابع زمنية',

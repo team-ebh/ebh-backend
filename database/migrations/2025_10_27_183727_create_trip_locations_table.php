@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('location_sub_title')->nullable();
             $table->float('latitude');
             $table->float('longitude');
-            $table->unsignedTinyInteger('type'); // origin or destination
+            $table->unsignedTinyInteger('type');
             $table->integer('sequence');
             $table->string('status')->nullable();
             $table->timestamps();

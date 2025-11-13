@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\Customer\CustomerStatusEnum;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use App\Traits\Model\LogsActivity;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User;
@@ -16,6 +17,7 @@ class Customer extends User
     use HasApiTokens;
     use HasDefaultColumnModelTrait;
     use HasFactory;
+    use LogsActivity;
 
     public const string COLUMN_FIRST_NAME = 'first_name';
 

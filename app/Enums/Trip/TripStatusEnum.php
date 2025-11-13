@@ -8,14 +8,14 @@ use Filament\Support\Contracts\HasLabel;
 
 enum TripStatusEnum: int implements HasLabel
 {
-    case PENDING = 1;
-    case CONFIRMED = 2;
-    case DRIVER_ASSIGNED = 3;
-    case IN_PROGRESS = 4;
-    case ARRIVED = 5;
-    case COMPLETED = 6;
-    case CANCELLED = 7;
-    case CANCELLED_BY_DRIVER = 8;
+    case DRAFT = 1;
+    case PENDING_RIDER = 2;
+    case ACCEPTED_RIDER = 3;
+    case ARRIVED = 4;
+    case CANCELED_BY_CUSTOMER = 5;
+    case CANCELLED_BY_RIDER = 6;
+    case PICKED_UP = 7;
+    case COMPLETED = 8;
 
     public function getLabel(): ?string
     {

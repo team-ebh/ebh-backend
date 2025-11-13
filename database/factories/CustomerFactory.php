@@ -21,7 +21,7 @@ class CustomerFactory extends Factory
             Customer::COLUMN_FIRST_NAME => fake()->firstName(),
             Customer::COLUMN_LAST_NAME => fake()->lastName(),
             Customer::COLUMN_EMAIL => fake()->optional()->email(),
-            Customer::COLUMN_PHONE_NUMBER => fake()->unique()->phoneNumber(),
+            Customer::COLUMN_PHONE_NUMBER => fake()->unique()->numerify('########'), // 8-digit phone number
             Customer::COLUMN_OTP => null,
             Customer::COLUMN_OTP_EXPIRES_AT => null,
             Customer::COLUMN_STATUS => CustomerStatusEnum::ACTIVE,

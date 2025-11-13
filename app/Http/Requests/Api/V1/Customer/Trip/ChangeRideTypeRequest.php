@@ -17,29 +17,41 @@ class ChangeRideTypeRequest extends FormRequest
 {
     public function rules(): array
     {
+        $rideTypeId = $this->post('ride_type_id');
+        $isRoundTrip = $rideTypeId === RideTypeEnum::ROUND_TRIP->value;
+        $isRoundTripWait = $rideTypeId === RideTypeEnum::ROUND_TRIP_WAIT->value;
+
         return [
             // Ride type (required)
             'ride_type_id' => ['required', 'integer', Rule::enum(RideTypeEnum::class)],
 
-            // Destination location (optional)
-            'destination_location_title' => ['nullable', 'string', 'max:255'],
-            'destination_location_sub_title' => ['nullable', 'string', 'max:255'],
+            // Destination location - required for ROUND_TRIP and ROUND_TRIP_WAIT, nullable for ONE_WAY
+            'destination_location_title' => [
+                $isRoundTrip || $isRoundTripWait ? 'required' : 'nullable',
+                'string',
+                'max:255',
+            ],
+            'destination_location_sub_title' => [
+                $isRoundTrip || $isRoundTripWait ? 'required' : 'nullable',
+                'string',
+                'max:255',
+            ],
             'destination_latitude' => [
-                'nullable',
+                $isRoundTrip || $isRoundTripWait ? 'required' : 'nullable',
                 'numeric',
                 'min:-90',
                 'max:90',
             ],
             'destination_longitude' => [
-                'nullable',
+                $isRoundTrip || $isRoundTripWait ? 'required' : 'nullable',
                 'numeric',
                 'min:-180',
                 'max:180',
             ],
 
-            // Waiting time (optional)
-            'waiting_time_minutes' => [
-                'nullable',
+            // Return time - required only for ROUND_TRIP_WAIT, nullable for others
+            'return_time' => [
+                $isRoundTripWait ? 'required' : 'nullable',
                 'integer',
                 'min:1',
                 'max:480', // Maximum 8 hours
@@ -51,8 +63,10 @@ class ChangeRideTypeRequest extends FormRequest
     {
         return [
             // Destination location
+            'destination_location_title.required' => trans('validations.trips.destination_location_title.required'),
             'destination_location_title.string' => trans('validations.trips.destination_location_title.string'),
             'destination_location_title.max' => trans('validations.trips.destination_location_title.max'),
+            'destination_location_sub_title.required' => trans('validations.trips.destination_location_sub_title.required'),
             'destination_location_sub_title.string' => trans('validations.trips.destination_location_sub_title.string'),
             'destination_location_sub_title.max' => trans('validations.trips.destination_location_sub_title.max'),
             'destination_latitude.required' => trans('validations.trips.destination_latitude.required'),
@@ -69,10 +83,11 @@ class ChangeRideTypeRequest extends FormRequest
             'ride_type_id.integer' => trans('validations.trips.ride_type_id.integer'),
             'ride_type_id.enum' => trans('validations.trips.ride_type_id.enum'),
 
-            // Waiting time
-            'waiting_time_minutes.integer' => trans('validations.trips.waiting_time_minutes.integer'),
-            'waiting_time_minutes.min' => trans('validations.trips.waiting_time_minutes.min'),
-            'waiting_time_minutes.max' => trans('validations.trips.waiting_time_minutes.max'),
+            // Return time
+            'return_time.required' => trans('validations.trips.return_time.required'),
+            'return_time.integer' => trans('validations.trips.return_time.integer'),
+            'return_time.min' => trans('validations.trips.return_time.min'),
+            'return_time.max' => trans('validations.trips.return_time.max'),
         ];
     }
 }

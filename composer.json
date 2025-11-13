@@ -16,11 +16,13 @@
         "filament/spatie-laravel-media-library-plugin": "*",
         "laravel/framework": "^12.25.0",
         "laravel/octane": "^2.12.1",
+        "laravel/reverb": "^1.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.0",
         "resend/resend-php": "^0.19.1",
-        "sentry/sentry-laravel": "*"
+        "sentry/sentry-laravel": "*",
+        "spatie/laravel-activitylog": "^4.10"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -61,4 +61,105 @@ class Trip extends Model
     {
         return $query->where(self::COLUMN_STATUS, $status);
     }
+
+    /**
+     * Check if trip is draft
+     */
+    public function isDraft(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::DRAFT;
+    }
+
+    /**
+     * Check if trip is pending rider acceptance
+     */
+    public function isPendingRider(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::PENDING_RIDER;
+    }
+
+    /**
+     * Check if trip is accepted by rider
+     */
+    public function isAcceptedByRider(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::ACCEPTED_RIDER;
+    }
+
+    /**
+     * Check if rider has arrived
+     */
+    public function isArrived(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::ARRIVED;
+    }
+
+    /**
+     * Check if trip is picked up
+     */
+    public function isPickedUp(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::PICKED_UP;
+    }
+
+    /**
+     * Check if trip is completed
+     */
+    public function isCompleted(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::COMPLETED;
+    }
+
+    /**
+     * Check if trip was cancelled by customer
+     */
+    public function isCanceledByCustomer(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::CANCELED_BY_CUSTOMER;
+    }
+
+    /**
+     * Check if trip was cancelled by rider
+     */
+    public function isCancelledByRider(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::CANCELLED_BY_RIDER;
+    }
+
+    /**
+     * Check trip can be cancelled or not
+     * Only DRAFT and PENDING_RIDER trips can be cancelled by customer
+     */
+    public function canCancelTrip(): bool
+    {
+        return in_array($this->{self::COLUMN_STATUS}, [TripStatusEnum::DRAFT, TripStatusEnum::PENDING_RIDER]);
+    }
+
+    /**
+     * Check if customer can get rider location
+     * Only allowed when trip has an assigned rider and is in specific statuses
+     */
+    public function canGetRiderLocation(): bool
+    {
+        // Only these statuses allow location tracking
+        return in_array($this->{self::COLUMN_STATUS}, [
+            TripStatusEnum::ACCEPTED_RIDER,
+            TripStatusEnum::ARRIVED,
+            TripStatusEnum::PICKED_UP,
+        ], true);
+    }
+
+    /**
+     * Check if trip status information is available
+     * Returns true when driver has been assigned and trip is in trackable state
+     */
+    public function hasTripStatusAvailable(): bool
+    {
+        return in_array($this->{self::COLUMN_STATUS}, [
+            TripStatusEnum::ACCEPTED_RIDER,
+            TripStatusEnum::ARRIVED,
+            TripStatusEnum::PICKED_UP,
+            TripStatusEnum::COMPLETED,
+        ], true);
+    }
 }

@@ -2,11 +2,18 @@
 
 declare(strict_types=1);
 
+use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Trip\AccessibilityRequirementsEnum;
+use App\Enums\Trip\RideTypeEnum;
+use App\Enums\Trip\TripLocationTypeEnum;
+use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
+use App\Models\Customer;
+use App\Models\Trip;
+use App\Models\TripLocation;
 use Laravel\Sanctum\Sanctum;
-use function Pest\Laravel\{get, withHeaders, getJson};
+use function Pest\Laravel\{get, postJson, withHeaders, getJson};
 
 describe('V1 Customer Trip API', function () {
     it('can get trip form data', function () {
@@ -210,8 +217,8 @@ describe('Trip Store API', function () {
         app()->instance(\App\Services\GeocodingService::class, $this->mockGeocodingService);
 
         // Authenticate a customer
-        $this->customer = \App\Models\Customer::factory()->create();
-        Sanctum::actingAs($this->customer, ['*'], 'api');
+        $this->customer = Customer::factory()->create();
+        Sanctum::actingAs($this->customer, ['*'], 'customer');
     });
 
     it('can create a trip with valid data', function () {
@@ -234,13 +241,13 @@ describe('Trip Store API', function () {
                 'location_sub_title' => 'Terminal 1',
             ]);
 
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        $response = postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
             'destination_longitude' => 47.96889,
-            'trip_type_id' => \App\Enums\Trip\TripTypeEnum::RIDE_NOW->value,
-            'vehicle_type_id' => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'accessibility_requirements' => [
                 \App\Enums\Trip\AccessibilityRequirementsEnum::WHEELCHAIR_ACCESSIBLE->value,
             ],
@@ -261,23 +268,23 @@ describe('Trip Store API', function () {
 
         // Verify database records
         $this->assertDatabaseHas('trips', [
-            \App\Models\Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
         ]);
 
-        $trip = \App\Models\Trip::latest()->first();
+        $trip = Trip::latest()->first();
 
         // Verify origin location
         $this->assertDatabaseHas('trip_locations', [
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Hospital',
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::ORIGIN->value,
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Hospital',
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
         ]);
 
         // Verify destination location
         $this->assertDatabaseHas('trip_locations', [
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Airport',
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::DESTINATION->value,
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Airport',
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
         ]);
 
         // Verify accessibility
@@ -285,7 +292,7 @@ describe('Trip Store API', function () {
     });
 
     it('validates required fields', function () {
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.store'), [])
+        $response = postJson(route('v1.customers.trips.store'), [])
             ->assertStatus(422);
 
         // Check that error response has validation errors
@@ -295,25 +302,25 @@ describe('Trip Store API', function () {
     });
 
     it('validates trip type enum', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
             'destination_longitude' => 47.96889,
             'trip_type_id' => 99999,
-            'vehicle_type_id' => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'accessibility_requirements' => [],
             'passenger_count' => 2,
         ])->assertStatus(422);
     });
 
     it('validates vehicle type enum', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
             'destination_longitude' => 47.96889,
-            'trip_type_id' => \App\Enums\Trip\TripTypeEnum::RIDE_NOW->value,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => 999,
             'accessibility_requirements' => [],
             'passenger_count' => 2,
@@ -322,38 +329,38 @@ describe('Trip Store API', function () {
 
     it('validates passenger count range', function () {
         // Test min constraint
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
             'destination_longitude' => 47.96889,
-            'trip_type_id' => \App\Enums\Trip\TripTypeEnum::RIDE_NOW->value,
-            'vehicle_type_id' => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'accessibility_requirements' => [],
             'passenger_count' => 0,
         ])->assertStatus(422);
 
         // Test max constraint
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
             'destination_longitude' => 47.96889,
-            'trip_type_id' => \App\Enums\Trip\TripTypeEnum::RIDE_NOW->value,
-            'vehicle_type_id' => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'accessibility_requirements' => [],
             'passenger_count' => 7,
         ])->assertStatus(422);
     });
 
     it('validates accessibility requirements enum', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
             'destination_longitude' => 47.96889,
-            'trip_type_id' => \App\Enums\Trip\TripTypeEnum::RIDE_NOW->value,
-            'vehicle_type_id' => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'accessibility_requirements' => [999],
             'passenger_count' => 2,
         ])->assertStatus(422);
@@ -366,13 +373,13 @@ describe('Trip Store API', function () {
             ->once()
             ->andThrow(new \App\Exceptions\GeocodingFailedException());
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
             'destination_longitude' => 47.96889,
-            'trip_type_id' => \App\Enums\Trip\TripTypeEnum::RIDE_NOW->value,
-            'vehicle_type_id' => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'accessibility_requirements' => [],
             'passenger_count' => 2,
         ])->assertStatus(422);
@@ -388,13 +395,13 @@ describe('Trip Store API', function () {
                 'location_sub_title' => null,
             ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
             'destination_longitude' => 47.96889,
-            'trip_type_id' => \App\Enums\Trip\TripTypeEnum::RIDE_NOW->value,
-            'vehicle_type_id' => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'accessibility_requirements' => [],
             'passenger_count' => 2,
         ])->assertStatus(200);
@@ -410,13 +417,13 @@ describe('Trip Store API', function () {
                 'location_sub_title' => null,
             ]);
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.store'), [
+        postJson(route('v1.customers.trips.store'), [
             'origin_latitude' => 29.37694,
             'origin_longitude' => 47.98306,
             'destination_latitude' => 29.22667,
             'destination_longitude' => 47.96889,
-            'trip_type_id' => \App\Enums\Trip\TripTypeEnum::RIDE_NOW->value,
-            'vehicle_type_id' => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'accessibility_requirements' => [],
             'passenger_count' => 2,
         ])->assertStatus(200);
@@ -425,40 +432,40 @@ describe('Trip Store API', function () {
 
 describe('Trip Show API', function () {
     it('can retrieve trip by id', function () {
-        $customer = \App\Models\Customer::factory()->create();
+        $customer = Customer::factory()->create();
 
-        $trip = \App\Models\Trip::create([
-            \App\Models\Trip::COLUMN_CUSTOMER_ID => $customer->id,
-            \App\Models\Trip::COLUMN_TRIP_TYPE_ID => \App\Enums\Trip\TripTypeEnum::RIDE_NOW->value,
-            \App\Models\Trip::COLUMN_VEHICLE_TYPE_ID => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
-            \App\Models\Trip::COLUMN_PASSENGER_COUNT => 2,
-            \App\Models\Trip::COLUMN_ACCESSIBILITY_PRICE => null,
-            \App\Models\Trip::COLUMN_WAITING_PRICE => null,
-            \App\Models\Trip::COLUMN_TOTAL_PRICE => 2.500,
-            \App\Models\Trip::COLUMN_CURRENCY => \App\Enums\Currency\CurrencyEnum::KWD->value,
-            \App\Models\Trip::COLUMN_STATUS => \App\Enums\Trip\TripStatusEnum::PENDING->value,
+        $trip = Trip::create([
+            Trip::COLUMN_CUSTOMER_ID => $customer->id,
+            Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
+            Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            Trip::COLUMN_PASSENGER_COUNT => 2,
+            Trip::COLUMN_ACCESSIBILITY_PRICE => null,
+            Trip::COLUMN_WAITING_PRICE => null,
+            Trip::COLUMN_TOTAL_PRICE => 2.500,
+            Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+            Trip::COLUMN_STATUS => TripStatusEnum::DRAFT->value,
         ]);
 
         // Create origin location
-        \App\Models\TripLocation::create([
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Hospital',
-            \App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Sabah medical district',
-            \App\Models\TripLocation::COLUMN_LATITUDE => 29.37694,
-            \App\Models\TripLocation::COLUMN_LONGITUDE => 47.98306,
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::ORIGIN,
-            \App\Models\TripLocation::COLUMN_SEQUENCE => 1,
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Hospital',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Sabah medical district',
+            TripLocation::COLUMN_LATITUDE => 29.37694,
+            TripLocation::COLUMN_LONGITUDE => 47.98306,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_SEQUENCE => 1,
         ]);
 
         // Create destination location
-        \App\Models\TripLocation::create([
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Airport',
-            \App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Terminal 1',
-            \App\Models\TripLocation::COLUMN_LATITUDE => 29.22667,
-            \App\Models\TripLocation::COLUMN_LONGITUDE => 47.96889,
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::DESTINATION,
-            \App\Models\TripLocation::COLUMN_SEQUENCE => 2,
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Airport',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Terminal 1',
+            TripLocation::COLUMN_LATITUDE => 29.22667,
+            TripLocation::COLUMN_LONGITUDE => 47.96889,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_SEQUENCE => 2,
         ]);
 
         \Pest\Laravel\getJson(route('v1.customers.trips.show', $trip->id))
@@ -552,48 +559,48 @@ describe('Ride Types API', function () {
 describe('Change Ride Type API', function () {
     beforeEach(function () {
         // Authenticate a customer
-        $this->customer = \App\Models\Customer::factory()->create();
-        Sanctum::actingAs($this->customer, ['*'], 'api');
+        $this->customer = Customer::factory()->create();
+        Sanctum::actingAs($this->customer, ['*'], 'customer');
 
         // Create a trip for testing
-        $this->trip = \App\Models\Trip::create([
+        $this->trip = Trip::create([
             'customer_id' => $this->customer->id,
-            'trip_type_id' => \App\Enums\Trip\TripTypeEnum::SCHEDULED->value,
-            'vehicle_type_id' => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 1,
             'accessibility_price' => null,
             'waiting_price' => null,
             'total_price' => 5.000,
-            'currency' => \App\Enums\Currency\CurrencyEnum::KWD->value,
-            'status' => \App\Enums\Trip\TripStatusEnum::PENDING->value,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
         ]);
 
         // Create origin location
-        \App\Models\TripLocation::create([
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $this->trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait City',
-            \App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Salmiya',
-            \App\Models\TripLocation::COLUMN_LATITUDE => 29.37694,
-            \App\Models\TripLocation::COLUMN_LONGITUDE => 47.98306,
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::ORIGIN,
-            \App\Models\TripLocation::COLUMN_SEQUENCE => 1,
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $this->trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait City',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Salmiya',
+            TripLocation::COLUMN_LATITUDE => 29.37694,
+            TripLocation::COLUMN_LONGITUDE => 47.98306,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_SEQUENCE => 1,
         ]);
 
         // Create destination location
-        \App\Models\TripLocation::create([
-            \App\Models\TripLocation::COLUMN_TRIP_ID => $this->trip->id,
-            \App\Models\TripLocation::COLUMN_LOCATION_TITLE => 'Ahmadi',
-            \App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Fahaheel',
-            \App\Models\TripLocation::COLUMN_LATITUDE => 29.22667,
-            \App\Models\TripLocation::COLUMN_LONGITUDE => 47.96889,
-            \App\Models\TripLocation::COLUMN_TYPE => \App\Enums\Trip\TripLocationTypeEnum::DESTINATION,
-            \App\Models\TripLocation::COLUMN_SEQUENCE => 2,
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $this->trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Ahmadi',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Fahaheel',
+            TripLocation::COLUMN_LATITUDE => 29.22667,
+            TripLocation::COLUMN_LONGITUDE => 47.96889,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_SEQUENCE => 2,
         ]);
     });
 
     it('can calculate pricing for ONE_WAY ride type', function () {
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+        $response = postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+            'ride_type_id' => RideTypeEnum::ONE_WAY->value,
         ])->assertStatus(200);
 
         $response->assertJsonStructure([
@@ -615,8 +622,8 @@ describe('Change Ride Type API', function () {
     });
 
     it('can calculate pricing for ROUND_TRIP ride type', function () {
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
+        $response = postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+            'ride_type_id' => RideTypeEnum::ROUND_TRIP->value,
         ])->assertStatus(200);
 
         // Verify ROUND_TRIP has base fare and round trip fee
@@ -630,9 +637,9 @@ describe('Change Ride Type API', function () {
     });
 
     it('can calculate pricing for ROUND_TRIP_WAIT with waiting time', function () {
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP_WAIT->value,
-            'waiting_time_minutes' => 60,
+        $response = postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+            'ride_type_id' => RideTypeEnum::ROUND_TRIP_WAIT->value,
+            'return_time' => 60,
         ])->assertStatus(200);
 
         // Verify ROUND_TRIP_WAIT has base fare, round trip fee, and waiting time charge
@@ -659,8 +666,8 @@ describe('Change Ride Type API', function () {
         $newLatitude = 29.3117;
         $newLongitude = 47.4818;
 
-        \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
+        postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+            'ride_type_id' => RideTypeEnum::ROUND_TRIP->value,
             'destination_location_title' => $newTitle,
             'destination_location_sub_title' => $newSubTitle,
             'destination_latitude' => $newLatitude,
@@ -672,17 +679,17 @@ describe('Change Ride Type API', function () {
         $this->trip->load('locations');
 
         $destination = $this->trip->locations
-            ->where(\App\Models\TripLocation::COLUMN_TYPE, \App\Enums\Trip\TripLocationTypeEnum::DESTINATION)
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)
             ->first();
 
         expect($destination->{App\Models\TripLocation::COLUMN_LOCATION_TITLE})->toBe($newTitle);
         expect($destination->{App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE})->toBe($newSubTitle);
-        expect((float) $destination->{App\Models\TripLocation::COLUMN_LATITUDE})->toBe($newLatitude);
-        expect((float) $destination->{App\Models\TripLocation::COLUMN_LONGITUDE})->toBe($newLongitude);
+        expect((float)$destination->{App\Models\TripLocation::COLUMN_LATITUDE})->toBe($newLatitude);
+        expect((float)$destination->{App\Models\TripLocation::COLUMN_LONGITUDE})->toBe($newLongitude);
     });
 
     it('validates required fields for change ride type', function () {
-        $response = \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [])
+        $response = postJson(route('v1.customers.trips.change-ride-type', $this->trip), [])
             ->assertStatus(422);
 
         // Check that error response has validation errors
@@ -692,30 +699,303 @@ describe('Change Ride Type API', function () {
     });
 
     it('validates ride type enum', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+        postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
             'ride_type_id' => 99999,
         ])->assertStatus(422);
     });
 
     it('validates latitude and longitude ranges when provided', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+        postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
             'destination_latitude' => 999,
             'destination_longitude' => 47.96889,
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+            'ride_type_id' => RideTypeEnum::ONE_WAY->value,
         ])->assertStatus(422);
     });
 
-    it('validates waiting time range when provided', function () {
-        \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP_WAIT->value,
-            'waiting_time_minutes' => 9999,
+    it('validates return time range when provided', function () {
+        postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
+            'ride_type_id' => RideTypeEnum::ROUND_TRIP_WAIT->value,
+            'return_time' => 9999,
         ])->assertStatus(422);
     });
 
     it('requires authentication', function () {
-        $trip = \App\Models\Trip::factory()->create();
-        \Pest\Laravel\postJson(route('v1.customers.trips.change-ride-type', $trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+        $trip = Trip::factory()->create();
+        postJson(route('v1.customers.trips.change-ride-type', $trip), [
+            'ride_type_id' => RideTypeEnum::ONE_WAY->value,
         ])->assertStatus(401);
     })->skip(); // Skip this test as actingAs is set in beforeEach
+});
+
+describe('Cancel Trip API', function () {
+    beforeEach(function () {
+        // Authenticate a customer
+        $this->customer = Customer::factory()->create();
+        Sanctum::actingAs($this->customer, ['*'], 'customer');
+    });
+
+    it('can cancel a pending trip', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip), [
+            'cancellation_reason' => 'Changed my mind',
+        ])->assertStatus(200);
+
+        // Verify trip status was updated
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::CANCELED_BY_CUSTOMER);
+    });
+
+    it('can cancel a confirmed trip', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::PENDING_RIDER->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip))
+            ->assertStatus(200);
+
+        // Verify trip status was updated
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::CANCELED_BY_CUSTOMER);
+    });
+
+    it('cannot cancel a trip with driver assigned', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::ACCEPTED_RIDER->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip))
+            ->assertStatus(406)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('trips.api.exceptions.trip_cannot_be_cancelled'),
+                ],
+            ]);
+
+        // Verify trip status was NOT updated
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::ACCEPTED_RIDER);
+    });
+
+    it('cannot cancel an in-progress trip', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::PICKED_UP->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip))
+            ->assertStatus(406);
+
+        // Verify trip status was NOT updated
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::PICKED_UP);
+    });
+
+    it('cannot cancel a completed trip', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::COMPLETED->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip))
+            ->assertStatus(406);
+
+        // Verify trip status was NOT updated
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::COMPLETED);
+    });
+
+    it('cannot cancel an already cancelled trip', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::CANCELED_BY_CUSTOMER->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip))
+            ->assertStatus(406);
+
+        // Verify trip status remains cancelled
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::CANCELED_BY_CUSTOMER);
+    });
+
+    it('validates cancellation reason length', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip), [
+            'cancellation_reason' => str_repeat('a', 501),
+        ])->assertStatus(422);
+    });
+
+    it('can cancel trip without providing a reason', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip))
+            ->assertStatus(200);
+
+        // Verify trip status was updated
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::CANCELED_BY_CUSTOMER);
+    });
+});
+
+describe('Get Trip Status API', function () {
+    beforeEach(function () {
+        // Authenticate a customer
+        $this->customer = Customer::factory()->create();
+        \Laravel\Sanctum\Sanctum::actingAs($this->customer, ['*'], 'customer');
+    });
+
+    it('can get trip status for valid statuses', function () {
+        // Create trip with ACCEPTED_RIDER status
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::ACCEPTED_RIDER->value,
+        ]);
+
+        \Pest\Laravel\getJson(route('v1.customers.trips.status', $trip))
+            ->assertStatus(200);
+    });
+
+    it('cannot check status for draft trips', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        \Pest\Laravel\getJson(route('v1.customers.trips.status', $trip))
+            ->assertStatus(406);
+    });
+
+    it('cannot check status for cancelled by customer trips', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::CANCELED_BY_CUSTOMER->value,
+        ]);
+
+        \Pest\Laravel\getJson(route('v1.customers.trips.status', $trip))
+            ->assertStatus(406);
+    });
+
+    it('cannot check status for cancelled by rider trips', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::CANCELLED_BY_RIDER->value,
+        ]);
+
+        \Pest\Laravel\getJson(route('v1.customers.trips.status', $trip))
+            ->assertStatus(406);
+    });
+
+    it('cannot check status for completed trips', function () {
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::COMPLETED->value,
+        ]);
+
+        \Pest\Laravel\getJson(route('v1.customers.trips.status', $trip))
+            ->assertStatus(406);
+    });
 });
