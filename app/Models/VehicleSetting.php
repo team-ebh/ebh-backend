@@ -104,10 +104,51 @@ class VehicleSetting extends Model implements TranslatableInterface
             }
         }
 
+        // Get items that will be deleted
+        $itemsToDelete = self::where(self::COLUMN_TYPE, $type)
+            ->whereNotIn('id', $submittedIds)
+            ->get();
+
+        // Check if any of these items are in use by riders
+        foreach ($itemsToDelete as $item) {
+            self::validateNotInUse($item->id, $type);
+        }
+
         // Delete items that were not in the submitted list
         self::where(self::COLUMN_TYPE, $type)
             ->whereNotIn('id', $submittedIds)
             ->delete();
+    }
+
+    public static function validateNotInUse(int $id, string $type): void
+    {
+        $columnMap = [
+            self::TYPE_CAR_TYPES => Vehicle::COLUMN_CAR_TYPE_ID,
+            self::TYPE_CAR_COLORS => Vehicle::COLUMN_CAR_COLOR_ID,
+            self::TYPE_PASSENGER_CAPACITY => Vehicle::COLUMN_PASSENGER_CAPACITY_ID,
+            self::TYPE_CAR_MAKES => Vehicle::COLUMN_CAR_MAKE_ID,
+            self::TYPE_CAR_MODELS => Vehicle::COLUMN_CAR_MODEL_ID,
+            self::TYPE_VEHICLE_TYPES => Vehicle::COLUMN_VEHICLE_TYPE_ID,
+        ];
+
+        if (! isset($columnMap[$type])) {
+            return;
+        }
+
+        $column = $columnMap[$type];
+        $inUseCount = Vehicle::where($column, $id)->count();
+
+        if ($inUseCount > 0) {
+            $item = self::find($id);
+            $itemName = $item?->{self::COLUMN_NAME} ?? trans('vehicle_settings.admin.labels.this_item');
+
+            throw new \Exception(
+                trans('vehicle_settings.admin.errors.item_in_use', [
+                    'item' => $itemName,
+                    'count' => $inUseCount,
+                ])
+            );
+        }
     }
 
     public static function getOptionsForSelect(string $type, string $labelColumn = self::COLUMN_NAME): array

@@ -256,17 +256,25 @@ class VehicleSettings extends Page implements HasForms
     {
         $data = $this->form->getState();
 
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_TYPES, $data['car_types'] ?? []);
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_COLORS, $data['car_colors'] ?? []);
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_PASSENGER_CAPACITY, $data['passenger_capacity'] ?? []);
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_MAKES, $data['car_makes'] ?? []);
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_MODELS, $data['car_models'] ?? []);
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_VEHICLE_TYPES, $data['vehicle_types'] ?? []);
+        try {
+            VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_TYPES, $data['car_types'] ?? []);
+            VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_COLORS, $data['car_colors'] ?? []);
+            VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_PASSENGER_CAPACITY, $data['passenger_capacity'] ?? []);
+            VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_MAKES, $data['car_makes'] ?? []);
+            VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_MODELS, $data['car_models'] ?? []);
+            VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_VEHICLE_TYPES, $data['vehicle_types'] ?? []);
 
-        Notification::make()
-            ->success()
-            ->title(trans('vehicle_settings.admin.notifications.saved'))
-            ->send();
+            Notification::make()
+                ->success()
+                ->title(trans('vehicle_settings.admin.notifications.saved'))
+                ->send();
+        } catch (\Exception $e) {
+            Notification::make()
+                ->danger()
+                ->title(trans('vehicle_settings.admin.notifications.error'))
+                ->body($e->getMessage())
+                ->send();
+        }
     }
 
     public static function getNavigationLabel(): string

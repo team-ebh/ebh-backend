@@ -47,6 +47,7 @@ return [
 
         'labels' => [
             'passengers' => 'passengers',
+            'this_item' => 'this item',
         ],
 
         'actions' => [
@@ -62,6 +63,11 @@ return [
 
         'notifications' => [
             'saved' => 'Vehicle settings have been saved successfully.',
+            'error' => 'Error saving vehicle settings',
+        ],
+
+        'errors' => [
+            'item_in_use' => 'Cannot delete ":item" because it is currently being used by :count rider vehicle(s). Please remove the assignment from the rider(s) first.',
         ],
     ],
 ];
