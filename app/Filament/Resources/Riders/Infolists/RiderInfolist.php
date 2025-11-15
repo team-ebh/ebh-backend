@@ -155,98 +155,40 @@ class RiderInfolist
                         foreach ($enabledDocuments as $document) {
                             $riderDocument = $riderDocuments->get($document->id);
 
+                            // Only show if RiderDocument exists and has media
                             if ($riderDocument && $riderDocument->hasMedia('rider_documents')) {
                                 $media = $riderDocument->getFirstMedia('rider_documents');
 
-                                // Check if media and URL are valid
-                                if (! $media) {
-                                    $fields[] = TextEntry::make("documents.{$document->id}_placeholder")
+                                // Check if media exists and URL is valid
+                                if ($media && ! empty($media->getUrl())) {
+                                    $url = $media->getUrl();
+
+                                    // Show download link for the file
+                                    $fields[] = TextEntry::make("documents.{$document->id}")
                                         ->label($document->{Document::COLUMN_NAME})
-                                        ->state(trans('documents.admin.status.no_file_uploaded'))
-                                        ->color('gray')
-                                        ->icon('heroicon-o-document')
+                                        ->state('file')
+                                        ->formatStateUsing(function ($state) use ($media, $url) {
+                                            $fileName = $media->file_name;
+                                            $size = number_format($media->size / 1024, 2) . ' KB';
+                                            $extension = strtoupper(pathinfo($fileName, PATHINFO_EXTENSION));
+
+                                            return new HtmlString("
+                                                <div class='flex items-center gap-2'>
+                                                    <a href='{$url}' target='_blank' download class='inline-flex items-center gap-2 text-primary-600 hover:text-primary-800 font-medium'>
+                                                        <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                                            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'></path>
+                                                        </svg>
+                                                        <span>{$fileName}</span>
+                                                        <span class='text-xs text-gray-500'>({$extension} • {$size})</span>
+                                                    </a>
+                                                </div>
+                                            ");
+                                        })
+                                        ->html()
                                         ->columnSpan(2);
-
-                                    continue;
                                 }
-
-                                $url = $media->getUrl();
-
-                                // If URL is empty or invalid, skip this document
-                                if (empty($url)) {
-                                    $fields[] = TextEntry::make("documents.{$document->id}_placeholder")
-                                        ->label($document->{Document::COLUMN_NAME})
-                                        ->state(trans('documents.admin.status.file_not_accessible'))
-                                        ->color('warning')
-                                        ->icon('heroicon-o-exclamation-triangle')
-                                        ->columnSpan(2);
-
-                                    continue;
-                                }
-
-                                // Show download link for all files
-                                $fields[] = TextEntry::make("documents.{$document->id}")
-                                    ->label($document->{Document::COLUMN_NAME})
-                                    ->state('file')
-                                    ->formatStateUsing(function ($state) use ($media, $riderDocument, $url) {
-                                        $fileName = $media->file_name;
-                                        $size = number_format($media->size / 1024, 2) . ' KB';
-                                        $extension = strtoupper(pathinfo($fileName, PATHINFO_EXTENSION));
-
-                                        // Add expiry info
-                                        $expiryInfo = '';
-                                        if ($riderDocument->{RiderDocument::COLUMN_EXPIRES_AT}) {
-                                            $expiryDate = $riderDocument->{RiderDocument::COLUMN_EXPIRES_AT};
-                                            $daysUntilExpiry = now()->diffInDays($expiryDate, false);
-
-                                            if ($daysUntilExpiry < 0) {
-                                                $expiryInfo = "<span class='inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-md ml-2'>
-                                                    <svg class='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                                        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'></path>
-                                                    </svg>
-                                                    " . trans('documents.admin.status.expired') . '
-                                                </span>';
-                                            } elseif ($daysUntilExpiry <= 30) {
-                                                $expiryInfo = "<span class='inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-100 text-orange-700 rounded-md ml-2'>
-                                                    <svg class='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                                        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'></path>
-                                                    </svg>
-                                                    " . trans('documents.admin.status.expires_soon', ['days' => $daysUntilExpiry]) . '
-                                                </span>';
-                                            } else {
-                                                $expiryInfo = "<span class='inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-md ml-2'>
-                                                    <svg class='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                                        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'></path>
-                                                    </svg>
-                                                    {$expiryDate->format('Y-m-d')}
-                                                </span>";
-                                            }
-                                        }
-
-                                        return new HtmlString("
-                                            <div class='flex items-center gap-2'>
-                                                <a href='{$url}' target='_blank' download class='inline-flex items-center gap-2 text-primary-600 hover:text-primary-800 font-medium'>
-                                                    <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                                        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'></path>
-                                                    </svg>
-                                                    <span>{$fileName}</span>
-                                                    <span class='text-xs text-gray-500'>({$extension} • {$size})</span>
-                                                </a>
-                                                {$expiryInfo}
-                                            </div>
-                                        ");
-                                    })
-                                    ->html()
-                                    ->columnSpan(2);
-                            } else {
-                                // Document not uploaded
-                                $fields[] = TextEntry::make("documents.{$document->id}_placeholder")
-                                    ->label($document->{Document::COLUMN_NAME})
-                                    ->state(trans('documents.admin.status.no_file_uploaded'))
-                                    ->color('gray')
-                                    ->icon('heroicon-o-document')
-                                    ->columnSpan(2);
                             }
+                            // If no file exists, don't show anything (skip)
                         }
 
                         return $fields;
