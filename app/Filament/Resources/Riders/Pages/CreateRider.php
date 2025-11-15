@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Riders\Pages;
 
 use App\Filament\Resources\Riders\RiderResource;
-use App\Models\Document;
-use App\Models\RiderDocument;
 use App\Traits\Filament\FilamentRedirectToListPage;
+use App\Traits\Filament\HandlesRiderDocuments;
 use App\Traits\Filament\HasCustomCreateActions;
 use App\Traits\Filament\HasFilamentNotifications;
 use Filament\Resources\Pages\CreateRecord;
@@ -15,6 +14,7 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateRider extends CreateRecord
 {
     use FilamentRedirectToListPage;
+    use HandlesRiderDocuments;
     use HasCustomCreateActions;
     use HasFilamentNotifications;
 
@@ -27,7 +27,7 @@ class CreateRider extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Store documents data for afterCreate
+        // Store documents data for afterCreate (same as mutateFormDataBeforeSave in Edit)
         $this->documentsData = $data['documents'] ?? [];
 
         // Remove documents from main data
@@ -35,8 +35,6 @@ class CreateRider extends CreateRecord
 
         return $data;
     }
-
-    protected array $documentsData = [];
 
     public array $accessibilityFeatureIds = [];
 
@@ -49,34 +47,46 @@ class CreateRider extends CreateRecord
             $rider->vehicle->syncAccessibilityFeatures($this->accessibilityFeatureIds);
         }
 
-        // Get all enabled documents
-        $enabledDocuments = Document::query()
-            ->where(Document::COLUMN_ENABLED, true)
+        // Handle documents in CREATE mode - directly add files to RiderDocument
+        $this->handleDocumentsForCreate($rider);
+    }
+
+    protected function handleDocumentsForCreate(\App\Models\Rider $rider): void
+    {
+        $enabledDocuments = \App\Models\Document::query()
+            ->where(\App\Models\Document::COLUMN_ENABLED, true)
             ->get();
 
         foreach ($enabledDocuments as $document) {
             $documentData = $this->documentsData[$document->id] ?? [];
 
-            // Check if there's any data for this document
-            if (! empty($documentData['file']) || isset($documentData['expires_at'])) {
-                // Create RiderDocument
-                $riderDocument = RiderDocument::query()->create([
-                    RiderDocument::COLUMN_RIDER_ID => $rider->id,
-                    RiderDocument::COLUMN_DOCUMENT_ID => $document->id,
-                    RiderDocument::COLUMN_EXPIRES_AT => $documentData['expires_at'] ?? null,
+            // Check if file was uploaded
+            if (! empty($documentData['file'])) {
+                // Create RiderDocument first
+                $riderDocument = \App\Models\RiderDocument::create([
+                    \App\Models\RiderDocument::COLUMN_RIDER_ID => $rider->id,
+                    \App\Models\RiderDocument::COLUMN_DOCUMENT_ID => $document->id,
                 ]);
 
-                // Handle media from temporary collection on rider
-                $temporaryMedia = $rider->getMedia("document_{$document->id}");
+                // Add file directly to RiderDocument (not from Rider!)
+                if (! empty($documentData['file'])) {
+                    $filePath = $documentData['file'];
 
-                if ($temporaryMedia->isNotEmpty()) {
-                    foreach ($temporaryMedia as $media) {
-                        $media->move($riderDocument, 'rider_documents');
+                    // FileUpload stores the relative path, we need the full path
+                    if (is_string($filePath)) {
+                        $fullPath = storage_path('app/public/' . $filePath);
+
+                        if (file_exists($fullPath)) {
+                            // Add file directly to RiderDocument
+                            $riderDocument
+                                ->addMedia($fullPath)
+                                ->toMediaCollection(\App\Models\RiderDocument::MEDIA_COLLECTION_NAME);
+
+                            // Delete temporary file
+                            @unlink($fullPath);
+                        }
                     }
                 }
-
-                // Clean up temporary collection
-                $rider->clearMediaCollection("document_{$document->id}");
             }
         }
     }
