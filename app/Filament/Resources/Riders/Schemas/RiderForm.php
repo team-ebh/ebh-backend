@@ -13,10 +13,10 @@ use App\Models\Rider;
 use App\Models\Vehicle;
 use App\Models\VehicleSetting;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
@@ -375,21 +375,40 @@ class RiderForm
 
                             $isRequired = $document->{Document::COLUMN_IS_REQUIRED};
 
-                            // Create a grid for each document
-                            $fields[] = SpatieMediaLibraryFileUpload::make("documents.{$document->id}.file")
-                                ->label($document->{Document::COLUMN_NAME})
-                                ->statePath("documents.{$document->id}.file")
-                                ->collection("document_{$document->id}")
-                                ->acceptedFileTypes($mimeTypes)
-                                ->maxFiles(1)
-                                ->maxSize(5120) // 5MB
-                                ->required($isRequired)
-                                ->helperText($helperText)
-                                ->downloadable()
-                                ->deletable()
-                                ->previewable()
-                                ->openable()
-                                ->columnSpan(1);
+                            // Use different upload component based on whether record exists
+                            if ($record) {
+                                // Edit mode: Use SpatieMediaLibraryFileUpload (uploads to Rider temporarily)
+                                $fields[] = SpatieMediaLibraryFileUpload::make("documents.{$document->id}.file")
+                                    ->label($document->{Document::COLUMN_NAME})
+                                    ->statePath("documents.{$document->id}.file")
+                                    ->collection("document_{$document->id}")
+                                    ->acceptedFileTypes($mimeTypes)
+                                    ->maxFiles(1)
+                                    ->maxSize(5120) // 5MB
+                                    ->required(false) // Not required in edit
+                                    ->helperText($helperText)
+                                    ->downloadable()
+                                    ->deletable()
+                                    ->previewable()
+                                    ->openable()
+                                    ->columnSpan(1);
+                            } else {
+                                // Create mode: Use regular FileUpload (stores file path only)
+                                $fields[] = FileUpload::make("documents.{$document->id}.file")
+                                    ->label($document->{Document::COLUMN_NAME})
+                                    ->acceptedFileTypes($mimeTypes)
+                                    ->maxFiles(1)
+                                    ->maxSize(5120) // 5MB
+                                    ->required($isRequired)
+                                    ->helperText($helperText)
+                                    ->disk('public')
+                                    ->directory('temp-rider-documents')
+                                    ->visibility('private')
+                                    ->downloadable()
+                                    ->previewable()
+                                    ->openable()
+                                    ->columnSpan(1);
+                            }
                         }
 
                         return $fields;
