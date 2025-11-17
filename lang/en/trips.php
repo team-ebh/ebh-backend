@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Trip\AccessibilityRequirementsEnum;
 use App\Enums\Trip\RideTypeEnum;
+use App\Enums\Trip\TripRequestStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
@@ -59,6 +60,13 @@ return [
             TripStatusEnum::CANCELLED_BY_RIDER->name => 'Cancelled by Rider',
             TripStatusEnum::PICKED_UP->name => 'Picked Up',
             TripStatusEnum::COMPLETED->name => 'Completed',
+        ],
+        'trip_request_statuses' => [
+            TripRequestStatusEnum::PENDING->name => 'Pending',
+            TripRequestStatusEnum::ACCEPTED->name => 'Accepted',
+            TripRequestStatusEnum::DECLINED->name => 'Declined',
+            TripRequestStatusEnum::EXPIRED->name => 'Expired',
+            TripRequestStatusEnum::CANCELLED->name => 'Cancelled',
         ],
         'price_estimation' => 'Price Estimation',
         'waiting_time_rate_description' => ':price per :minutes minutes',

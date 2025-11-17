@@ -33,5 +33,26 @@ Route::domain(config('app.domains.api'))
             Route::domain(config('app.domains.admin'))->get('/websocket-docs', function () {
                 return view('websocket-docs');
             });
+
+            // Broadcast Monitor Pages
+            Route::domain(config('app.domains.admin'))->get('/broadcast-monitor', function () {
+                return view('broadcast-monitor.index');
+            });
+
+            Route::domain(config('app.domains.admin'))->get('/broadcast-monitor/customer', function () {
+                return view('broadcast-monitor.customer');
+            });
+
+            Route::domain(config('app.domains.admin'))->get('/broadcast-monitor/rider', function () {
+                return view('broadcast-monitor.rider');
+            });
+
+            Route::domain(config('app.domains.admin'))->get('/broadcast-monitor/unified', function () {
+                return view('broadcast-monitor.unified');
+            });
+
+            Route::domain(config('app.domains.admin'))->get('/broadcast-monitor/selector', function () {
+                return view('broadcast-monitor.selector');
+            });
         }
     });

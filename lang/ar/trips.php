@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Trip\AccessibilityRequirementsEnum;
 use App\Enums\Trip\RideTypeEnum;
+use App\Enums\Trip\TripRequestStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
@@ -59,6 +60,13 @@ return [
             TripStatusEnum::CANCELLED_BY_RIDER->name => 'ملغاة من قبل السائق',
             TripStatusEnum::PICKED_UP->name => 'تم الاستلام',
             TripStatusEnum::COMPLETED->name => 'مكتملة',
+        ],
+        'trip_request_statuses' => [
+            TripRequestStatusEnum::PENDING->name => 'قيد الانتظار',
+            TripRequestStatusEnum::ACCEPTED->name => 'مقبول',
+            TripRequestStatusEnum::DECLINED->name => 'مرفوض',
+            TripRequestStatusEnum::EXPIRED->name => 'منتهي الصلاحية',
+            TripRequestStatusEnum::CANCELLED->name => 'ملغى',
         ],
         'price_estimation' => 'تقدير السعر',
         'waiting_time_rate_description' => ':price لكل :minutes دقيقة',
