@@ -639,7 +639,11 @@ describe('Change Ride Type API', function () {
     it('can calculate pricing for ROUND_TRIP_WAIT with waiting time', function () {
         $response = postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
             'ride_type_id' => RideTypeEnum::ROUND_TRIP_WAIT->value,
-            'return_time' => 60,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'destination_latitude' => 29.2263,
+            'destination_longitude' => 47.9689,
+            'return_time' => now()->addHour()->timestamp, // 1 hour from now
         ])->assertStatus(200);
 
         // Verify ROUND_TRIP_WAIT has base fare, round trip fee, and waiting time charge
@@ -712,10 +716,10 @@ describe('Change Ride Type API', function () {
         ])->assertStatus(422);
     });
 
-    it('validates return time range when provided', function () {
+    it('validates return time must be in the future', function () {
         postJson(route('v1.customers.trips.change-ride-type', $this->trip), [
             'ride_type_id' => RideTypeEnum::ROUND_TRIP_WAIT->value,
-            'return_time' => 9999,
+            'return_time' => now()->subHour()->timestamp, // Past time should fail
         ])->assertStatus(422);
     });
 

@@ -84,9 +84,8 @@ return [
         ],
         'return_time' => [
             'required' => 'Return time is required.',
-            'integer' => 'Return time must be an integer.',
-            'min' => 'Return time must be at least :min minute.',
-            'max' => 'Return time must not exceed :max minutes.',
+            'integer' => 'Return time must be a valid timestamp.',
+            'min' => 'Return time must be in the future.',
         ],
     ],
 ];

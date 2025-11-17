@@ -50,11 +50,11 @@ class ChangeRideTypeRequest extends FormRequest
             ],
 
             // Return time - required only for ROUND_TRIP_WAIT, nullable for others
+            // Unix timestamp
             'return_time' => [
                 $isRoundTripWait ? 'required' : 'nullable',
                 'integer',
-                'min:1',
-                'max:480', // Maximum 8 hours
+                'min:' . now()->timestamp, // Must be in the future
             ],
         ];
     }
@@ -87,7 +87,6 @@ class ChangeRideTypeRequest extends FormRequest
             'return_time.required' => trans('validations.trips.return_time.required'),
             'return_time.integer' => trans('validations.trips.return_time.integer'),
             'return_time.min' => trans('validations.trips.return_time.min'),
-            'return_time.max' => trans('validations.trips.return_time.max'),
         ];
     }
 }

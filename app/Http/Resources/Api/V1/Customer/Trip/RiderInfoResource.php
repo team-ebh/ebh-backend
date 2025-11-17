@@ -29,6 +29,15 @@ class RiderInfoResource extends JsonResource
             'id' => $this->resource['id'],
 
             /**
+             * Rider Image
+             *
+             * @example "https://api.ebhapp.com/riders/avatars/1.png"
+             *
+             * @var string
+             */
+            'image' => $this->resource['image'],
+
+            /**
              * Rider Name
              *
              * @example "Ahmed Al-Mansour"
