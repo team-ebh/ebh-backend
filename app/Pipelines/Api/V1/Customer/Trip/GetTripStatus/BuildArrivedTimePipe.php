@@ -21,7 +21,7 @@ class BuildArrivedTimePipe
 
         // TODO:: must be dynamic with trip table
         if ($context->trip->isAcceptedByRider() || $context->trip->isArrived() || $context->trip->isPickedUp()) {
-            $context->arrivedTime = now()->subMinutes(5)->timestamp;
+            $context->arrivedTime = now()->addMinutes(5)->timestamp;
         }
 
         return $next($context);
