@@ -57,6 +57,12 @@ class TripRequest extends Model
     }
 
     #[Scope]
+    protected function accepted($query)
+    {
+        return $query->where(self::COLUMN_STATUS, TripRequestStatusEnum::ACCEPTED);
+    }
+
+    #[Scope]
     protected function forRider($query, int $riderId)
     {
         return $query->where(self::COLUMN_RIDER_ID, $riderId);
@@ -83,6 +89,14 @@ class TripRequest extends Model
         return $query->whereNotNull(self::COLUMN_EXPIRES_AT)
             ->where(self::COLUMN_EXPIRES_AT, '<=', now())
             ->where(self::COLUMN_STATUS, TripRequestStatusEnum::PENDING);
+    }
+
+    /**
+     * Check if trip request belongs to rider
+     */
+    public function belongsToRider(int $riderId): bool
+    {
+        return $this->{self::COLUMN_RIDER_ID} === $riderId;
     }
 
     /**

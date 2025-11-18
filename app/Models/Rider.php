@@ -71,7 +71,9 @@ class Rider extends User implements HasMedia
 
     public function isOnline(): bool
     {
-        return $this->{self::COLUMN_STATUS} === RiderStatusEnum::ONLINE;
+        // TODO: for now return true
+        return true;
+        //        return $this->{self::COLUMN_STATUS} === RiderStatusEnum::ONLINE;
     }
 
     public function isOffline(): bool

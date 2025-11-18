@@ -13,7 +13,7 @@ use App\Models\TripRequest;
 use App\Services\DistanceCalculationService;
 use Illuminate\Database\Eloquent\Collection;
 
-class TripRequestRepository implements TripRequestRepositoryInterface
+readonly class TripRequestRepository implements TripRequestRepositoryInterface
 {
     public function __construct(
         private DistanceCalculationService $distanceCalculationService
@@ -60,7 +60,7 @@ class TripRequestRepository implements TripRequestRepositoryInterface
                 TripRequest::COLUMN_ESTIMATED_ARRIVAL_MINUTES => $estimatedArrivalMinutes,
                 TripRequest::COLUMN_STATUS => TripRequestStatusEnum::PENDING->value,
                 TripRequest::COLUMN_SENT_AT => now(),
-                TripRequest::COLUMN_PRIORITY => $index, // Lower index = higher priority (closer)
+                TripRequest::COLUMN_PRIORITY => $index + 1, // Lower index = higher priority (closer)
                 TripRequest::COLUMN_SEARCH_RADIUS_METERS => $searchRadiusMeters,
                 TripRequest::COLUMN_SEARCH_ATTEMPT => $searchAttempt,
                 TripRequest::COLUMN_EXPIRES_AT => $expiresAt,
@@ -89,15 +89,28 @@ class TripRequestRepository implements TripRequestRepositoryInterface
     /**
      * Get pending trip requests for a specific rider
      */
-    public function getPendingForRider(Rider $rider): Collection
+    public function getPendingForRider(int $riderId): Collection
     {
         return TripRequest::query()
-            ->forRider($rider->id)
+            ->forRider($riderId)
             ->pending()
-            ->notExpired()
-            ->with(['trip.customer', 'trip.locations', 'trip.accessibility'])
+//            ->notExpired()
+            ->with(['trip.locations', 'trip.accessibility'])
             ->orderBy(TripRequest::COLUMN_SENT_AT, 'desc')
             ->get();
+    }
+
+    /**
+     * Get accepted trip request for a specific trip
+     */
+    public function getAcceptedForTrip(int $tripId, int $riderId): ?TripRequest
+    {
+        return TripRequest::query()
+            ->forTrip($tripId)
+            ->forRider($riderId)
+            ->accepted()
+            ->with(['trip.locations', 'trip.accessibility'])
+            ->first();
     }
 
     /**

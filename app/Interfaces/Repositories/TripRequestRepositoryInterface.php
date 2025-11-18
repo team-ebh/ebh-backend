@@ -29,7 +29,12 @@ interface TripRequestRepositoryInterface
     /**
      * Get pending trip requests for a specific rider
      */
-    public function getPendingForRider(Rider $rider): Collection;
+    public function getPendingForRider(int $riderId): Collection;
+
+    /**
+     * Get accepted trip request for a specific trip
+     */
+    public function getAcceptedForTrip(int $tripId, int $riderId): ?TripRequest;
 
     /**
      * Get a specific trip request by trip and rider

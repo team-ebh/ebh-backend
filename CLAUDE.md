@@ -341,9 +341,48 @@ app/
    - Create relationship aggregate traits in `app/Traits/Model/Aggregates/`
    - Name pattern: `{ModelName}Aggregate`
    - Keep all `BelongsTo`, `HasMany`, `BelongsToMany` relationships in the aggregate trait
-   - Add PHPDoc comment describing the aggregate
-   - Use the aggregate trait in the model with `use {ModelName}Aggregate;`
 
+7. **Socket Events must extend `BaseSocketEvent`** for consistent real-time broadcasting:
+   ```php
+   use App\Events\Socket\BaseSocketEvent;
+   use Illuminate\Broadcasting\PrivateChannel;
+
+   class NewTripRequestEvent extends BaseSocketEvent
+   {
+       public function __construct(
+           public readonly int $riderId,
+           public readonly Trip $trip,
+       ) {}
+
+       public function getEventName(): string
+       {
+           return 'trip.new_request';
+       }
+
+       public function getEventData(): array
+       {
+           return [
+               'trip_id' => $this->trip->id,
+               // ... event data
+           ];
+       }
+
+       public function broadcastOn(): array
+       {
+           return [
+               new PrivateChannel("rider.{$this->riderId}"),
+           ];
+       }
+   }
+   ```
+   - All socket events go in `app/Events/Socket/{Customer|Rider}/`
+   - Use descriptive event names: `trip.new_request`, `trip.accepted`, `trip.status_changed`
+   - Always use PrivateChannel for user-specific events
+   - Event data structure: `{ event: string, data: object, timestamp: string }`
+   - Broadcast channels must be defined in `routes/channels.php`
+   - Dispatch events using `broadcast()` helper: `broadcast(new TripAcceptedEvent(...))`
+
+   Example aggregate trait pattern:
    ```php
    // app/Traits/Model/Aggregates/VehicleAggregate.php
    /**

@@ -40,6 +40,7 @@ return [
 
         'all' => 'All',
         'none' => 'None',
+        'not_provided' => 'Not provided',
 
         'save' => 'Save',
         'save_and_create_another' => 'Save & Create Another',

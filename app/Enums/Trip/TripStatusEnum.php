@@ -16,6 +16,7 @@ enum TripStatusEnum: int implements HasLabel
     case CANCELLED_BY_RIDER = 6;
     case PICKED_UP = 7;
     case COMPLETED = 8;
+    case DECLINED = 9;
 
     public function getLabel(): ?string
     {

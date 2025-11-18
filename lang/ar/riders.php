@@ -59,6 +59,21 @@ return [
         ],
     ],
     'api' => [
-
+        'validation' => [
+            'decline_reason' => [
+                'required' => 'سبب الرفض مطلوب',
+                'max' => 'يجب ألا يتجاوز سبب الرفض 500 حرف',
+            ],
+        ],
+        'errors' => [
+            'trip_not_available' => 'الرحلة لم تعد متاحة',
+            'trip_already_assigned' => 'تم تعيين هذه الرحلة بالفعل إلى سائق آخر',
+            'rider_not_available' => 'السائق غير متاح',
+            'rider_must_be_available' => 'يجب أن تكون متاحًا لقبول الرحلات',
+        ],
+        'success' => [
+            'trip_accepted' => 'تم قبول الرحلة بنجاح',
+            'trip_declined' => 'تم رفض الرحلة بنجاح',
+        ],
     ],
 ];

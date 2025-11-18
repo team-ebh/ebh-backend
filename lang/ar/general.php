@@ -18,6 +18,7 @@ return [
 
         'all' => 'الكل',
         'none' => 'لا شيء',
+        'not_provided' => 'غير محدد',
 
         'save' => 'حفظ',
         'save_and_create_another' => 'حفظ وإنشاء آخر',

@@ -60,6 +60,7 @@ return [
             TripStatusEnum::CANCELLED_BY_RIDER->name => 'ملغاة من قبل السائق',
             TripStatusEnum::PICKED_UP->name => 'تم الاستلام',
             TripStatusEnum::COMPLETED->name => 'مكتملة',
+            TripStatusEnum::DECLINED->name => 'مرفوضة',
         ],
         'trip_request_statuses' => [
             TripRequestStatusEnum::PENDING->name => 'قيد الانتظار',
@@ -93,4 +94,10 @@ return [
             'trip_status_cannot_be_checked' => 'لا يمكن التحقق من حالة الرحلة. التحقق من الحالة غير متاح للرحلات المسودة أو الملغاة أو المكتملة.',
         ],
     ],
+    'not_your_trip' => 'غير مصرح لك بإلغاء هذه الرحلة.',
+    'cannot_cancel_trip_status' => 'لا يمكن إلغاء هذه الرحلة. يمكن للسائق فقط إلغاء الرحلات المقبولة أو الواصلة.',
+    'trip_cancelled_successfully' => 'تم إلغاء الرحلة بنجاح',
+    'trip_request_not_belong_to_rider' => 'طلب الرحلة هذا غير مخصص لك.',
+    'trip_request_declined_successfully' => 'تم رفض طلب الرحلة بنجاح.',
+    'no_active_trip' => 'ليس لديك أي رحلة نشطة.',
 ];

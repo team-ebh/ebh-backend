@@ -26,7 +26,7 @@ class FormattedLocationResource extends JsonResource
              *
              * @var bool
              */
-            'is_active' => $this->resource['is_active'],
+            'is_active' => $this->resource['is_active'] ?? true,
 
             /**
              * From Location

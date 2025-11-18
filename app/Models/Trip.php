@@ -22,6 +22,8 @@ class Trip extends Model
 
     public const string COLUMN_CUSTOMER_ID = 'customer_id';
 
+    public const string COLUMN_RIDER_ID = 'rider_id';
+
     public const string COLUMN_TRIP_TYPE_ID = 'trip_type_id';
 
     public const string COLUMN_VEHICLE_TYPE_ID = 'vehicle_type_id';
@@ -54,6 +56,12 @@ class Trip extends Model
     protected function forCustomer($query, int $customerId)
     {
         return $query->where(self::COLUMN_CUSTOMER_ID, $customerId);
+    }
+
+    #[Scope]
+    protected function forRider($query, int $riderId)
+    {
+        return $query->where(self::COLUMN_RIDER_ID, $riderId);
     }
 
     #[Scope]
@@ -124,6 +132,26 @@ class Trip extends Model
     public function isCancelledByRider(): bool
     {
         return $this->{self::COLUMN_STATUS} === TripStatusEnum::CANCELLED_BY_RIDER;
+    }
+
+    /**
+     * Check if trip belongs to rider
+     */
+    public function belongsToRider(int $riderId): bool
+    {
+        return $this->{self::COLUMN_RIDER_ID} === $riderId;
+    }
+
+    /**
+     * Check if trip can be cancelled by rider
+     * Only ACCEPTED_RIDER and ARRIVED trips can be cancelled by rider
+     */
+    public function canBeCancelledByRider(): bool
+    {
+        return in_array($this->{self::COLUMN_STATUS}, [
+            TripStatusEnum::ACCEPTED_RIDER,
+            TripStatusEnum::ARRIVED,
+        ]);
     }
 
     /**

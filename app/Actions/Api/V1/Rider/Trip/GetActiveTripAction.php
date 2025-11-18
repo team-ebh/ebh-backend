@@ -1,0 +1,56 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Actions\Api\V1\Rider\Trip;
+
+use App\DTOs\Api\V1\Rider\Trip\GetActiveTripDTO;
+use App\Exceptions\Rider\NoActiveTripException;
+use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
+use App\Interfaces\Repositories\TripRequestRepositoryInterface;
+use App\Models\Trip;
+use App\Services\Trip\TripDataFormatterService;
+
+/**
+ * Get Active Trip Action
+ *
+ * Handles retrieving rider's active trip information
+ */
+readonly class GetActiveTripAction
+{
+    public function __construct(
+        private RiderTripRepositoryInterface $riderTripRepository,
+        private TripRequestRepositoryInterface $tripRequestRepository,
+        private TripDataFormatterService $tripDataFormatter,
+    ) {}
+
+    /**
+     * Execute the action
+     *
+     * @throws NoActiveTripException
+     * @throws \Throwable
+     */
+    public function __invoke(GetActiveTripDTO $dto): array
+    {
+        // Get active trip for rider
+        $activeTrip = $this->riderTripRepository->getActiveTrip($dto->riderId);
+
+        throw_if(
+            ! $activeTrip,
+            NoActiveTripException::class
+        );
+
+        // Get accepted trip request for this trip
+        $tripRequest = $this->tripRequestRepository->getAcceptedForTrip(
+            $activeTrip->{Trip::COLUMN_ID},
+            $dto->riderId
+        );
+
+        throw_if(
+            ! $tripRequest,
+            NoActiveTripException::class
+        );
+
+        return $this->tripDataFormatter->prepareTripData($tripRequest);
+    }
+}

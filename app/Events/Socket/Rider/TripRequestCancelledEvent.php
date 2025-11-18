@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Events\Socket\Rider;
 
 use App\Http\Resources\Api\V1\Socket\TripRequestCancelledBroadcastResource;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -27,7 +28,7 @@ class TripRequestCancelledEvent implements ShouldBroadcast
     {
         return [
             new PrivateChannel("rider.{$this->riderId}"),
-            new \Illuminate\Broadcasting\Channel("monitor.rider.{$this->riderId}"),
+            new Channel("monitor.rider.{$this->riderId}"),
         ];
     }
 
