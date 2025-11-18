@@ -19,7 +19,7 @@ class RiderController extends Controller
      * Update rider's current location
      *
      * Updates the rider's current latitude and longitude coordinates.
-     * This endpoint should be called every 30 seconds when the rider is online.
+     * This endpoint should be called every 15 seconds when the rider is online.
      *
      * @authenticated
      *
@@ -27,9 +27,10 @@ class RiderController extends Controller
      */
     public function updateLocation(
         UpdateLocationRequest $request,
-        UpdateLocationDTO $dto,
-        UpdateLocationAction $action
-    ): JsonResponse {
+        UpdateLocationDTO     $dto,
+        UpdateLocationAction  $action
+    ): JsonResponse
+    {
         $dto->getDataFromRequest($request);
 
         $action($dto);
