@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\Api\V1\Rider\Trip;
 
+use App\Enums\Rider\RiderStatusEnum;
 use App\Enums\Trip\TripRequestStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Collection;
 readonly class RiderTripRepository implements RiderTripRepositoryInterface
 {
     public function __construct(
-        private readonly TripRequestRepositoryInterface $tripRequestRepository
+        private TripRequestRepositoryInterface $tripRequestRepository
     ) {}
 
     /**
@@ -82,6 +83,11 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
         $trip->update([
             Trip::COLUMN_RIDER_ID => $rider->{Rider::COLUMN_ID},
             Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER,
+        ]);
+
+        // Update rider status to BUSY
+        $rider->update([
+            Rider::COLUMN_STATUS => RiderStatusEnum::BUSY,
         ]);
 
         // Reload with relationships
