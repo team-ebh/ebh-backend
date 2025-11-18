@@ -13,7 +13,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AdminInitializerSeeder::class,
-            //            VehicleSettingSeeder::class,
+            VehicleSettingSeeder::class,
+            TestDataSeeder::class,
         ]);
     }
 }
