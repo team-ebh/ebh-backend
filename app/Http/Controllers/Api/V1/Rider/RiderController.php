@@ -27,10 +27,9 @@ class RiderController extends Controller
      */
     public function updateLocation(
         UpdateLocationRequest $request,
-        UpdateLocationDTO     $dto,
-        UpdateLocationAction  $action
-    ): JsonResponse
-    {
+        UpdateLocationDTO $dto,
+        UpdateLocationAction $action
+    ): JsonResponse {
         $dto->getDataFromRequest($request);
 
         $action($dto);
