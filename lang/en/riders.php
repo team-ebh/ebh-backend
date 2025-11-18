@@ -77,5 +77,7 @@ return [
             'trip_accepted' => 'Trip accepted successfully',
             'trip_declined' => 'Trip declined successfully',
         ],
+        'location_updated_successfully' => 'Location updated successfully',
     ],
+    'location_updated_successfully' => 'Location updated successfully',
 ];

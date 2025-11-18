@@ -21,4 +21,6 @@ interface RiderRepositoryInterface
     public function validateOtp(Rider $rider, string $otp): void;
 
     public function createAuthToken(Rider $rider): string;
+
+    public function updateLocation(Rider $rider, float $latitude, float $longitude): void;
 }

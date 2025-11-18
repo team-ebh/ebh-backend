@@ -72,4 +72,13 @@ class RiderRepository implements RiderRepositoryInterface
     {
         return $rider->createToken('auth-token')->plainTextToken;
     }
+
+    public function updateLocation(Rider $rider, float $latitude, float $longitude): void
+    {
+        $rider->update([
+            Rider::COLUMN_LATITUDE => $latitude,
+            Rider::COLUMN_LONGITUDE => $longitude,
+            Rider::COLUMN_LAST_LOCATION_UPDATE => now(),
+        ]);
+    }
 }

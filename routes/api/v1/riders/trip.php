@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:rider')
     ->name('trips.')
     ->prefix('trips')
+    ->middleware(['auth:rider'])
     ->group(function () {
         // Get available trip requests
         Route::get('/requests', [TripController::class, 'requests'])

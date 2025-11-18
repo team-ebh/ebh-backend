@@ -75,5 +75,7 @@ return [
             'trip_accepted' => 'تم قبول الرحلة بنجاح',
             'trip_declined' => 'تم رفض الرحلة بنجاح',
         ],
+        'location_updated_successfully' => 'تم تحديث الموقع بنجاح',
     ],
+    'location_updated_successfully' => 'تم تحديث الموقع بنجاح',
 ];
