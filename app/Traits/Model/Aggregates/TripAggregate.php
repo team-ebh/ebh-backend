@@ -9,6 +9,7 @@ use App\Models\Trip;
 use App\Models\TripAccessibility;
 use App\Models\TripLocation;
 use App\Models\TripRequest;
+use App\Models\TripStatusLog;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -37,5 +38,10 @@ trait TripAggregate
     public function tripRequests(): HasMany
     {
         return $this->hasMany(TripRequest::class, TripRequest::COLUMN_TRIP_ID);
+    }
+
+    public function statusLogs(): HasMany
+    {
+        return $this->hasMany(TripStatusLog::class, TripStatusLog::COLUMN_TRIP_ID);
     }
 }

@@ -9,7 +9,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class NoActiveTripException extends BaseException
 {
-    protected $code = Response::HTTP_NO_CONTENT;
+    public function message(): string
+    {
+        return trans('trips.no_active_trip');
+    }
 
-    protected $message = 'trips.no_active_trip';
+    public function statusCode(): int
+    {
+        return Response::HTTP_NO_CONTENT;
+    }
 }

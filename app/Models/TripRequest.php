@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Trip\TripRequestStatusEnum;
+use App\Observers\TripRequestObserver;
 use App\Traits\Model\Aggregates\TripRequestAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 
+#[ObservedBy(TripRequestObserver::class)]
 class TripRequest extends Model
 {
     use HasDefaultColumnModelTrait;
@@ -137,50 +140,5 @@ class TripRequest extends Model
         }
 
         return $this->{self::COLUMN_EXPIRES_AT} <= now();
-    }
-
-    /**
-     * Mark request as expired
-     */
-    public function markAsExpired(): void
-    {
-        $this->update([
-            self::COLUMN_STATUS => TripRequestStatusEnum::EXPIRED,
-            self::COLUMN_RESPONDED_AT => now(),
-        ]);
-    }
-
-    /**
-     * Mark request as accepted
-     */
-    public function markAsAccepted(): void
-    {
-        $this->update([
-            self::COLUMN_STATUS => TripRequestStatusEnum::ACCEPTED,
-            self::COLUMN_RESPONDED_AT => now(),
-        ]);
-    }
-
-    /**
-     * Mark request as declined
-     */
-    public function markAsDeclined(string $reason): void
-    {
-        $this->update([
-            self::COLUMN_STATUS => TripRequestStatusEnum::DECLINED,
-            self::COLUMN_DECLINE_REASON => $reason,
-            self::COLUMN_RESPONDED_AT => now(),
-        ]);
-    }
-
-    /**
-     * Mark request as cancelled
-     */
-    public function markAsCancelled(): void
-    {
-        $this->update([
-            self::COLUMN_STATUS => TripRequestStatusEnum::CANCELLED,
-            self::COLUMN_RESPONDED_AT => now(),
-        ]);
     }
 }

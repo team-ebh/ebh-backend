@@ -8,12 +8,15 @@ use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
+use App\Observers\TripObserver;
 use App\Traits\Model\Aggregates\TripAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy(TripObserver::class)]
 class Trip extends Model
 {
     use HasDefaultColumnModelTrait;
