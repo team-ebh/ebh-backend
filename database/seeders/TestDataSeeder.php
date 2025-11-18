@@ -31,7 +31,7 @@ class TestDataSeeder extends Seeder
     public function run(): void
     {
         // Only run in local/testing environment
-        if (!ApplicationEnvironmentEnum::isLocalEnvironments()) {
+        if (! ApplicationEnvironmentEnum::isLocalEnvironments()) {
             $this->command->warn('TestDataSeeder only runs in local/testing environment');
 
             return;
@@ -148,7 +148,7 @@ class TestDataSeeder extends Seeder
 
         $company = Company::query()->first();
 
-        if (!$company) {
+        if (! $company) {
             $this->command->warn('⚠ No company found, skipping riders');
 
             return;
@@ -267,7 +267,7 @@ class TestDataSeeder extends Seeder
 
         $rider = Rider::query()->where(Rider::COLUMN_PHONE_NUMBER, self::TEST_RIDER_PHONE)->first();
 
-        if (!$rider) {
+        if (! $rider) {
             $this->command->warn('⚠ No rider found, skipping vehicles');
 
             return;
@@ -299,7 +299,7 @@ class TestDataSeeder extends Seeder
             ->where(VehicleSetting::COLUMN_CAPACITY, 4)
             ->first();
 
-        if (!$carType || !$carColor || !$carMake || !$carModel || !$passengerCapacity) {
+        if (! $carType || ! $carColor || ! $carMake || ! $carModel || ! $passengerCapacity) {
             $this->command->warn('⚠ Vehicle settings not found, skipping vehicles');
 
             return;

@@ -10,6 +10,7 @@ use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Models\TripRequest;
+use App\Models\TripRequestStatusLog;
 use App\Services\DistanceCalculationService;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -30,13 +31,14 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
     ): void {
         $expirationSeconds = config('trip.request.expiration_seconds');
         $expiresAt = $expirationSeconds ? now()->addSeconds($expirationSeconds) : null;
+        $now = now();
 
         // Get trip origin location
         $origin = $trip->locations()
             ->orderBy(TripLocation::COLUMN_SEQUENCE)
             ->first();
 
-        $requests = $riders->map(function (Rider $rider, int $index) use ($trip, $searchAttempt, $searchRadiusMeters, $expiresAt, $origin) {
+        $requests = $riders->map(function (Rider $rider, int $index) use ($trip, $searchAttempt, $searchRadiusMeters, $expiresAt, $origin, $now) {
             $distanceMeters = null;
             $estimatedArrivalMinutes = null;
 
@@ -59,17 +61,48 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
                 TripRequest::COLUMN_DISTANCE_METERS => $distanceMeters,
                 TripRequest::COLUMN_ESTIMATED_ARRIVAL_MINUTES => $estimatedArrivalMinutes,
                 TripRequest::COLUMN_STATUS => TripRequestStatusEnum::PENDING->value,
-                TripRequest::COLUMN_SENT_AT => now(),
+                TripRequest::COLUMN_SENT_AT => $now,
                 TripRequest::COLUMN_PRIORITY => $index + 1, // Lower index = higher priority (closer)
                 TripRequest::COLUMN_SEARCH_RADIUS_METERS => $searchRadiusMeters,
                 TripRequest::COLUMN_SEARCH_ATTEMPT => $searchAttempt,
                 TripRequest::COLUMN_EXPIRES_AT => $expiresAt,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
         })->toArray();
 
+        // Bulk insert trip requests (bypasses observers for performance)
         TripRequest::query()->insert($requests);
+
+        // Manually create status logs for all inserted trip requests
+        $this->createStatusLogsForBulkInsert($trip->id, $riders, $now);
+    }
+
+    /**
+     * Create status logs for bulk inserted trip requests
+     */
+    private function createStatusLogsForBulkInsert(int $tripId, Collection $riders, \Carbon\CarbonInterface $timestamp): void
+    {
+        // Get the IDs of the newly created trip requests
+        $tripRequestIds = TripRequest::query()
+            ->where(TripRequest::COLUMN_TRIP_ID, $tripId)
+            ->whereIn(TripRequest::COLUMN_RIDER_ID, $riders->pluck('id'))
+            ->pluck(TripRequest::COLUMN_ID, TripRequest::COLUMN_RIDER_ID);
+
+        // Prepare status logs for bulk insert
+        $statusLogs = $tripRequestIds->map(function ($tripRequestId) use ($timestamp) {
+            return [
+                TripRequestStatusLog::COLUMN_TRIP_REQUEST_ID => $tripRequestId,
+                TripRequestStatusLog::COLUMN_STATUS => TripRequestStatusEnum::PENDING->value,
+                TripRequestStatusLog::COLUMN_CHANGED_BY_TYPE => null,
+                TripRequestStatusLog::COLUMN_CHANGED_BY_ID => null,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ];
+        })->values()->toArray();
+
+        // Bulk insert status logs
+        TripRequestStatusLog::query()->insert($statusLogs);
     }
 
     /**
