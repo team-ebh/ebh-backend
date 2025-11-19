@@ -31,11 +31,11 @@ class TripRequestDetailResource extends JsonResource
             'trip_request_id' => $this->resource['trip_request_id'],
 
             /**
-             * Trip distance
+             * Trip distance (Meters)
              *
-             * @var string
+             * @var int
              *
-             * @example "2.3 KM"
+             * @example 325
              */
             'distance' => $this->resource['distance'],
 
