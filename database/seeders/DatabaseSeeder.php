@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Enums\ApplicationEnvironmentEnum;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,8 +14,13 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AdminInitializerSeeder::class,
-            VehicleSettingSeeder::class,
-            TestDataSeeder::class,
         ]);
+
+        if (ApplicationEnvironmentEnum::isLocalEnvironments()) {
+            $this->call([
+                VehicleSettingSeeder::class,
+                TestDataSeeder::class,
+            ]);
+        }
     }
 }
