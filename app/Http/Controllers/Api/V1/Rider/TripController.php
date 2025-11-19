@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers\Api\V1\Rider\Trip;
+namespace App\Http\Controllers\Api\V1\Rider;
 
 use App\Actions\Api\V1\Rider\Trip\AcceptTripRequestAction;
 use App\Actions\Api\V1\Rider\Trip\CancelTripAction;
@@ -23,7 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
- * @tags Rider - Trip Requests
+ * @tags Trip
  */
 class TripController extends Controller
 {
