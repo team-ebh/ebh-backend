@@ -24,7 +24,7 @@ class TripRequest extends Model
 
     public const string COLUMN_DISTANCE_METERS = 'distance_meters';
 
-    public const string COLUMN_ESTIMATED_ARRIVAL_MINUTES = 'estimated_arrival_minutes';
+    public const string COLUMN_ESTIMATED_ARRIVAL_SECONDS = 'estimated_arrival_seconds';
 
     public const string COLUMN_STATUS = 'status';
 
@@ -33,8 +33,6 @@ class TripRequest extends Model
     public const string COLUMN_RESPONDED_AT = 'responded_at';
 
     public const string COLUMN_DECLINE_REASON = 'decline_reason';
-
-    public const string COLUMN_PRIORITY = 'priority';
 
     public const string COLUMN_SEARCH_RADIUS_METERS = 'search_radius_meters';
 
@@ -48,7 +46,7 @@ class TripRequest extends Model
         self::COLUMN_RESPONDED_AT => 'timestamp',
         self::COLUMN_EXPIRES_AT => 'timestamp',
         self::COLUMN_DISTANCE_METERS => 'integer',
-        self::COLUMN_ESTIMATED_ARRIVAL_MINUTES => 'integer',
+        self::COLUMN_ESTIMATED_ARRIVAL_SECONDS => 'integer',
     ];
 
     protected $attributes = [self::COLUMN_STATUS => TripRequestStatusEnum::PENDING];

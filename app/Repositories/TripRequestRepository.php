@@ -40,7 +40,7 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
 
         $requests = $riders->map(function (Rider $rider, int $index) use ($trip, $searchAttempt, $searchRadiusMeters, $expiresAt, $origin, $now) {
             $distanceMeters = null;
-            $estimatedArrivalMinutes = null;
+            $estimatedArrivalSeconds = null;
 
             // Calculate distance and estimated arrival time if both trip origin and rider location are available
             if ($origin && isset($rider->latitude) && isset($rider->longitude)) {
@@ -52,17 +52,16 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
                 );
 
                 $distanceMeters = $calculation['distance_meters'];
-                $estimatedArrivalMinutes = $calculation['estimated_arrival_minutes'];
+                $estimatedArrivalSeconds = $calculation['estimated_arrival_seconds'];
             }
 
             return [
                 TripRequest::COLUMN_TRIP_ID => $trip->id,
                 TripRequest::COLUMN_RIDER_ID => $rider->id,
                 TripRequest::COLUMN_DISTANCE_METERS => $distanceMeters,
-                TripRequest::COLUMN_ESTIMATED_ARRIVAL_MINUTES => $estimatedArrivalMinutes,
+                TripRequest::COLUMN_ESTIMATED_ARRIVAL_SECONDS => $estimatedArrivalSeconds,
                 TripRequest::COLUMN_STATUS => TripRequestStatusEnum::PENDING->value,
                 TripRequest::COLUMN_SENT_AT => $now,
-                TripRequest::COLUMN_PRIORITY => $index + 1, // Lower index = higher priority (closer)
                 TripRequest::COLUMN_SEARCH_RADIUS_METERS => $searchRadiusMeters,
                 TripRequest::COLUMN_SEARCH_ATTEMPT => $searchAttempt,
                 TripRequest::COLUMN_EXPIRES_AT => $expiresAt,

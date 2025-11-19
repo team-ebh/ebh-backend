@@ -20,11 +20,10 @@ return new class extends Migration
             $table->unsignedTinyInteger('status');
             $table->timestamp('sent_at');
             $table->timestamp('responded_at')->nullable();
-            $table->unsignedTinyInteger('priority');
             $table->unsignedInteger('search_radius_meters')->nullable();
             $table->unsignedTinyInteger('search_attempt')->default(1);
             $table->unsignedInteger('distance_meters')->nullable();
-            $table->unsignedInteger('estimated_arrival_minutes')->nullable();
+            $table->unsignedInteger('estimated_arrival_seconds')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });

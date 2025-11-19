@@ -9,6 +9,7 @@ use App\Traits\Model\Aggregates\RiderAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\HasMediaTrait;
 use App\Traits\Model\LogsActivity;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -103,5 +104,21 @@ class Rider extends User implements HasMedia
     public function vehicles(): HasMany
     {
         return $this->hasMany(Vehicle::class, Vehicle::COLUMN_RIDER_ID);
+    }
+
+    public function latitude(): Attribute
+    {
+        // TODO: remove this function before production
+        return new Attribute(
+            get: fn ($value) => is_null($value) ? 29.353325 : (float) $value
+        );
+    }
+
+    public function longitude(): Attribute
+    {
+        // TODO: remove this function before production
+        return new Attribute(
+            get: fn ($value) => is_null($value) ? 47.98227 : (float) $value
+        );
     }
 }

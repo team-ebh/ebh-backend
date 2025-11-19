@@ -85,14 +85,7 @@ readonly class RiderMatchingService
 
         // Calculate distance and filter by radius
         // Using Haversine formula for distance calculation
-        $riders = $query->get()->filter(function (Rider $rider) use ($originLat, $originLng, $radiusMeters) {
-            // TODO: This assumes riders have a location field
-            // You might need to implement a RiderLocation model/table
-            // For now, we'll skip proximity filtering if location is not available
-            if (! isset($rider->latitude) || ! isset($rider->longitude)) {
-                return true; // Include all riders if location not available
-            }
-
+        $riders = $query->get()->filter(function (Rider $rider) use ($originLat, $originLng) {
             $distance = $this->calculateDistance(
                 $originLat,
                 $originLng,
@@ -100,7 +93,9 @@ readonly class RiderMatchingService
                 $rider->longitude
             );
 
-            return $distance <= $radiusMeters;
+            // TODO: This assumes riders have a location field
+            return true;
+            //            return $distance <= $radiusMeters;
         });
 
         // Sort by proximity (if location data available)

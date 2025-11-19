@@ -37,7 +37,7 @@ class DistanceCalculationService
      * @param  float  $originLongitude  Origin longitude
      * @param  float  $destinationLatitude  Destination latitude
      * @param  float  $destinationLongitude  Destination longitude
-     * @return array{distance_meters: int|null, estimated_arrival_minutes: int|null}
+     * @return array{distance_meters: int|null, estimated_arrival_seconds: int|null}
      */
     public function calculateDistanceAndDuration(
         float $originLatitude,
@@ -115,8 +115,8 @@ class DistanceCalculationService
             $durationSeconds = $element['duration']['value'] ?? null;
 
             return [
-                'distance_meters' => $distanceMeters ? (int) $distanceMeters : null,
-                'estimated_arrival_minutes' => $durationSeconds ? (int) ceil($durationSeconds / 60) : null,
+                'distance_meters' => $distanceMeters !== null ? (int) $distanceMeters : null,
+                'estimated_arrival_seconds' => $durationSeconds !== null ? (int) ceil($durationSeconds) : null,
             ];
         } catch (\Throwable $e) {
             Log::error('Distance calculation service exception', [
@@ -143,7 +143,7 @@ class DistanceCalculationService
      * @param  float  $originLongitude  Origin longitude
      * @param  float  $destinationLatitude  Destination latitude
      * @param  float  $destinationLongitude  Destination longitude
-     * @return array{distance_meters: int|null, estimated_arrival_minutes: int|null}
+     * @return array{distance_meters: int|null, estimated_arrival_seconds: int|null}
      */
     private function calculateUsingHaversine(
         float $originLatitude,
@@ -172,11 +172,11 @@ class DistanceCalculationService
         // Estimate duration based on average city speed (30 km/h = 8.33 m/s)
         $averageSpeedMetersPerSecond = 8.33;
         $durationSeconds = $distanceMeters / $averageSpeedMetersPerSecond;
-        $estimatedArrivalMinutes = (int) ceil($durationSeconds / 60);
+        $estimatedArrivalSeconds = (int) ceil($durationSeconds);
 
         return [
             'distance_meters' => $distanceMeters,
-            'estimated_arrival_minutes' => $estimatedArrivalMinutes,
+            'estimated_arrival_seconds' => $estimatedArrivalSeconds,
         ];
     }
 
