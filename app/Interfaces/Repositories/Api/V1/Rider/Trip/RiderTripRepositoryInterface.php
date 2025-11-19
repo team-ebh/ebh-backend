@@ -24,4 +24,6 @@ interface RiderTripRepositoryInterface
     public function declineTripRequest(TripRequest $tripRequest): void;
 
     public function cancelTripRequestWithLock(TripRequest $tripRequest): Trip;
+
+    public function updateRiderStatusToOnline(int $riderId): void;
 }

@@ -132,4 +132,16 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
 
         return $trip->fresh();
     }
+
+    /**
+     * Update rider status to ONLINE
+     */
+    public function updateRiderStatusToOnline(int $riderId): void
+    {
+        Rider::query()
+            ->where(Rider::COLUMN_ID, $riderId)
+            ->update([
+                Rider::COLUMN_STATUS => RiderStatusEnum::ONLINE,
+            ]);
+    }
 }

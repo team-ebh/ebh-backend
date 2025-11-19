@@ -43,6 +43,9 @@ readonly class CancelTripAction
         // Cancel trip with lock (inside transaction)
         $trip = $this->riderTripRepository->cancelTripRequestWithLock($dto->tripRequest);
 
+        // Update rider status to ONLINE
+        $this->riderTripRepository->updateRiderStatusToOnline($dto->riderId);
+
         return $trip;
     }
 
