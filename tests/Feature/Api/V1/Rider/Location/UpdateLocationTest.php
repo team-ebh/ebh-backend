@@ -43,9 +43,9 @@ test('it can update rider location with valid coordinates', function () {
 
     // Verify database was updated
     $this->rider->refresh();
-    expect($this->rider->{Rider::COLUMN_LATITUDE})->toBe('29.37590000');
-    expect($this->rider->{Rider::COLUMN_LONGITUDE})->toBe('47.97740000');
-    expect($this->rider->{Rider::COLUMN_LAST_LOCATION_UPDATE})->not->toBeNull();
+    expect((float) $this->rider->{Rider::COLUMN_LATITUDE})->toBe(29.3759)
+        ->and((float) $this->rider->{Rider::COLUMN_LONGITUDE})->toBe(47.9774)
+        ->and($this->rider->{Rider::COLUMN_LAST_LOCATION_UPDATE})->not->toBeNull();
 });
 
 test('it requires authentication', function () {
@@ -91,6 +91,6 @@ test('it can handle decimal precision in coordinates', function () {
     $response->assertOk();
 
     $this->rider->refresh();
-    expect($this->rider->{Rider::COLUMN_LATITUDE})->toBe('29.37594567');
-    expect($this->rider->{Rider::COLUMN_LONGITUDE})->toBe('47.97745678');
+    expect((float) $this->rider->{Rider::COLUMN_LATITUDE})->toBe(29.37594567)
+        ->and((float) $this->rider->{Rider::COLUMN_LONGITUDE})->toBe(47.97745678);
 });

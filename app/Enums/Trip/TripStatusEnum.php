@@ -12,7 +12,7 @@ enum TripStatusEnum: int implements HasLabel
     case PENDING_RIDER = 2;
     case ACCEPTED_RIDER = 3;
     case ARRIVED = 4;
-    case PICKUP = 5;
+    case PICKED_UP = 5;
     case COMPLETED = 6;
     case CANCELED_BY_CUSTOMER = 7;
     case CANCELLED_BY_RIDER = 8;

@@ -85,7 +85,6 @@ test('TripRequestObserver creates status log on trip request creation', function
         TripRequest::COLUMN_RIDER_ID => $rider->id,
         TripRequest::COLUMN_STATUS => TripRequestStatusEnum::PENDING,
         TripRequest::COLUMN_SENT_AT => now(),
-        TripRequest::COLUMN_PRIORITY => 1,
     ]);
 
     // Verify log was created

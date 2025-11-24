@@ -56,7 +56,7 @@ return [
             TripStatusEnum::PENDING_RIDER->name => 'Pending Rider',
             TripStatusEnum::ACCEPTED_RIDER->name => 'Accepted by Rider',
             TripStatusEnum::ARRIVED->name => 'Arrived',
-            TripStatusEnum::PICKUP->name => 'Picked Up',
+            TripStatusEnum::PICKED_UP->name => 'Picked Up',
             TripStatusEnum::COMPLETED->name => 'Completed',
             TripStatusEnum::CANCELED_BY_CUSTOMER->name => 'Cancelled by Customer',
             TripStatusEnum::CANCELLED_BY_RIDER->name => 'Cancelled by Rider',

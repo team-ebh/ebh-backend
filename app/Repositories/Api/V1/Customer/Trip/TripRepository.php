@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class TripRepository implements TripRepositoryInterface
 {
-    public function createTrip(TripStoreDTO $dto, array $originLocation, array $destinationLocation, float $accessibilityCost, float $totalPrice): Trip
+    public function createTrip(TripStoreDTO $dto, array $originLocation, array $destinationLocation, ?float $accessibilityCost, float $totalPrice): Trip
     {
         // Create trip
         $trip = Trip::query()->create([
@@ -25,7 +25,7 @@ class TripRepository implements TripRepositoryInterface
             Trip::COLUMN_TRIP_TYPE_ID => $dto->tripTypeId,
             Trip::COLUMN_VEHICLE_TYPE_ID => $dto->vehicleTypeId,
             Trip::COLUMN_PASSENGER_COUNT => $dto->passengerCount,
-            Trip::COLUMN_ACCESSIBILITY_PRICE => $accessibilityCost > 0 ? $accessibilityCost : null,
+            Trip::COLUMN_ACCESSIBILITY_PRICE => ($accessibilityCost && $accessibilityCost > 0) ? $accessibilityCost : null,
             Trip::COLUMN_WAITING_PRICE => null,
             Trip::COLUMN_TOTAL_PRICE => $totalPrice,
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD,

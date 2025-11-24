@@ -39,9 +39,8 @@ beforeEach(function () {
             'trip_id' => $trip->id,
             'rider_id' => $this->rider->id,
             'distance_meters' => 1000,
-            'estimated_arrival_minutes' => 5,
+            'estimated_arrival_seconds' => 300,
             'status' => TripRequestStatusEnum::ACCEPTED->value,
-            'priority' => 1,
             'sent_at' => now(),
         ], $tripRequestOverrides));
 
@@ -57,7 +56,7 @@ test('rider can cancel accepted trip successfully', function () {
     ]);
 
     $response = actingAs($this->rider, 'rider')
-        ->postJson(route('v1.riders.trips.requests.cancel', $trip->tripRequest));
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
     $response->assertOk();
 
@@ -78,7 +77,7 @@ test('rider can cancel trip that has arrived status', function () {
     ]);
 
     $response = actingAs($this->rider, 'rider')
-        ->postJson(route('v1.riders.trips.requests.cancel', $trip->tripRequest));
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
     $response->assertOk();
 
@@ -93,13 +92,13 @@ test('rider can cancel trip that has arrived status', function () {
     ]);
 });
 
-test('rider can cancel trip without providing reason', function () {
+test('rider can cancel trip', function () {
     $trip = ($this->createTrip)([
         'status' => TripStatusEnum::ACCEPTED_RIDER->value,
     ]);
 
     $response = actingAs($this->rider, 'rider')
-        ->postJson(route('v1.riders.trips.requests.cancel', $trip->tripRequest));
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
     $response->assertOk();
 });
@@ -113,7 +112,7 @@ test('rider cannot cancel trip that is not assigned to them', function () {
     );
 
     $response = actingAs($this->rider, 'rider')
-        ->postJson(route('v1.riders.trips.requests.cancel', $trip->tripRequest));
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
     $response->assertForbidden();
 });
@@ -125,7 +124,7 @@ test('rider cannot cancel trip with invalid status - draft', function () {
     );
 
     $response = actingAs($this->rider, 'rider')
-        ->postJson(route('v1.riders.trips.requests.cancel', $trip->tripRequest));
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
     $response->assertUnprocessable();
 });
@@ -136,7 +135,7 @@ test('rider cannot cancel trip with invalid status - picked up', function () {
     ]);
 
     $response = actingAs($this->rider, 'rider')
-        ->postJson(route('v1.riders.trips.requests.cancel', $trip->tripRequest));
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
     $response->assertUnprocessable();
 });
@@ -147,7 +146,7 @@ test('rider cannot cancel trip with invalid status - completed', function () {
     ]);
 
     $response = actingAs($this->rider, 'rider')
-        ->postJson(route('v1.riders.trips.requests.cancel', $trip->tripRequest));
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
     $response->assertUnprocessable();
 });
@@ -158,7 +157,7 @@ test('rider cannot cancel trip with invalid status - already cancelled by custom
     ]);
 
     $response = actingAs($this->rider, 'rider')
-        ->postJson(route('v1.riders.trips.requests.cancel', $trip->tripRequest));
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
     $response->assertUnprocessable();
 });
@@ -169,7 +168,7 @@ test('rider cannot cancel trip with invalid status - already cancelled by rider'
     ]);
 
     $response = actingAs($this->rider, 'rider')
-        ->postJson(route('v1.riders.trips.requests.cancel', $trip->tripRequest));
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
     $response->assertUnprocessable();
 });
@@ -179,7 +178,7 @@ test('unauthenticated rider cannot cancel trip', function () {
         'status' => TripStatusEnum::ACCEPTED_RIDER->value,
     ]);
 
-    $response = postJson(route('v1.riders.trips.requests.cancel', $trip->tripRequest));
+    $response = postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
     $response->assertUnauthorized();
 });

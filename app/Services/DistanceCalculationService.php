@@ -23,7 +23,7 @@ class DistanceCalculationService
      */
     public function __construct()
     {
-        $this->apiKey = config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY', ''));
+        $this->apiKey = config('services.google_maps.api_key');
 
         if (empty($this->apiKey)) {
             Log::warning('Google Maps API key is not configured');

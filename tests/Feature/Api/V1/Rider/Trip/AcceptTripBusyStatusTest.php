@@ -47,9 +47,8 @@ beforeEach(function () {
             'trip_id' => $trip->id,
             'rider_id' => $this->rider->id,
             'distance_meters' => 1000,
-            'estimated_arrival_minutes' => 5,
+            'estimated_arrival_seconds' => 300,
             'status' => TripRequestStatusEnum::PENDING->value,
-            'priority' => 1,
             'sent_at' => now(),
         ], $tripRequestOverrides));
 

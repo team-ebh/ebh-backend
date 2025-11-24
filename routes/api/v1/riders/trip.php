@@ -16,6 +16,6 @@ Route::middleware('auth:rider')
         Route::post('/{tripRequest}/decline', 'decline')->name('requests.decline');
         Route::post('/{tripRequest}/cancel', 'cancel')->name('requests.cancel');
         Route::post('/{tripRequest}/arrived', 'arrivedTripLocation')->name('requests.arrived');
-        Route::post('/{tripRequest}/pickup', 'pickUpPassenger')->name('requests.pickup');
-        Route::post('/{tripRequest}/complete', 'completeTripLocation')->name('requests.complete');
+        Route::post('/{tripRequest}/picked-up', 'pickUpPassenger')->name('requests.pickup');
+        Route::post('/{tripRequest}/completed', 'completeTripLocation')->name('requests.complete');
     });
