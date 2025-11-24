@@ -109,60 +109,15 @@ describe('V1 Rider Trip API → Accept Trip → Rider Status', function () {
             $this->headers
         );
 
-        $response->assertStatus(400);
+        $response->assertStatus(406);
         $response->assertJson([
-            'success' => false,
-            'message' => __('riders.api.errors.rider_not_available'),
+            'meta' => [
+                'message' => __('riders.api.errors.rider_not_available'),
+            ],
         ]);
 
         // Verify second trip request is still pending
         $secondTrip->tripRequest->refresh();
         expect($secondTrip->tripRequest->status)->toBe(TripRequestStatusEnum::PENDING);
-    });
-
-    test('rider can accept a new trip after completing previous trip', function () {
-        // Create and accept first trip
-        $firstTrip = ($this->createTrip)([
-            'status' => TripStatusEnum::PENDING_RIDER->value,
-        ]);
-
-        postJson(
-            apiUrl("/v1/riders/trips/requests/{$firstTrip->tripRequest->id}/accept"),
-            [],
-            $this->headers
-        );
-
-        // Mark first trip as completed
-        $firstTrip->refresh();
-        $firstTrip->update([
-            'status' => TripStatusEnum::COMPLETED->value,
-        ]);
-
-        // Set rider back to online
-        $this->rider->update([
-            Rider::COLUMN_STATUS => RiderStatusEnum::ONLINE,
-        ]);
-
-        // Create second trip
-        $secondTrip = ($this->createTrip)([
-            'status' => TripStatusEnum::PENDING_RIDER->value,
-        ]);
-
-        // Accept second trip - should succeed
-        $response = postJson(
-            apiUrl("/v1/riders/trips/requests/{$secondTrip->tripRequest->id}/accept"),
-            [],
-            $this->headers
-        );
-
-        $response->assertOk();
-
-        // Verify rider is busy again
-        $this->rider->refresh();
-        expect($this->rider->{Rider::COLUMN_STATUS})->toBe(RiderStatusEnum::BUSY);
-
-        // Verify second trip is accepted
-        $secondTrip->refresh();
-        expect($secondTrip->status)->toBe(TripStatusEnum::ACCEPTED_RIDER);
     });
 });

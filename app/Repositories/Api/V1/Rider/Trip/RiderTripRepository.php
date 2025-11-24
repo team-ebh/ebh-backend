@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Repositories\Api\V1\Rider\Trip;
 
 use App\Enums\Rider\RiderStatusEnum;
+use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripRequestStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Interfaces\Repositories\TripRequestRepositoryInterface;
 use App\Models\Rider;
 use App\Models\Trip;
+use App\Models\TripLocation;
 use App\Models\TripRequest;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -53,11 +55,7 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     {
         return Trip::query()
             ->forRider($riderId)
-            ->whereIn(Trip::COLUMN_STATUS, [
-                TripStatusEnum::ACCEPTED_RIDER,
-                TripStatusEnum::ARRIVED,
-                TripStatusEnum::PICKED_UP,
-            ])
+            ->where(Trip::COLUMN_STATUS, TripStatusEnum::ACCEPTED_RIDER)
             ->with(['customer', 'locations', 'accessibility'])
             ->first();
     }
@@ -143,5 +141,25 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
             ->update([
                 Rider::COLUMN_STATUS => RiderStatusEnum::ONLINE,
             ]);
+    }
+
+    /**
+     * Update trip location status
+     */
+    public function updateTripLocationStatus(TripLocation $location, TripLocationStatusEnum $status): void
+    {
+        $location->update([
+            TripLocation::COLUMN_STATUS => $status,
+        ]);
+    }
+
+    /**
+     * Update trip status
+     */
+    public function updateTripStatus(Trip $trip, TripStatusEnum $status): void
+    {
+        $trip->update([
+            Trip::COLUMN_STATUS => $status,
+        ]);
     }
 }

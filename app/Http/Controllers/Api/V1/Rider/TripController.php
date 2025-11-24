@@ -5,17 +5,24 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Rider;
 
 use App\Actions\Api\V1\Rider\Trip\AcceptTripRequestAction;
+use App\Actions\Api\V1\Rider\Trip\ArriveTripAction;
 use App\Actions\Api\V1\Rider\Trip\CancelTripAction;
+use App\Actions\Api\V1\Rider\Trip\CompleteTripAction;
 use App\Actions\Api\V1\Rider\Trip\DeclineTripRequestAction;
 use App\Actions\Api\V1\Rider\Trip\GetActiveTripAction;
 use App\Actions\Api\V1\Rider\Trip\GetTripRequestsAction;
+use App\Actions\Api\V1\Rider\Trip\PickUpTripAction;
 use App\DTOs\Api\V1\Rider\Trip\AcceptTripRequestDTO;
+use App\DTOs\Api\V1\Rider\Trip\ArrivedTripDTO;
 use App\DTOs\Api\V1\Rider\Trip\CancelTripDTO;
+use App\DTOs\Api\V1\Rider\Trip\CompleteTripDTO;
 use App\DTOs\Api\V1\Rider\Trip\DeclineTripRequestDTO;
 use App\DTOs\Api\V1\Rider\Trip\GetActiveTripDTO;
 use App\DTOs\Api\V1\Rider\Trip\GetTripRequestsDTO;
+use App\DTOs\Api\V1\Rider\Trip\PickUpTripDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\Rider\Trip\AcceptTripRequestResource;
+use App\Http\Resources\Api\V1\Rider\Trip\TripActionResource;
 use App\Http\Resources\Api\V1\Rider\Trip\TripRequestResource;
 use App\Models\TripRequest;
 use Illuminate\Http\JsonResponse;
@@ -127,5 +134,65 @@ class TripController extends Controller
         $action($dto);
 
         return $this->successResponse();
+    }
+
+    /**
+     * Mark rider as arrived at location
+     *
+     * Updates current location status to arrived and returns next action
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function arrivedTripLocation(
+        TripRequest $tripRequest,
+        Request $request,
+        ArrivedTripDTO $dto,
+        ArriveTripAction $action,
+    ): TripActionResource {
+        $dto->getDataFromRequest($request);
+
+        return new TripActionResource($action($dto));
+    }
+
+    /**
+     * Mark passenger as picked up
+     *
+     * Updates current location status to picked up and returns next action
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function pickUpPassenger(
+        TripRequest $tripRequest,
+        Request $request,
+        PickUpTripDTO $dto,
+        PickUpTripAction $action,
+    ): TripActionResource {
+        $dto->getDataFromRequest($request);
+
+        return new TripActionResource($action($dto));
+    }
+
+    /**
+     * Complete current location
+     *
+     * Marks current location as completed. If all locations completed, marks trip as completed and rider as online
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function completeTripLocation(
+        TripRequest $tripRequest,
+        Request $request,
+        CompleteTripDTO $dto,
+        CompleteTripAction $action,
+    ): TripActionResource {
+        $dto->getDataFromRequest($request);
+
+        return new TripActionResource($action($dto));
     }
 }

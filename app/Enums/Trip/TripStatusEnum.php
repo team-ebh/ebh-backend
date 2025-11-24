@@ -12,11 +12,10 @@ enum TripStatusEnum: int implements HasLabel
     case PENDING_RIDER = 2;
     case ACCEPTED_RIDER = 3;
     case ARRIVED = 4;
-    case CANCELED_BY_CUSTOMER = 5;
-    case CANCELLED_BY_RIDER = 6;
-    case PICKED_UP = 7;
-    case COMPLETED = 8;
-    case DECLINED = 9;
+    case PICKUP = 5;
+    case COMPLETED = 6;
+    case CANCELED_BY_CUSTOMER = 7;
+    case CANCELLED_BY_RIDER = 8;
 
     public function getLabel(): ?string
     {
