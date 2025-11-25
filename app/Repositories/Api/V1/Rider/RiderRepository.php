@@ -12,6 +12,11 @@ use Random\RandomException;
 
 class RiderRepository implements RiderRepositoryInterface
 {
+    public function find(int $riderId): ?Rider
+    {
+        return Rider::find($riderId);
+    }
+
     public function findByPhoneNumber(string $phoneNumber): ?Rider
     {
         return Rider::query()->where(Rider::COLUMN_PHONE_NUMBER, $phoneNumber)->first();

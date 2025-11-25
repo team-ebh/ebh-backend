@@ -8,6 +8,8 @@ use App\Models\Rider;
 
 interface RiderRepositoryInterface
 {
+    public function find(int $riderId): ?Rider;
+
     public function findByPhoneNumber(string $phoneNumber): ?Rider;
 
     public function findAndValidateRider(string $phoneNumber): ?Rider;

@@ -99,7 +99,7 @@ return [
             'trip_status_cannot_be_checked' => 'Trip status cannot be checked. Status checking is not available for draft, cancelled, or completed trips.',
         ],
     ],
-    'not_your_trip' => 'You are not authorized to cancel this trip.',
+    'not_your_trip' => 'You are not authorized to access this trip.',
     'cannot_cancel_trip_status' => 'This trip cannot be cancelled. Only accepted or arrived trips can be cancelled by rider.',
     'trip_cancelled_successfully' => 'Trip cancelled successfully',
     'trip_request_not_belong_to_rider' => 'This trip request is not assigned to you.',

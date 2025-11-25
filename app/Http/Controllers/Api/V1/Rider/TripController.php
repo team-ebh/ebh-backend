@@ -10,6 +10,7 @@ use App\Actions\Api\V1\Rider\Trip\CancelTripAction;
 use App\Actions\Api\V1\Rider\Trip\CompleteTripAction;
 use App\Actions\Api\V1\Rider\Trip\DeclineTripRequestAction;
 use App\Actions\Api\V1\Rider\Trip\GetActiveTripAction;
+use App\Actions\Api\V1\Rider\Trip\GetEstimatedArrivalTimeAction;
 use App\Actions\Api\V1\Rider\Trip\GetTripRequestsAction;
 use App\Actions\Api\V1\Rider\Trip\PickUpTripAction;
 use App\DTOs\Api\V1\Rider\Trip\AcceptTripRequestDTO;
@@ -18,10 +19,12 @@ use App\DTOs\Api\V1\Rider\Trip\CancelTripDTO;
 use App\DTOs\Api\V1\Rider\Trip\CompleteTripDTO;
 use App\DTOs\Api\V1\Rider\Trip\DeclineTripRequestDTO;
 use App\DTOs\Api\V1\Rider\Trip\GetActiveTripDTO;
+use App\DTOs\Api\V1\Rider\Trip\GetEstimatedArrivalTimeDTO;
 use App\DTOs\Api\V1\Rider\Trip\GetTripRequestsDTO;
 use App\DTOs\Api\V1\Rider\Trip\PickUpTripDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\Rider\Trip\AcceptTripRequestResource;
+use App\Http\Resources\Api\V1\Rider\Trip\EstimatedArrivalTimeResource;
 use App\Http\Resources\Api\V1\Rider\Trip\TripActionResource;
 use App\Http\Resources\Api\V1\Rider\Trip\TripRequestResource;
 use App\Models\TripRequest;
@@ -194,5 +197,29 @@ class TripController extends Controller
         $dto->getDataFromRequest($request);
 
         return new TripActionResource($action($dto));
+    }
+
+    /**
+     * Get estimated arrival time to next destination
+     *
+     * Returns the estimated time in seconds for the rider to reach the next destination (origin or destination location).
+     * This endpoint should be called every 60 seconds while the rider is moving towards the next location.
+     * The rider should call this API when:
+     * - Moving towards an origin location (to pick up passenger)
+     * - Moving towards a destination location (after picking up passenger)
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function estimatedArrivalTime(
+        TripRequest $tripRequest,
+        Request $request,
+        GetEstimatedArrivalTimeDTO $dto,
+        GetEstimatedArrivalTimeAction $action,
+    ): EstimatedArrivalTimeResource {
+        $dto->getDataFromRequest($request);
+
+        return new EstimatedArrivalTimeResource($action($dto));
     }
 }
