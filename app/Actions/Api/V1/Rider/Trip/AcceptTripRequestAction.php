@@ -74,6 +74,7 @@ readonly class AcceptTripRequestAction
         return array_merge($tripData, [
             'next_action' => $nextAction,
             'trip_completed' => $nextAction === null,
+            'customer' => $trip->customer,
         ]);
     }
 

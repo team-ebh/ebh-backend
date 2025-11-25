@@ -7,6 +7,7 @@ namespace App\Http\Resources\Api\V1\Rider\Trip;
 use App\Http\Resources\Api\PriceResource;
 use App\Http\Resources\Api\V1\Customer\Trip\FormattedLocationResource;
 use App\Http\Resources\Api\V1\Customer\Trip\MapLocationResource;
+use App\Http\Resources\Api\V1\Rider\CustomerResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -69,6 +70,15 @@ class AcceptTripRequestResource extends JsonResource
                 'next_action' => $this->resource['next_action'] ?? null,
                 'trip_completed' => $this->resource['trip_completed'] ?? false,
             ]),
+
+            /**
+             * Customer Information
+             *
+             * Contains customer details (full name, image, phone)
+             *
+             * @var CustomerResource
+             */
+            'customer' => new CustomerResource($this->resource['customer']),
         ];
     }
 }
