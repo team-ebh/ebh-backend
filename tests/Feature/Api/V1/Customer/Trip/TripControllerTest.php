@@ -902,7 +902,6 @@ describe('Confirm Trip API', function () {
 
         \Illuminate\Support\Facades\Event::fake([
             \App\Events\Socket\Rider\NewTripRequestEvent::class,
-            \App\Events\Socket\Customer\TripSearchingForRiderEvent::class,
         ]);
 
         // Create vehicle setting for the trip vehicle type
@@ -1009,14 +1008,6 @@ describe('Confirm Trip API', function () {
         \Illuminate\Support\Facades\Event::assertNotDispatched(
             \App\Events\Socket\Rider\NewTripRequestEvent::class,
             fn ($event) => $event->riderId === $rider3->id
-        );
-
-        // Verify customer was notified about searching
-        \Illuminate\Support\Facades\Event::assertDispatched(
-            \App\Events\Socket\Customer\TripSearchingForRiderEvent::class,
-            fn ($event) => $event->customerId === $this->customer->id
-                && $event->tripId === $trip->id
-                && $event->riderCount === 2
         );
     });
 

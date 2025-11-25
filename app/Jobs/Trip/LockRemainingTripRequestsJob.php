@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs\Trip;
 
 use App\Enums\Trip\TripRequestStatusEnum;
+use App\Events\Socket\Rider\TripRequestLockedEvent;
 use App\Models\Trip;
 use App\Models\TripRequest;
 use Illuminate\Bus\Queueable;
@@ -17,6 +18,7 @@ use Illuminate\Queue\SerializesModels;
  * Lock Remaining Trip Requests Job
  *
  * Locks all pending trip requests for a trip after one has been accepted
+ * Notifies affected riders via socket events
  */
 class LockRemainingTripRequestsJob implements ShouldQueue
 {
@@ -50,6 +52,13 @@ class LockRemainingTripRequestsJob implements ShouldQueue
                         TripRequest::COLUMN_STATUS => TripRequestStatusEnum::LOCKED,
                         TripRequest::COLUMN_RESPONDED_AT => now(),
                     ]);
+
+                    // Notify rider that their trip request has been locked
+                    broadcast(new TripRequestLockedEvent(
+                        riderId: $tripRequest->{TripRequest::COLUMN_RIDER_ID},
+                        tripId: $this->tripId,
+                        tripRequestId: $tripRequest->{TripRequest::COLUMN_ID},
+                    ));
                 }
             });
     }

@@ -8,13 +8,15 @@ use App\Events\Socket\BaseSocketEvent;
 use App\Models\Rider;
 use App\Models\Trip;
 use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 /**
  * Trip Accepted Event
  *
  * Sent to customer when a rider accepts their trip request
  */
-class TripAcceptedEvent extends BaseSocketEvent
+class TripAcceptedEvent extends BaseSocketEvent implements ShouldDispatchAfterCommit, ShouldQueue
 {
     public function __construct(
         public readonly int $customerId,

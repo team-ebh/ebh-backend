@@ -54,7 +54,6 @@ abstract class BaseSocketEvent implements ShouldBroadcast
             'type' => 'socket',
             'event' => $this->getEventName(),
             'data' => $this->getEventData(),
-            'timestamp' => now()->toIso8601String(),
         ];
     }
 }

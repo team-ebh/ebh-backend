@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Trip;
 
-use App\Events\Socket\Customer\TripSearchingForRiderEvent;
 use App\Events\Socket\Rider\NewTripRequestEvent;
-use App\Events\Socket\Rider\TripRequestCancelledEvent;
 use App\Interfaces\Repositories\TripRequestRepositoryInterface;
-use App\Models\Rider;
 use App\Models\Trip;
 
 /**
@@ -64,67 +61,7 @@ readonly class TripRequestService
             ));
         }
 
-        // Broadcast to customer
-        broadcast(new TripSearchingForRiderEvent(
-            customerId: $trip->customer_id,
-            tripId: $trip->id,
-            riderCount: $eligibleRiders->count(),
-            radiusMeters: $radiusMeters,
-            searchAttempt: $searchAttempt
-        ));
-
         return $eligibleRiders->count();
-    }
-
-    /**
-     * Cancel all pending trip requests for a trip
-     *
-     * @param  Trip  $trip  The trip
-     * @param  string  $reason  Reason for cancellation
-     * @return int Number of requests cancelled
-     */
-    public function cancelPendingRequests(Trip $trip, string $reason = 'trip_assigned'): int
-    {
-        // Get pending requests before cancelling
-        $pendingRequests = $this->tripRequestRepository->getPendingForTrip($trip);
-
-        // Cancel them
-        $cancelledCount = $this->tripRequestRepository->cancelPendingByTrip($trip, $reason);
-
-        // Broadcast cancellation to each rider
-        foreach ($pendingRequests as $tripRequest) {
-            broadcast(new TripRequestCancelledEvent(
-                riderId: $tripRequest->rider_id,
-                tripId: $trip->id,
-                reason: $reason
-            ));
-        }
-
-        return $cancelledCount;
-    }
-
-    /**
-     * Cancel all pending trip requests for a rider (e.g., when they become busy)
-     *
-     * @param  Rider  $rider  The rider
-     * @param  string  $reason  Reason for cancellation
-     * @return int Number of requests cancelled
-     */
-    public function cancelRiderPendingRequests(Rider $rider, string $reason = 'rider_busy'): int
-    {
-        return $this->tripRequestRepository->cancelPendingByRider($rider, $reason);
-    }
-
-    /**
-     * Process expired trip requests
-     *
-     * This should be called by a scheduled job
-     *
-     * @return int Number of requests marked as expired
-     */
-    public function processExpiredRequests(): int
-    {
-        return $this->tripRequestRepository->markExpiredRequests();
     }
 
     /**

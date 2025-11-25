@@ -4,35 +4,35 @@ declare(strict_types=1);
 
 namespace App\Events\Socket\Rider;
 
-use App\Enums\Trip\TripStatusEnum;
 use App\Events\Socket\BaseSocketEvent;
 use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 /**
- * Trip Status Changed Event (Rider)
+ * Trip Request Locked Event
  *
- * Sent to rider when trip status changes (e.g., customer cancelled, trip completed)
+ * Dispatched when a trip request is locked because another rider accepted the trip
+ * Notifies riders that their trip request is no longer available
  */
-class TripStatusChangedEvent extends BaseSocketEvent
+class TripRequestLockedEvent extends BaseSocketEvent implements ShouldDispatchAfterCommit, ShouldQueue
 {
     public function __construct(
         public readonly int $riderId,
         public readonly int $tripId,
-        public readonly TripStatusEnum $status,
-        public readonly ?string $message = null,
+        public readonly int $tripRequestId,
     ) {}
 
     public function getEventName(): string
     {
-        return 'trip.status_changed';
+        return 'trip.request_locked';
     }
 
     public function getEventData(): array
     {
         return [
             'trip_id' => $this->tripId,
-            'status' => $this->status->value,
-            'message' => $this->message,
+            'trip_request_id' => $this->tripRequestId,
         ];
     }
 
