@@ -57,6 +57,18 @@ class AcceptTripRequestResource extends JsonResource
              * @var PriceResource
              */
             'payment' => $this->resource['payment'],
+
+            /**
+             * Trip Action
+             *
+             * Contains next action information and trip completion status
+             *
+             * @var TripActionResource
+             */
+            'trip_action' => new TripActionResource([
+                'next_action' => $this->resource['next_action'] ?? null,
+                'trip_completed' => $this->resource['trip_completed'] ?? false,
+            ]),
         ];
     }
 }

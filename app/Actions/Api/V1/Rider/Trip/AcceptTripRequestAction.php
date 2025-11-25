@@ -13,6 +13,7 @@ use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripRequest;
+use App\Services\Trip\TripActionService;
 use App\Services\Trip\TripDataFormatterService;
 
 /**
@@ -25,6 +26,7 @@ readonly class AcceptTripRequestAction
     public function __construct(
         private RiderTripRepositoryInterface $riderTripRepository,
         private TripDataFormatterService $tripDataFormatter,
+        private TripActionService $tripActionService,
     ) {}
 
     /**
@@ -64,7 +66,15 @@ readonly class AcceptTripRequestAction
         ));
 
         // Prepare formatted response data
-        return $this->tripDataFormatter->prepareTripData($dto->tripRequest);
+        $tripData = $this->tripDataFormatter->prepareTripData($dto->tripRequest);
+
+        // Add next action information
+        $nextAction = $this->tripActionService->getNextAction($trip->fresh());
+
+        return array_merge($tripData, [
+            'next_action' => $nextAction,
+            'trip_completed' => $nextAction === null,
+        ]);
     }
 
     /**

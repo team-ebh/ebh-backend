@@ -9,6 +9,7 @@ use App\Exceptions\Rider\NoActiveTripException;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Interfaces\Repositories\TripRequestRepositoryInterface;
 use App\Models\Trip;
+use App\Services\Trip\TripActionService;
 use App\Services\Trip\TripDataFormatterService;
 
 /**
@@ -22,6 +23,7 @@ readonly class GetActiveTripAction
         private RiderTripRepositoryInterface $riderTripRepository,
         private TripRequestRepositoryInterface $tripRequestRepository,
         private TripDataFormatterService $tripDataFormatter,
+        private TripActionService $tripActionService,
     ) {}
 
     /**
@@ -51,6 +53,15 @@ readonly class GetActiveTripAction
             NoActiveTripException::class
         );
 
-        return $this->tripDataFormatter->prepareTripData($tripRequest);
+        // Prepare base trip data
+        $tripData = $this->tripDataFormatter->prepareTripData($tripRequest);
+
+        // Add next action information
+        $nextAction = $this->tripActionService->getNextAction($activeTrip->fresh());
+
+        return array_merge($tripData, [
+            'next_action' => $nextAction,
+            'trip_completed' => $nextAction === null,
+        ]);
     }
 }
