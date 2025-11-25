@@ -42,7 +42,7 @@ class CustomerResource extends JsonResource
              *
              * @example "https://example.com/images/customer.jpg"
              */
-            'image' => null, // Customer model doesn't have media implementation yet
+            'image' => 'https://pngimg.com/uploads/thinking_man/thinking_man_PNG11613.png', // TODO:  Customer model doesn't have media implementation yet
 
             /**
              * Customer phone information
