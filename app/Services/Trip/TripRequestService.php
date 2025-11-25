@@ -21,6 +21,7 @@ readonly class TripRequestService
     public function __construct(
         private TripRequestRepositoryInterface $tripRequestRepository,
         private RiderMatchingService $riderMatchingService,
+        private TripDataFormatterService $tripDataFormatter,
     ) {}
 
     /**
@@ -43,18 +44,23 @@ readonly class TripRequestService
         }
 
         // Create trip request records
-        $this->tripRequestRepository->createForRiders(
+        $tripRequests = $this->tripRequestRepository->createForRiders(
             $trip,
             $eligibleRiders,
             $searchAttempt,
             $radiusMeters
         );
 
-        // Broadcast to each rider
-        foreach ($eligibleRiders as $rider) {
+        // Ensure trip has necessary relations loaded
+        $trip->loadMissing(['locations', 'accessibility']);
+
+        // Broadcast to each rider with properly formatted trip data
+        foreach ($tripRequests as $tripRequest) {
+            $tripData = $this->tripDataFormatter->prepareTripData($tripRequest);
+
             broadcast(new NewTripRequestEvent(
-                riderId: $rider->id,
-                trip: $trip
+                riderId: $tripRequest->rider_id,
+                tripData: $tripData
             ));
         }
 

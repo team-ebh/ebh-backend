@@ -13,13 +13,15 @@ interface TripRequestRepositoryInterface
 {
     /**
      * Create trip requests for multiple riders
+     *
+     * @return Collection<int, TripRequest>
      */
     public function createForRiders(
         Trip $trip,
         Collection $riders,
         int $searchAttempt,
         int $searchRadiusMeters
-    ): void;
+    ): Collection;
 
     /**
      * Get pending trip requests for a specific trip

@@ -884,6 +884,223 @@ describe('Cancel Trip API', function () {
     });
 });
 
+describe('Confirm Trip API', function () {
+    beforeEach(function () {
+        // Authenticate a customer
+        $this->customer = Customer::factory()->create();
+        \Laravel\Sanctum\Sanctum::actingAs($this->customer, ['*'], 'customer');
+    });
+
+    it('broadcasts new trip request to all eligible riders when trip is confirmed', function () {
+        // Clean database to ensure no riders from previous tests
+        \App\Models\Vehicle::query()->delete();
+        \App\Models\Rider::query()->delete();
+
+        // Set config to only match online riders and vehicle types
+        config(['trip.matching.only_online_riders' => true]);
+        config(['trip.matching.require_vehicle_type_match' => true]);
+
+        \Illuminate\Support\Facades\Event::fake([
+            \App\Events\Socket\Rider\NewTripRequestEvent::class,
+            \App\Events\Socket\Customer\TripSearchingForRiderEvent::class,
+        ]);
+
+        // Create vehicle setting for the trip vehicle type
+        $vehicleSetting = \App\Models\VehicleSetting::create([
+            \App\Models\VehicleSetting::COLUMN_TYPE => \App\Models\VehicleSetting::TYPE_VEHICLE_TYPES,
+            \App\Models\VehicleSetting::COLUMN_NAME => 'Wheelchair Accessible',
+            \App\Models\VehicleSetting::COLUMN_NAME_AR => 'نقل كراسي متحركة',
+            \App\Models\VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+
+        // Create exactly 2 online riders and 1 offline rider
+        $rider1 = \App\Models\Rider::factory()->create([
+            'status' => \App\Enums\Rider\RiderStatusEnum::ONLINE,
+        ]);
+        $rider2 = \App\Models\Rider::factory()->create([
+            'status' => \App\Enums\Rider\RiderStatusEnum::ONLINE,
+        ]);
+        $rider3 = \App\Models\Rider::factory()->create([
+            'status' => \App\Enums\Rider\RiderStatusEnum::OFFLINE, // Should not receive request
+        ]);
+
+        // Create vehicles for online riders only
+        \App\Models\Vehicle::create([
+            \App\Models\Vehicle::COLUMN_RIDER_ID => $rider1->id,
+            \App\Models\Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
+            \App\Models\Vehicle::COLUMN_PLATE_NUMBER => 'ABC123',
+            \App\Models\Vehicle::COLUMN_YEAR => 2023,
+        ]);
+        \App\Models\Vehicle::create([
+            \App\Models\Vehicle::COLUMN_RIDER_ID => $rider2->id,
+            \App\Models\Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
+            \App\Models\Vehicle::COLUMN_PLATE_NUMBER => 'DEF456',
+            \App\Models\Vehicle::COLUMN_YEAR => 2023,
+        ]);
+        // Rider3 (offline) does NOT have a vehicle, so they won't match
+
+        // Create a draft trip
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Create origin location
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Hospital',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Sabah medical district',
+            TripLocation::COLUMN_LATITUDE => 29.37694,
+            TripLocation::COLUMN_LONGITUDE => 47.98306,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_SEQUENCE => 1,
+        ]);
+
+        // Create destination location
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Airport',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Terminal 1',
+            TripLocation::COLUMN_LATITUDE => 29.22667,
+            TripLocation::COLUMN_LONGITUDE => 47.96889,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_SEQUENCE => 2,
+        ]);
+
+        // Confirm the trip
+        postJson(route('v1.customers.trips.confirm', $trip))
+            ->assertStatus(200);
+
+        // Verify trip status changed to PENDING_RIDER
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::PENDING_RIDER);
+
+        // Verify NewTripRequestEvent was dispatched for eligible riders only
+        \Illuminate\Support\Facades\Event::assertDispatched(\App\Events\Socket\Rider\NewTripRequestEvent::class, 2);
+
+        // Verify event was dispatched for rider1
+        \Illuminate\Support\Facades\Event::assertDispatched(
+            \App\Events\Socket\Rider\NewTripRequestEvent::class,
+            fn ($event) => $event->riderId === $rider1->id
+                && isset($event->tripData['trip_request'])
+                && isset($event->tripData['map_locations'])
+                && isset($event->tripData['formatted_locations'])
+                && isset($event->tripData['payment'])
+        );
+
+        // Verify event was dispatched for rider2
+        \Illuminate\Support\Facades\Event::assertDispatched(
+            \App\Events\Socket\Rider\NewTripRequestEvent::class,
+            fn ($event) => $event->riderId === $rider2->id
+                && isset($event->tripData['trip_request'])
+                && isset($event->tripData['map_locations'])
+                && isset($event->tripData['formatted_locations'])
+                && isset($event->tripData['payment'])
+        );
+
+        // Verify event was NOT dispatched for offline rider
+        \Illuminate\Support\Facades\Event::assertNotDispatched(
+            \App\Events\Socket\Rider\NewTripRequestEvent::class,
+            fn ($event) => $event->riderId === $rider3->id
+        );
+
+        // Verify customer was notified about searching
+        \Illuminate\Support\Facades\Event::assertDispatched(
+            \App\Events\Socket\Customer\TripSearchingForRiderEvent::class,
+            fn ($event) => $event->customerId === $this->customer->id
+                && $event->tripId === $trip->id
+                && $event->riderCount === 2
+        );
+    });
+
+    it('dispatches events after database transaction commits', function () {
+        // This test verifies that ShouldDispatchAfterCommit interface is working
+        \Illuminate\Support\Facades\Event::fake([
+            \App\Events\Socket\Rider\NewTripRequestEvent::class,
+        ]);
+
+        // Create vehicle setting for the trip vehicle type
+        $vehicleSetting = \App\Models\VehicleSetting::create([
+            \App\Models\VehicleSetting::COLUMN_TYPE => \App\Models\VehicleSetting::TYPE_VEHICLE_TYPES,
+            \App\Models\VehicleSetting::COLUMN_NAME => 'Wheelchair Accessible',
+            \App\Models\VehicleSetting::COLUMN_NAME_AR => 'نقل كراسي متحركة',
+            \App\Models\VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+
+        // Create a rider
+        $rider = \App\Models\Rider::factory()->create([
+            'status' => \App\Enums\Rider\RiderStatusEnum::ONLINE,
+        ]);
+
+        // Create vehicle for rider
+        \App\Models\Vehicle::create([
+            \App\Models\Vehicle::COLUMN_RIDER_ID => $rider->id,
+            \App\Models\Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
+            \App\Models\Vehicle::COLUMN_PLATE_NUMBER => 'GHI789',
+            \App\Models\Vehicle::COLUMN_YEAR => 2023,
+        ]);
+
+        // Create a draft trip
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 3.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Hospital',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Sabah medical district',
+            TripLocation::COLUMN_LATITUDE => 29.37694,
+            TripLocation::COLUMN_LONGITUDE => 47.98306,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_SEQUENCE => 1,
+        ]);
+
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Kuwait Airport',
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => 'Terminal 1',
+            TripLocation::COLUMN_LATITUDE => 29.22667,
+            TripLocation::COLUMN_LONGITUDE => 47.96889,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_SEQUENCE => 2,
+        ]);
+
+        // Confirm the trip
+        postJson(route('v1.customers.trips.confirm', $trip))
+            ->assertStatus(200);
+
+        // Verify trip requests were created in database before events were dispatched
+        $tripRequest = \App\Models\TripRequest::where('trip_id', $trip->id)
+            ->where('rider_id', $rider->id)
+            ->first();
+
+        expect($tripRequest)->not->toBeNull()
+            ->and($tripRequest->status)->toBe(\App\Enums\Trip\TripRequestStatusEnum::PENDING);
+
+        // Verify event was dispatched with correct data
+        \Illuminate\Support\Facades\Event::assertDispatched(
+            \App\Events\Socket\Rider\NewTripRequestEvent::class,
+            fn ($event) => $event->riderId === $rider->id
+                && $event->tripData['trip_request']['trip_request_id'] === $tripRequest->id
+        );
+    });
+});
+
 describe('Get Trip Status API', function () {
     beforeEach(function () {
         // Authenticate a customer

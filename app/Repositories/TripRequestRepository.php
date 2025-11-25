@@ -22,13 +22,15 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
 
     /**
      * Create trip requests for multiple riders
+     *
+     * @return Collection<int, TripRequest>
      */
     public function createForRiders(
         Trip $trip,
         Collection $riders,
         int $searchAttempt,
         int $searchRadiusMeters
-    ): void {
+    ): Collection {
         $expirationSeconds = config('trip.request.expiration_seconds');
         $expiresAt = $expirationSeconds ? now()->addSeconds($expirationSeconds) : null;
         $now = now();
@@ -75,6 +77,13 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
 
         // Manually create status logs for all inserted trip requests
         $this->createStatusLogsForBulkInsert($trip->id, $riders, $now);
+
+        // Fetch and return the created trip requests with necessary relations
+        return TripRequest::query()
+            ->forTrip($trip->id)
+            ->whereIn(TripRequest::COLUMN_RIDER_ID, $riders->pluck('id'))
+            ->with(['trip.locations', 'trip.accessibility'])
+            ->get();
     }
 
     /**
