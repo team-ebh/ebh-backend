@@ -67,6 +67,7 @@ return [
             TripRequestStatusEnum::DECLINED->name => 'مرفوض',
             TripRequestStatusEnum::EXPIRED->name => 'منتهي الصلاحية',
             TripRequestStatusEnum::CANCELLED->name => 'ملغى',
+            TripRequestStatusEnum::LOCKED->name => 'مقفل',
         ],
         'trip_location_statuses' => [
             'PENDING' => 'قيد الانتظار',

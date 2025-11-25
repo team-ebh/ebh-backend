@@ -67,6 +67,7 @@ return [
             TripRequestStatusEnum::DECLINED->name => 'Declined',
             TripRequestStatusEnum::EXPIRED->name => 'Expired',
             TripRequestStatusEnum::CANCELLED->name => 'Cancelled',
+            TripRequestStatusEnum::LOCKED->name => 'Locked',
         ],
         'trip_location_statuses' => [
             'PENDING' => 'Pending',

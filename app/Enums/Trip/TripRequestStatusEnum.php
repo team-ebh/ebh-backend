@@ -13,6 +13,7 @@ enum TripRequestStatusEnum: int implements HasLabel
     case DECLINED = 3;
     case EXPIRED = 4;
     case CANCELLED = 5;
+    case LOCKED = 6;
 
     public function getLabel(): ?string
     {

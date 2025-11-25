@@ -10,6 +10,7 @@ use App\Exceptions\Rider\RiderNotAvailableException;
 use App\Exceptions\Rider\TripNotAvailableException;
 use App\Exceptions\Rider\TripRequestNotBelongToRiderException;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
+use App\Jobs\Trip\LockRemainingTripRequestsJob;
 use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripRequest;
@@ -57,6 +58,12 @@ readonly class AcceptTripRequestAction
 
         // Accept trip with lock (inside transaction)
         $trip = $this->riderTripRepository->acceptTripRequestWithLock($dto->tripRequest, $rider);
+
+        // Lock all other pending trip requests for this trip
+        LockRemainingTripRequestsJob::dispatch(
+            $trip->{Trip::COLUMN_ID},
+            $dto->tripRequest->{TripRequest::COLUMN_ID}
+        );
 
         // Broadcast to customer
         broadcast(new TripAcceptedEvent(
