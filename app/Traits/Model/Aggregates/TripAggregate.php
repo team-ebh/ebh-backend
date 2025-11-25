@@ -12,6 +12,7 @@ use App\Models\TripRequest;
 use App\Models\TripStatusLog;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Trip Aggregate Trait
@@ -38,6 +39,11 @@ trait TripAggregate
     public function tripRequests(): HasMany
     {
         return $this->hasMany(TripRequest::class, TripRequest::COLUMN_TRIP_ID);
+    }
+
+    public function acceptedTripRequest(): HasOne
+    {
+        return $this->hasOne(TripRequest::class, TripRequest::COLUMN_TRIP_ID)->accepted();
     }
 
     public function statusLogs(): HasMany

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1\Customer;
 use App\Actions\Api\V1\Customer\Trip\CancelTripAction;
 use App\Actions\Api\V1\Customer\Trip\ChangeRideTypeAction;
 use App\Actions\Api\V1\Customer\Trip\ConfirmTripAction;
+use App\Actions\Api\V1\Customer\Trip\GetEstimatedArrivalTimeAction;
 use App\Actions\Api\V1\Customer\Trip\GetRiderLocationAction;
 use App\Actions\Api\V1\Customer\Trip\GetTripFormDataAction;
 use App\Actions\Api\V1\Customer\Trip\GetTripStatusAction;
@@ -14,11 +15,13 @@ use App\Actions\Api\V1\Customer\Trip\StoreTripAction;
 use App\DTOs\Api\V1\Customer\Trip\CancelTripDTO;
 use App\DTOs\Api\V1\Customer\Trip\ChangeRideTypeDTO;
 use App\DTOs\Api\V1\Customer\Trip\ConfirmTripDTO;
+use App\DTOs\Api\V1\Customer\Trip\GetEstimatedArrivalTimeDTO;
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Customer\Trip\ChangeRideTypeRequest;
 use App\Http\Requests\Api\V1\Customer\Trip\TripStoreRequest;
 use App\Http\Resources\Api\V1\Customer\Trip\ChangeRideTypeResource;
+use App\Http\Resources\Api\V1\Customer\Trip\EstimatedArrivalTimeResource;
 use App\Http\Resources\Api\V1\Customer\Trip\RiderLocationResource;
 use App\Http\Resources\Api\V1\Customer\Trip\TripFormDataResource;
 use App\Http\Resources\Api\V1\Customer\Trip\TripResource;
@@ -153,5 +156,31 @@ class TripController extends Controller
     public function getRiderLocation(Trip $trip, GetRiderLocationAction $action): RiderLocationResource
     {
         return new RiderLocationResource($action($trip));
+    }
+
+    /**
+     * Get estimated arrival time to next destination
+     *
+     * Returns the estimated time in seconds for the rider to reach the next destination (origin or destination location).
+     * This endpoint should be called every 60 seconds while the rider is moving towards the next location.
+     * The customer should call this API when:
+     * - Rider is moving towards an origin location (to pick up passenger)
+     * - Rider is moving towards a destination location (after picking up passenger)
+     *
+     * The rider's location is automatically retrieved from the database, no need to send location data in the request.
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function estimatedArrivalTime(
+        Trip $trip,
+        Request $request,
+        GetEstimatedArrivalTimeDTO $dto,
+        GetEstimatedArrivalTimeAction $action,
+    ): EstimatedArrivalTimeResource {
+        $dto->getDataFromRequest($request);
+
+        return new EstimatedArrivalTimeResource($action($dto));
     }
 }

@@ -16,18 +16,19 @@ use App\Models\TripLocation;
 use App\Models\TripRequest;
 
 use function Pest\Laravel\actingAs;
+use function Pest\Laravel\getJson;
 
 beforeEach(function () {
+    $this->customer = Customer::factory()->create();
     $this->rider = Rider::factory()->create([
         Rider::COLUMN_LATITUDE => 29.3800,
         Rider::COLUMN_LONGITUDE => 47.9800,
     ]);
-    $this->customer = Customer::factory()->create();
 
     // Helper function to create a trip with locations
-    $this->createTripWithLocations = function (array $tripOverrides = [], array $locations = [], ?int $riderIdOverride = null) {
-        $trip = Trip::query()->create(array_merge([
-            Trip::COLUMN_CUSTOMER_ID => $this->customer->{Customer::COLUMN_ID},
+    $this->createTripWithLocations = function (array $tripOverrides = [], array $locations = [], ?int $customerIdOverride = null) {
+        $trip = Trip::create(array_merge([
+            Trip::COLUMN_CUSTOMER_ID => $customerIdOverride ?? $this->customer->{Customer::COLUMN_ID},
             Trip::COLUMN_RIDER_ID => $this->rider->{Rider::COLUMN_ID},
             Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
             Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
@@ -38,28 +39,26 @@ beforeEach(function () {
         ], $tripOverrides));
 
         foreach ($locations as $location) {
-            TripLocation::query()->create(array_merge([
+            TripLocation::create(array_merge([
                 TripLocation::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
                 TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
             ], $location));
         }
 
-        $tripRequest = TripRequest::query()->create([
+        TripRequest::create([
             TripRequest::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
-            TripRequest::COLUMN_RIDER_ID => $riderIdOverride ?? $this->rider->{Rider::COLUMN_ID},
+            TripRequest::COLUMN_RIDER_ID => $this->rider->{Rider::COLUMN_ID},
             TripRequest::COLUMN_DISTANCE_METERS => 1000,
             TripRequest::COLUMN_ESTIMATED_ARRIVAL_SECONDS => 300,
             TripRequest::COLUMN_STATUS => TripRequestStatusEnum::ACCEPTED->value,
             TripRequest::COLUMN_SENT_AT => now(),
         ]);
 
-        $trip->tripRequest = $tripRequest;
-
         return $trip;
     };
 });
 
-test('rider can get estimated arrival time to origin location', function () {
+test('customer can get estimated arrival time to origin location', function () {
     $trip = ($this->createTripWithLocations)([], [
         [
             TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
@@ -69,8 +68,8 @@ test('rider can get estimated arrival time to origin location', function () {
         ],
     ]);
 
-    $response = actingAs($this->rider, 'rider')
-        ->getJson(route('v1.riders.trips.requests.estimated_arrival_time', $trip->tripRequest));
+    $response = actingAs($this->customer, 'customer')
+        ->getJson(route('v1.customers.trips.estimated-arrival-time', $trip));
 
     $response->assertOk()
         ->assertJsonStructure([
@@ -85,7 +84,7 @@ test('rider can get estimated arrival time to origin location', function () {
         );
 });
 
-test('rider can get estimated arrival time to destination location', function () {
+test('customer can get estimated arrival time to destination location', function () {
     $trip = ($this->createTripWithLocations)(
         [Trip::COLUMN_STATUS => TripStatusEnum::PICKED_UP->value],
         [
@@ -106,8 +105,8 @@ test('rider can get estimated arrival time to destination location', function ()
         ]
     );
 
-    $response = actingAs($this->rider, 'rider')
-        ->getJson(route('v1.riders.trips.requests.estimated_arrival_time', $trip->tripRequest));
+    $response = actingAs($this->customer, 'customer')
+        ->getJson(route('v1.customers.trips.estimated-arrival-time', $trip));
 
     $response->assertOk()
         ->assertJsonStructure([
@@ -117,32 +116,44 @@ test('rider can get estimated arrival time to destination location', function ()
         ]);
 });
 
-test('rider cannot get estimated arrival time for trip not belonging to them', function () {
-    $otherRider = Rider::factory()->create([
-        Rider::COLUMN_LATITUDE => 29.3800,
-        Rider::COLUMN_LONGITUDE => 47.9800,
+test('customer cannot get estimated arrival time for trip without accepted trip request', function () {
+    $trip = Trip::create([
+        Trip::COLUMN_CUSTOMER_ID => $this->customer->{Customer::COLUMN_ID},
+        Trip::COLUMN_RIDER_ID => $this->rider->{Rider::COLUMN_ID},
+        Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
+        Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+        Trip::COLUMN_PASSENGER_COUNT => 1,
+        Trip::COLUMN_TOTAL_PRICE => 5.000,
+        Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+        Trip::COLUMN_STATUS => TripStatusEnum::PENDING_RIDER->value,
     ]);
 
-    $trip = ($this->createTripWithLocations)(
-        [],
-        [
-            [
-                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
-                TripLocation::COLUMN_LATITUDE => 29.3759,
-                TripLocation::COLUMN_LONGITUDE => 47.9774,
-                TripLocation::COLUMN_SEQUENCE => 1,
-            ],
-        ],
-        $otherRider->{Rider::COLUMN_ID}
-    );
+    TripLocation::create([
+        TripLocation::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
+        TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
+        TripLocation::COLUMN_LATITUDE => 29.3759,
+        TripLocation::COLUMN_LONGITUDE => 47.9774,
+        TripLocation::COLUMN_SEQUENCE => 1,
+        TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+    ]);
 
-    $response = actingAs($this->rider, 'rider')
-        ->getJson(route('v1.riders.trips.requests.estimated_arrival_time', $trip->tripRequest));
+    // Create pending trip request (not accepted)
+    TripRequest::create([
+        TripRequest::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
+        TripRequest::COLUMN_RIDER_ID => $this->rider->{Rider::COLUMN_ID},
+        TripRequest::COLUMN_DISTANCE_METERS => 1000,
+        TripRequest::COLUMN_ESTIMATED_ARRIVAL_SECONDS => 300,
+        TripRequest::COLUMN_STATUS => TripRequestStatusEnum::PENDING->value,
+        TripRequest::COLUMN_SENT_AT => now(),
+    ]);
 
-    $response->assertForbidden(); // TripNotBelongToRiderException
+    $response = actingAs($this->customer, 'customer')
+        ->getJson(route('v1.customers.trips.estimated-arrival-time', $trip));
+
+    $response->assertStatus(406); // InvalidTripActionException (HTTP_NOT_ACCEPTABLE)
 });
 
-test('unauthenticated rider cannot get estimated arrival time', function () {
+test('unauthenticated customer cannot get estimated arrival time', function () {
     $trip = ($this->createTripWithLocations)([], [
         [
             TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
@@ -152,7 +163,7 @@ test('unauthenticated rider cannot get estimated arrival time', function () {
         ],
     ]);
 
-    $response = $this->getJson(route('v1.riders.trips.requests.estimated_arrival_time', $trip->tripRequest));
+    $response = getJson(route('v1.customers.trips.estimated-arrival-time', $trip));
 
     $response->assertUnauthorized();
 });

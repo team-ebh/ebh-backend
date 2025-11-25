@@ -20,5 +20,6 @@ Route::name('trips.')
                 Route::get('/{trip}/status', 'getTripStatus')->name('status');
                 Route::post('/{trip}/cancel', 'cancel')->name('cancel');
                 Route::get('/{trip}/rider-location', 'getRiderLocation')->name('rider-location');
+                Route::get('/{trip}/estimated-arrival-time', 'estimatedArrivalTime')->name('estimated-arrival-time');
             });
     });

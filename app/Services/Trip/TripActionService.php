@@ -21,7 +21,7 @@ readonly class TripActionService
      */
     public function getNextAction(Trip $trip): ?string
     {
-        // TODO:: this functionality must be chang base on trip rider type 2, and 3
+        // TODO:: this functionality must be changed based on trip rider type 2, and 3
         $locations = $trip->locations()->orderBy(TripLocation::COLUMN_SEQUENCE)->get();
 
         if ($locations->isEmpty()) {
@@ -105,10 +105,6 @@ readonly class TripActionService
             return false;
         }
 
-        // Can complete if:
-        // 1. Origin location and picked up
-        // 2. Destination location and arrived
-        return ($location->isOrigin() && $location->isPickedUp())
-            || ($location->isDestination() && $location->isPending());
+        return $location->isDestination() && $location->isPending();
     }
 }
