@@ -31,6 +31,15 @@ class TripRequestDetailResource extends JsonResource
             'trip_request_id' => $this->resource['trip_request_id'],
 
             /**
+             * Trip ID
+             *
+             * @var int
+             *
+             * @example 456
+             */
+            'trip_id' => $this->resource['trip_id'],
+
+            /**
              * Trip distance (Meters)
              *
              * @var int

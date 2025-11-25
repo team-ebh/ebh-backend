@@ -62,6 +62,7 @@ readonly class GetActiveTripAction
         return array_merge($tripData, [
             'next_action' => $nextAction,
             'trip_completed' => $nextAction === null,
+            'customer' => $activeTrip->customer,
         ]);
     }
 }
