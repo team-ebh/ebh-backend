@@ -42,10 +42,14 @@ readonly class CancelTripAction
 
         // Notify rider if trip has been assigned to a rider
         if ($dto->trip->{Trip::COLUMN_RIDER_ID}) {
+            // Load accepted trip request to get its ID
+            $acceptedTripRequest = $dto->trip->load('acceptedTripRequest:id,trip_id')->acceptedTripRequest;
+
             broadcast(new TripCancelledByCustomerEvent(
                 riderId: $dto->trip->{Trip::COLUMN_RIDER_ID},
                 tripId: $dto->trip->{Trip::COLUMN_ID},
-                customerId: $dto->trip->{Trip::COLUMN_CUSTOMER_ID}
+                customerId: $dto->trip->{Trip::COLUMN_CUSTOMER_ID},
+                tripRequestId: $acceptedTripRequest?->id
             ));
         }
     }

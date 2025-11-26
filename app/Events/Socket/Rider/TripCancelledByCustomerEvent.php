@@ -20,6 +20,7 @@ class TripCancelledByCustomerEvent extends BaseSocketEvent implements ShouldDisp
         public readonly int $riderId,
         public readonly int $tripId,
         public readonly int $customerId,
+        public readonly ?int $tripRequestId = null,
     ) {}
 
     public function getEventName(): string
@@ -32,6 +33,7 @@ class TripCancelledByCustomerEvent extends BaseSocketEvent implements ShouldDisp
         return [
             'trip_id' => $this->tripId,
             'customer_id' => $this->customerId,
+            'trip_request_id' => $this->tripRequestId,
         ];
     }
 
