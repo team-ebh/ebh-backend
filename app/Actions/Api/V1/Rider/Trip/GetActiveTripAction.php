@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Rider\Trip;
 
 use App\DTOs\Api\V1\Rider\Trip\GetActiveTripDTO;
-use App\Exceptions\Rider\NoActiveTripException;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Interfaces\Repositories\TripRequestRepositoryInterface;
 use App\Models\Trip;
@@ -29,18 +28,16 @@ readonly class GetActiveTripAction
     /**
      * Execute the action
      *
-     * @throws NoActiveTripException
      * @throws \Throwable
      */
-    public function __invoke(GetActiveTripDTO $dto): array
+    public function __invoke(GetActiveTripDTO $dto): ?array
     {
         // Get active trip for rider
         $activeTrip = $this->riderTripRepository->getActiveTrip($dto->riderId);
 
-        throw_if(
-            ! $activeTrip,
-            NoActiveTripException::class
-        );
+        if (! $activeTrip) {
+            return null;
+        }
 
         // Get accepted trip request for this trip
         $tripRequest = $this->tripRequestRepository->getAcceptedForTrip(
@@ -48,10 +45,9 @@ readonly class GetActiveTripAction
             $dto->riderId
         );
 
-        throw_if(
-            ! $tripRequest,
-            NoActiveTripException::class
-        );
+        if (! $tripRequest) {
+            return null;
+        }
 
         // Prepare base trip data
         $tripData = $this->tripDataFormatter->prepareTripData($tripRequest);

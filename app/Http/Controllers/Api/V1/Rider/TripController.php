@@ -69,10 +69,15 @@ class TripController extends Controller
         Request $request,
         GetActiveTripDTO $dto,
         GetActiveTripAction $action,
-    ): AcceptTripRequestResource {
+    ): JsonResponse | AcceptTripRequestResource {
         $dto->getDataFromRequest($request);
+        $activeTrip = $action($dto);
 
-        return new AcceptTripRequestResource($action($dto));
+        if (is_null($activeTrip)) {
+            return response()->json(['data' => null]);
+        }
+
+        return new AcceptTripRequestResource($activeTrip);
     }
 
     /**
