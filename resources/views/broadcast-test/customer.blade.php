@@ -314,7 +314,7 @@
             disableStats: true,
             enabledTransports: ['ws', 'wss'],
             cluster: 'mt1',
-            authEndpoint: 'http://admin.localhost:9000/broadcasting/auth',
+            authEndpoint: `${window.location.origin}/broadcasting/auth`,
             auth: {
                 headers: {
                     'Authorization': `Bearer ${token}`,
