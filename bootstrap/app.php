@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\ApplicationEnvironmentEnum;
 use App\Exceptions\BaseException;
+use App\Http\Middleware\AuthenticateBroadcasting;
 use App\Http\Middleware\LocalizationMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__ . '/../routes/web.php',
         commands: __DIR__ . '/../routes/console.php',
+        channels: __DIR__ . '/../routes/channels.php',
         health: '/up',
         then: function () {
             $routeGroups = [
@@ -49,6 +51,16 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->redirectGuestsTo('login');
+
+        // Exclude broadcasting auth from CSRF verification (uses Bearer token)
+        $middleware->validateCsrfTokens(except: [
+            'broadcasting/auth',
+        ]);
+
+        // Add custom middleware for broadcasting authentication
+        $middleware->alias([
+            'auth.broadcasting' => AuthenticateBroadcasting::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (ThrottleRequestsException $exceptions) {

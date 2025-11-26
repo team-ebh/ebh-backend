@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Connection Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-4">WebSocket Connection Debug Tool</h1>
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Bearer Token:</label>
+            <input type="text" id="token" placeholder="Paste token here..." class="w-full px-4 py-2 border rounded-lg">
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Customer ID:</label>
+            <input type="number" id="customerId" value="6" class="w-full px-4 py-2 border rounded-lg">
+        </div>
+
+        <button onclick="testConnection()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 mb-4">
+            Test Connection
+        </button>
+
+        <div id="log" class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm h-96 overflow-y-auto"></div>
+    </div>
+
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function testConnection() {
+            const token = document.getElementById('token').value;
+            const customerId = document.getElementById('customerId').value;
+
+            if (!token) {
+                alert('Please enter a Bearer token');
+                return;
+            }
+
+            document.getElementById('log').innerHTML = '';
+            log('🚀 Starting connection test...');
+            log(`📋 Token: ${token.substring(0, 20)}...`);
+            log(`👤 Customer ID: ${customerId}`);
+            log('');
+
+            // Step 1: Test broadcasting auth endpoint
+            log('1️⃣ Testing /broadcasting/auth endpoint...');
+            fetch('http://admin.localhost:9000/broadcasting/auth', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    socket_id: '123.456',
+                    channel_name: `private-customer.${customerId}`
+                })
+            })
+            .then(res => {
+                log(`   Status: ${res.status} ${res.statusText}`);
+                return res.json();
+            })
+            .then(data => {
+                log(`   ✅ Auth response: ${JSON.stringify(data)}`);
+                log('');
+
+                // Step 2: Initialize Echo
+                log('2️⃣ Initializing Laravel Echo...');
+                const echo = new Echo({
+                    broadcaster: 'reverb',
+                    key: 'rjh7g66iuhl8zikoxhth',
+                    wsHost: 'localhost',
+                    wsPort: 8080,
+                    wssPort: 8080,
+                    forceTLS: false,
+                    encrypted: false,
+                    disableStats: true,
+                    enabledTransports: ['ws', 'wss'],
+                    authEndpoint: 'http://admin.localhost:9000/broadcasting/auth',
+                    auth: {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/json',
+                        }
+                    }
+                });
+
+                log('   ✅ Echo initialized');
+                log('');
+
+                // Step 3: Subscribe to private channel
+                log(`3️⃣ Subscribing to private channel: customer.${customerId}...`);
+                const channel = echo.private(`customer.${customerId}`);
+
+                channel.subscribed(() => {
+                    log('   ✅ Successfully subscribed to private channel!');
+                    log('   🎉 CONNECTION SUCCESSFUL!');
+                    log('');
+                    log('🔊 Now listening for events...');
+                });
+
+                channel.error((error) => {
+                    log(`   ❌ Channel subscription error: ${JSON.stringify(error)}`);
+                });
+
+                // Listen for events
+                channel.listen('.trip.cancelled_by_rider', (data) => {
+                    log(`📨 Event received: trip.cancelled_by_rider`);
+                    log(`   Data: ${JSON.stringify(data)}`);
+                });
+
+            })
+            .catch(error => {
+                log(`   ❌ Error: ${error.message}`);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -163,7 +163,7 @@ class Trip extends Model
      */
     public function canCancelTrip(): bool
     {
-        return in_array($this->{self::COLUMN_STATUS}, [TripStatusEnum::DRAFT, TripStatusEnum::PENDING_RIDER]);
+        return in_array($this->{self::COLUMN_STATUS}, [TripStatusEnum::DRAFT, TripStatusEnum::PENDING_RIDER, TripStatusEnum::ACCEPTED_RIDER]);
     }
 
     /**

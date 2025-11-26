@@ -152,6 +152,7 @@ Before creating ANY file (Action, DTO, Request, Resource, Repository, Test), ask
 ```
 
 **Examples of Customer features:**
+
 - Customer authentication (sign up, sign in, verify OTP)
 - Customer profile management
 - Customer trip booking
@@ -159,6 +160,7 @@ Before creating ANY file (Action, DTO, Request, Resource, Repository, Test), ask
 - Customer notifications
 
 **Examples of Rider features:**
+
 - Rider authentication (sign up, sign in, verify OTP)
 - Rider profile management
 - Rider trip acceptance
@@ -228,6 +230,7 @@ Rider/
 #### Separation Rules
 
 **Never mix Customer and Rider code.** Each context has its own:
+
 - Authentication system
 - Business logic
 - Data validation rules
@@ -236,6 +239,7 @@ Rider/
 - Test suites
 
 **If you need similar functionality for both:**
+
 1. Create separate implementations in each folder
 2. Extract shared logic to `app/Services/` if needed
 3. Never share Requests, DTOs, Actions, or Resources between Customer and Rider
@@ -298,6 +302,7 @@ app/
 ```
 
 **Key Points**:
+
 - All API V1 code MUST be organized under `Customer/` or `Rider/` folders
 - Each context (Customer/Rider) contains its own modules (Auth, Profile, etc.)
 - Never create files directly under `Api/V1/` - always use `Customer/` or `Rider/` subfolder
@@ -338,9 +343,9 @@ app/
 5. **Resource fields must be documented** with description, type, and example
 
 6. **Model relationships should be aggregated in traits** for better organization:
-   - Create relationship aggregate traits in `app/Traits/Model/Aggregates/`
-   - Name pattern: `{ModelName}Aggregate`
-   - Keep all `BelongsTo`, `HasMany`, `BelongsToMany` relationships in the aggregate trait
+    - Create relationship aggregate traits in `app/Traits/Model/Aggregates/`
+    - Name pattern: `{ModelName}Aggregate`
+    - Keep all `BelongsTo`, `HasMany`, `BelongsToMany` relationships in the aggregate trait
 
 7. **Socket Events must extend `BaseSocketEvent`** for consistent real-time broadcasting:
    ```php
@@ -375,12 +380,12 @@ app/
        }
    }
    ```
-   - All socket events go in `app/Events/Socket/{Customer|Rider}/`
-   - Use descriptive event names: `trip.new_request`, `trip.accepted`, `trip.status_changed`
-   - Always use PrivateChannel for user-specific events
-   - Event data structure: `{ event: string, data: object, timestamp: string }`
-   - Broadcast channels must be defined in `routes/channels.php`
-   - Dispatch events using `broadcast()` helper: `broadcast(new TripAcceptedEvent(...))`
+    - All socket events go in `app/Events/Socket/{Customer|Rider}/`
+    - Use descriptive event names: `trip.new_request`, `trip.accepted`,
+    - Always use PrivateChannel for user-specific events
+    - Event data structure: `{ event: string, data: object, timestamp: string }`
+    - Broadcast channels must be defined in `routes/channels.php`
+    - Dispatch events using `broadcast()` helper: `broadcast(new TripAcceptedEvent(...))`
 
    Example aggregate trait pattern:
    ```php
@@ -619,7 +624,8 @@ All models have:
 
 ## Common Pitfalls to Avoid
 
-1. **Never create API files outside Customer/Rider folders** - All Actions, DTOs, Requests, Resources, Repositories, and Tests MUST be placed under either `Customer/` or `Rider/` folders
+1. **Never create API files outside Customer/Rider folders** - All Actions, DTOs, Requests, Resources, Repositories, and
+   Tests MUST be placed under either `Customer/` or `Rider/` folders
 2. **Never use try-catch** in Actions - use `safeProcess()` instead
 3. **Never commit without running** `./vendor/bin/pint && php artisan test`
 4. **Never skip DTO** when processing input data

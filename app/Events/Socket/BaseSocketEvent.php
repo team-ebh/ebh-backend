@@ -51,7 +51,6 @@ abstract class BaseSocketEvent implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'type' => 'socket',
             'event' => $this->getEventName(),
             'data' => $this->getEventData(),
         ];
