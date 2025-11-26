@@ -142,7 +142,7 @@
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
 <script>
-    const API_BASE = 'http://api.localhost:9000/v1/customers';
+    const API_BASE = `${window.location.protocol}//${window.location.hostname.replace('admin', 'api')}${window.location.port ? ':' + window.location.port : ''}/v1/customers`;
     let token = null;
     let customerId = null;
     let echo = null;

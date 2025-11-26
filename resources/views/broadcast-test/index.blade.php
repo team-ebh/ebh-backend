@@ -118,29 +118,6 @@
             </ol>
         </div>
 
-        <!-- Technical Info -->
-        <div class="mt-6 bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl shadow-lg p-6 text-white">
-            <h3 class="text-lg font-bold mb-3">⚙️ Technical Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div>
-                    <p class="text-gray-400 mb-1">Broadcasting Driver</p>
-                    <p class="font-mono bg-gray-700 px-2 py-1 rounded">{{ config('broadcasting.default') }}</p>
-                </div>
-                <div>
-                    <p class="text-gray-400 mb-1">WebSocket Server</p>
-                    <p class="font-mono bg-gray-700 px-2 py-1 rounded">{{ config('broadcasting.connections.reverb.host') }}:{{ config('broadcasting.connections.reverb.port') }}</p>
-                </div>
-                <div>
-                    <p class="text-gray-400 mb-1">API Base URL</p>
-                    <p class="font-mono bg-gray-700 px-2 py-1 rounded">http://api.localhost:9000</p>
-                </div>
-                <div>
-                    <p class="text-gray-400 mb-1">Auth Endpoint</p>
-                    <p class="font-mono bg-gray-700 px-2 py-1 rounded">/broadcasting/auth</p>
-                </div>
-            </div>
-        </div>
-
         <!-- Footer -->
         <div class="mt-6 text-center text-sm text-gray-500">
             <p>Made with ❤️ for testing Laravel Broadcasting & Private Channels</p>
