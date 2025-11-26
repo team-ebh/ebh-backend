@@ -9,11 +9,17 @@ use App\Enums\Trip\TripLocationTypeEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
+use App\Events\Socket\Rider\TripCancelledByCustomerEvent;
 use App\Models\Customer;
+use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripLocation;
+use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
-use function Pest\Laravel\{get, postJson, withHeaders, getJson};
+
+use function Pest\Laravel\get;
+use function Pest\Laravel\postJson;
+use function Pest\Laravel\withHeaders;
 
 describe('V1 Customer Trip API', function () {
     it('can get trip form data', function () {
@@ -660,8 +666,8 @@ describe('Change Ride Type API', function () {
 
         expect($destination->{App\Models\TripLocation::COLUMN_LOCATION_TITLE})->toBe($newTitle);
         expect($destination->{App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE})->toBe($newSubTitle);
-        expect((float)$destination->{App\Models\TripLocation::COLUMN_LATITUDE})->toBe($newLatitude);
-        expect((float)$destination->{App\Models\TripLocation::COLUMN_LONGITUDE})->toBe($newLongitude);
+        expect((float) $destination->{App\Models\TripLocation::COLUMN_LATITUDE})->toBe($newLatitude);
+        expect((float) $destination->{App\Models\TripLocation::COLUMN_LONGITUDE})->toBe($newLongitude);
     });
 
     it('validates required fields for change ride type', function () {
@@ -881,6 +887,55 @@ describe('Cancel Trip API', function () {
         // Verify trip status was updated
         $trip->refresh();
         expect($trip->status)->toBe(TripStatusEnum::CANCELED_BY_CUSTOMER);
+    });
+
+    it('dispatches event to rider when customer cancels trip with assigned rider', function () {
+        Event::fake([TripCancelledByCustomerEvent::class]);
+
+        $rider = Rider::factory()->create();
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'rider_id' => $rider->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::PENDING_RIDER->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip))
+            ->assertStatus(200);
+
+        Event::assertDispatched(TripCancelledByCustomerEvent::class, function ($event) use ($trip, $rider) {
+            return $event->riderId === $rider->id
+                && $event->tripId === $trip->id
+                && $event->customerId === $this->customer->id;
+        });
+    });
+
+    it('does not dispatch event when customer cancels trip without assigned rider', function () {
+        Event::fake([TripCancelledByCustomerEvent::class]);
+
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'rider_id' => null,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip))
+            ->assertStatus(200);
+
+        Event::assertNotDispatched(TripCancelledByCustomerEvent::class);
     });
 });
 
