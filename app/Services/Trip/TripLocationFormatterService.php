@@ -44,6 +44,7 @@ class TripLocationFormatterService
 
             if ($nextLocation) {
                 $formattedLocations->push([
+                    'is_active' => ! $nextLocation->isFinished(),
                     'from' => [
                         'location_title' => $location->{TripLocation::COLUMN_LOCATION_TITLE},
                         'location_sub_title' => $location->{TripLocation::COLUMN_LOCATION_SUB_TITLE},
