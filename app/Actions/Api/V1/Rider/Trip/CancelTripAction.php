@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Rider\Trip;
 
 use App\DTOs\Api\V1\Rider\Trip\CancelTripDTO;
+use App\Events\Socket\Customer\TripCancelledByRiderEvent;
 use App\Exceptions\Rider\TripCannotBeCancelledByRiderException;
 use App\Exceptions\Rider\TripRequestNotBelongToRiderException;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
@@ -45,6 +46,13 @@ readonly class CancelTripAction
 
         // Update rider status to ONLINE
         $this->riderTripRepository->updateRiderStatusToOnline($dto->riderId);
+
+        // Notify customer about trip cancellation
+        broadcast(new TripCancelledByRiderEvent(
+            customerId: $trip->customer_id,
+            tripId: $trip->id,
+            riderId: $dto->riderId
+        ));
 
         return $trip;
     }

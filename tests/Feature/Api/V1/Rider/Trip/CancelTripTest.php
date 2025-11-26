@@ -7,10 +7,12 @@ use App\Enums\Trip\TripRequestStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
+use App\Events\Socket\Customer\TripCancelledByRiderEvent;
 use App\Models\Customer;
 use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripRequest;
+use Illuminate\Support\Facades\Event;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
@@ -181,4 +183,22 @@ test('unauthenticated rider cannot cancel trip', function () {
     $response = postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
     $response->assertUnauthorized();
+});
+
+test('trip cancelled by rider event is dispatched when rider cancels trip', function () {
+    Event::fake([TripCancelledByRiderEvent::class]);
+
+    $trip = ($this->createTrip)([
+        'status' => TripStatusEnum::ACCEPTED_RIDER->value,
+    ]);
+
+    actingAs($this->rider, 'rider')
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel")
+        ->assertOk();
+
+    Event::assertDispatched(TripCancelledByRiderEvent::class, function ($event) use ($trip) {
+        return $event->customerId === $trip->customer_id
+            && $event->tripId === $trip->id
+            && $event->riderId === $this->rider->id;
+    });
 });
