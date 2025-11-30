@@ -6,7 +6,6 @@ namespace App\Actions\Api\V1\Rider\Trip;
 
 use App\DTOs\Api\V1\Rider\Trip\ArrivedTripDTO;
 use App\Enums\Trip\TripLocationStatusEnum;
-use App\Enums\Trip\TripStatusEnum;
 use App\Events\Socket\Customer\TripArrivedEvent;
 use App\Exceptions\Rider\InvalidTripActionException;
 use App\Exceptions\Rider\TripNotBelongToRiderException;
@@ -59,7 +58,6 @@ readonly class ArriveTripAction
         $this->validateArrivalConditions($currentLocation);
 
         $this->riderTripRepository->updateTripLocationStatus($currentLocation, TripLocationStatusEnum::ARRIVED);
-        $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::ARRIVED);
 
         // Broadcast to customer
         broadcast(new TripArrivedEvent(

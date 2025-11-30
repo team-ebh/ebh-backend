@@ -714,32 +714,6 @@ describe('Cancel Trip API', function () {
         expect($trip->status)->toBe(TripStatusEnum::CANCELED_BY_CUSTOMER);
     });
 
-    it('cannot cancel a trip with driver arrived', function () {
-        $trip = Trip::create([
-            'customer_id' => $this->customer->id,
-            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
-            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
-            'passenger_count' => 2,
-            'accessibility_price' => null,
-            'waiting_price' => null,
-            'total_price' => 5.000,
-            'currency' => CurrencyEnum::KWD->value,
-            'status' => TripStatusEnum::ARRIVED->value,
-        ]);
-
-        postJson(route('v1.customers.trips.cancel', $trip))
-            ->assertStatus(406)
-            ->assertJson([
-                'meta' => [
-                    'message' => trans('trips.api.exceptions.trip_cannot_be_cancelled'),
-                ],
-            ]);
-
-        // Verify trip status was NOT updated
-        $trip->refresh();
-        expect($trip->status)->toBe(TripStatusEnum::ARRIVED);
-    });
-
     it('cannot cancel an in-progress trip', function () {
         $trip = Trip::create([
             'customer_id' => $this->customer->id,
@@ -750,7 +724,7 @@ describe('Cancel Trip API', function () {
             'waiting_price' => null,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
-            'status' => TripStatusEnum::PICKED_UP->value,
+            'status' => TripStatusEnum::ON_TRIP->value,
         ]);
 
         postJson(route('v1.customers.trips.cancel', $trip))
@@ -758,7 +732,7 @@ describe('Cancel Trip API', function () {
 
         // Verify trip status was NOT updated
         $trip->refresh();
-        expect($trip->status)->toBe(TripStatusEnum::PICKED_UP);
+        expect($trip->status)->toBe(TripStatusEnum::ON_TRIP);
     });
 
     it('cannot cancel a completed trip', function () {

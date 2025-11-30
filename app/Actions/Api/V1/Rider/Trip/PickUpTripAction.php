@@ -59,7 +59,7 @@ readonly class PickUpTripAction
         $this->validatePickUpConditions($currentLocation);
 
         $this->riderTripRepository->updateTripLocationStatus($currentLocation, TripLocationStatusEnum::PICKED_UP);
-        $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::PICKED_UP);
+        $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::ON_TRIP);
 
         // Broadcast to customer
         broadcast(new TripPickedUpEvent(

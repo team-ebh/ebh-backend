@@ -98,19 +98,11 @@ class Trip extends Model
     }
 
     /**
-     * Check if rider has arrived
+     * Check if trip is on trip
      */
-    public function isArrived(): bool
+    public function isOnTrip(): bool
     {
-        return $this->{self::COLUMN_STATUS} === TripStatusEnum::ARRIVED;
-    }
-
-    /**
-     * Check if trip is picked up
-     */
-    public function isPickedUp(): bool
-    {
-        return $this->{self::COLUMN_STATUS} === TripStatusEnum::PICKED_UP;
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::ON_TRIP;
     }
 
     /**
@@ -147,14 +139,11 @@ class Trip extends Model
 
     /**
      * Check if trip can be cancelled by rider
-     * Only ACCEPTED_RIDER and ARRIVED trips can be cancelled by rider
+     * Only ACCEPTED_RIDER trips can be cancelled by rider
      */
     public function canBeCancelledByRider(): bool
     {
-        return in_array($this->{self::COLUMN_STATUS}, [
-            TripStatusEnum::ACCEPTED_RIDER,
-            TripStatusEnum::ARRIVED,
-        ]);
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::ACCEPTED_RIDER;
     }
 
     /**
@@ -175,8 +164,7 @@ class Trip extends Model
         // Only these statuses allow location tracking
         return in_array($this->{self::COLUMN_STATUS}, [
             TripStatusEnum::ACCEPTED_RIDER,
-            TripStatusEnum::ARRIVED,
-            TripStatusEnum::PICKED_UP,
+            TripStatusEnum::ON_TRIP,
         ], true);
     }
 
@@ -188,8 +176,7 @@ class Trip extends Model
     {
         return in_array($this->{self::COLUMN_STATUS}, [
             TripStatusEnum::ACCEPTED_RIDER,
-            TripStatusEnum::ARRIVED,
-            TripStatusEnum::PICKED_UP,
+            TripStatusEnum::ON_TRIP,
             TripStatusEnum::COMPLETED,
         ], true);
     }
