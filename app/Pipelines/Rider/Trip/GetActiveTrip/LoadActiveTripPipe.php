@@ -9,11 +9,11 @@ use App\Interfaces\Repositories\TripRequestRepositoryInterface;
 use App\Models\Trip;
 use Closure;
 
-class LoadActiveTripPipe
+readonly class LoadActiveTripPipe
 {
     public function __construct(
-        private readonly RiderTripRepositoryInterface $riderTripRepository,
-        private readonly TripRequestRepositoryInterface $tripRequestRepository,
+        private RiderTripRepositoryInterface $riderTripRepository,
+        private TripRequestRepositoryInterface $tripRequestRepository,
     ) {}
 
     /**

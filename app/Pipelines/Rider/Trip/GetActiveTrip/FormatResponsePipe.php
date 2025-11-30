@@ -8,11 +8,11 @@ use App\Services\Trip\TripActionService;
 use App\Services\Trip\TripDataFormatterService;
 use Closure;
 
-class FormatResponsePipe
+readonly class FormatResponsePipe
 {
     public function __construct(
-        private readonly TripDataFormatterService $tripDataFormatter,
-        private readonly TripActionService $tripActionService,
+        private TripDataFormatterService $tripDataFormatter,
+        private TripActionService $tripActionService,
     ) {}
 
     /**
@@ -20,11 +20,6 @@ class FormatResponsePipe
      */
     public function handle(array $payload, Closure $next): mixed
     {
-        // If result is already null (no active trip), skip formatting
-        if (isset($payload['result']) && $payload['result'] === null) {
-            return $payload;
-        }
-
         $activeTrip = $payload['activeTrip'];
         $tripRequest = $payload['tripRequest'];
 

@@ -12,11 +12,11 @@ use App\Models\Trip;
 use App\Services\Trip\TripActionService;
 use Closure;
 
-class ExecuteAndBroadcastPipe
+readonly class ExecuteAndBroadcastPipe
 {
     public function __construct(
-        private readonly RiderTripRepositoryInterface $riderTripRepository,
-        private readonly TripActionService $tripActionService,
+        private RiderTripRepositoryInterface $riderTripRepository,
+        private TripActionService $tripActionService,
     ) {}
 
     /**

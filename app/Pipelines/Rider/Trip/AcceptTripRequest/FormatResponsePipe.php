@@ -8,11 +8,11 @@ use App\Services\Trip\TripActionService;
 use App\Services\Trip\TripDataFormatterService;
 use Closure;
 
-class FormatResponsePipe
+readonly class FormatResponsePipe
 {
     public function __construct(
-        private readonly TripDataFormatterService $tripDataFormatter,
-        private readonly TripActionService $tripActionService,
+        private TripDataFormatterService $tripDataFormatter,
+        private TripActionService $tripActionService,
     ) {}
 
     /**

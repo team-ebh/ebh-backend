@@ -8,10 +8,10 @@ use App\Events\Socket\Customer\TripCancelledByRiderEvent;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use Closure;
 
-class ExecuteAndBroadcastPipe
+readonly class ExecuteAndBroadcastPipe
 {
     public function __construct(
-        private readonly RiderTripRepositoryInterface $riderTripRepository,
+        private RiderTripRepositoryInterface $riderTripRepository,
     ) {}
 
     /**

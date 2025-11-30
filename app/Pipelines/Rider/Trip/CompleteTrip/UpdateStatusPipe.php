@@ -8,10 +8,10 @@ use App\Enums\Trip\TripLocationStatusEnum;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use Closure;
 
-class UpdateStatusPipe
+readonly class UpdateStatusPipe
 {
     public function __construct(
-        private readonly RiderTripRepositoryInterface $riderTripRepository,
+        private RiderTripRepositoryInterface $riderTripRepository,
     ) {}
 
     /**

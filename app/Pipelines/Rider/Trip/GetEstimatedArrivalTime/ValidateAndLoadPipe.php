@@ -12,11 +12,11 @@ use App\Models\Rider;
 use App\Services\Trip\TripActionService;
 use Closure;
 
-class ValidateAndLoadPipe
+readonly class ValidateAndLoadPipe
 {
     public function __construct(
-        private readonly RiderRepositoryInterface $riderRepository,
-        private readonly TripActionService $tripActionService,
+        private RiderRepositoryInterface $riderRepository,
+        private TripActionService $tripActionService,
     ) {}
 
     /**

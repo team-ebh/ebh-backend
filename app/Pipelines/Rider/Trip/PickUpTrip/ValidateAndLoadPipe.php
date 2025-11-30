@@ -9,10 +9,10 @@ use App\Exceptions\Rider\TripNotBelongToRiderException;
 use App\Services\Trip\TripActionService;
 use Closure;
 
-class ValidateAndLoadPipe
+readonly class ValidateAndLoadPipe
 {
     public function __construct(
-        private readonly TripActionService $tripActionService,
+        private TripActionService $tripActionService,
     ) {}
 
     /**

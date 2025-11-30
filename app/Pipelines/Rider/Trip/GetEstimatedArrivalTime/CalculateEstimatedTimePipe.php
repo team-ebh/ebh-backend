@@ -9,10 +9,10 @@ use App\Models\TripLocation;
 use App\Services\DistanceCalculationService;
 use Closure;
 
-class CalculateEstimatedTimePipe
+readonly class CalculateEstimatedTimePipe
 {
     public function __construct(
-        private readonly DistanceCalculationService $distanceCalculationService,
+        private DistanceCalculationService $distanceCalculationService,
     ) {}
 
     /**

@@ -12,10 +12,10 @@ use App\Models\Trip;
 use App\Models\TripRequest;
 use Closure;
 
-class ExecuteAndBroadcastPipe
+readonly class ExecuteAndBroadcastPipe
 {
     public function __construct(
-        private readonly RiderTripRepositoryInterface $riderTripRepository,
+        private RiderTripRepositoryInterface $riderTripRepository,
     ) {}
 
     /**
