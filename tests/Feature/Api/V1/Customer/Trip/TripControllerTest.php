@@ -3,21 +3,27 @@
 declare(strict_types=1);
 
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Rider\RiderStatusEnum;
 use App\Enums\Trip\AccessibilityRequirementsEnum;
 use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
+use App\Events\Socket\Rider\NewTripRequestEvent;
 use App\Events\Socket\Rider\TripCancelledByCustomerEvent;
 use App\Models\Customer;
 use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripLocation;
+use App\Models\Vehicle;
+use App\Models\VehicleSetting;
+use App\Services\GeocodingService;
 use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
 
 use function Pest\Laravel\get;
+use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;
 use function Pest\Laravel\withHeaders;
 
@@ -57,8 +63,8 @@ describe('V1 Customer Trip API', function () {
         expect($tripTypes)->toHaveCount(2);
 
         $tripTypeIds = collect($tripTypes)->pluck('id')->toArray();
-        expect($tripTypeIds)->toContain(TripTypeEnum::RIDE_NOW->value);
-        expect($tripTypeIds)->toContain(TripTypeEnum::SCHEDULED->value);
+        expect($tripTypeIds)->toContain(TripTypeEnum::RIDE_NOW->value)
+            ->and($tripTypeIds)->toContain(TripTypeEnum::SCHEDULED->value);
 
         // Verify vehicle types
         $vehicleTypes = $response->json('data.vehicle_types');
@@ -116,16 +122,16 @@ describe('V1 Customer Trip API', function () {
         $accessibilityRequirements = $response->json('data.accessibility_requirements');
 
         $wheelchairReq = collect($accessibilityRequirements)->firstWhere('id', AccessibilityRequirementsEnum::WHEELCHAIR_ACCESSIBLE->value);
-        expect($wheelchairReq['label'])->toBe('Wheelchair Accessible');
-        expect($wheelchairReq['description'])->toBe('Standard Wheelchair transport');
+        expect($wheelchairReq['label'])->toBe('Wheelchair Accessible')
+            ->and($wheelchairReq['description'])->toBe('Standard Wheelchair transport');
 
         $oxygenReq = collect($accessibilityRequirements)->firstWhere('id', AccessibilityRequirementsEnum::OXYGEN_SUPPORT->value);
-        expect($oxygenReq['label'])->toBe('Oxygen Support');
-        expect($oxygenReq['description'])->toBe('Portable oxygen support');
+        expect($oxygenReq['label'])->toBe('Oxygen Support')
+            ->and($oxygenReq['description'])->toBe('Portable oxygen support');
 
         $rampReq = collect($accessibilityRequirements)->firstWhere('id', AccessibilityRequirementsEnum::PORTABLE_RAMP->value);
-        expect($rampReq['label'])->toBe('Portable Ramp');
-        expect($rampReq['description'])->toBe('Equipped with ramp access');
+        expect($rampReq['label'])->toBe('Portable Ramp')
+            ->and($rampReq['description'])->toBe('Equipped with ramp access');
     });
 
     it('does not require authentication', function () {
@@ -219,8 +225,8 @@ describe('V1 Customer Trip API', function () {
 describe('Trip Store API', function () {
     beforeEach(function () {
         // Mock the GeocodingService
-        $this->mockGeocodingService = Mockery::mock(\App\Services\GeocodingService::class);
-        app()->instance(\App\Services\GeocodingService::class, $this->mockGeocodingService);
+        $this->mockGeocodingService = Mockery::mock(GeocodingService::class);
+        app()->instance(GeocodingService::class, $this->mockGeocodingService);
 
         // Authenticate a customer
         $this->customer = Customer::factory()->create();
@@ -241,7 +247,7 @@ describe('Trip Store API', function () {
                 'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
                 'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
                 'accessibility_requirements' => [
-                    \App\Enums\Trip\AccessibilityRequirementsEnum::WHEELCHAIR_ACCESSIBLE->value,
+                    AccessibilityRequirementsEnum::WHEELCHAIR_ACCESSIBLE->value,
                 ],
                 'passenger_count' => 2,
             ])->assertStatus(200);
@@ -445,7 +451,7 @@ describe('Trip Show API', function () {
             TripLocation::COLUMN_SEQUENCE => 2,
         ]);
 
-        \Pest\Laravel\getJson(route('v1.customers.trips.show', $trip->id))
+        getJson(route('v1.customers.trips.show', $trip->id))
             ->assertStatus(200)
             ->assertJsonStructure([
                 'data' => [
@@ -477,60 +483,9 @@ describe('Trip Show API', function () {
     })->skip('Show API not implemented');
 
     it('returns 404 for non-existent trip', function () {
-        \Pest\Laravel\getJson(route('v1.customers.trips.show', 99999))
+        getJson(route('v1.customers.trips.show', 99999))
             ->assertStatus(404);
     })->skip('Show API not implemented');
-});
-
-describe('Ride Types API', function () {
-    it('can list all ride types', function () {
-        \Pest\Laravel\getJson(route('v1.customers.ride-types.index'))
-            ->assertStatus(200)
-            ->assertJsonStructure([
-                'data' => [
-                    '*' => [
-                        'id',
-                        'key',
-                        'label',
-                        'description',
-                        'icon',
-                        'is_default',
-                    ],
-                ],
-            ]);
-    })->skip('RideType model and API not implemented yet');
-
-    it('returns all active ride types in correct order', function () {
-        $response = \Pest\Laravel\getJson(route('v1.customers.ride-types.index'))
-            ->assertStatus(200);
-
-        $rideTypes = $response->json('data');
-        expect($rideTypes)->toHaveCount(3);
-
-        // Check ONE_WAY is default
-        $oneWay = collect($rideTypes)->firstWhere('key', 'ONE_WAY');
-        expect($oneWay['is_default'])->toBeTrue();
-
-        // Check all have required fields
-        foreach ($rideTypes as $rideType) {
-            expect($rideType)->toHaveKeys([
-                'id', 'key', 'label', 'description', 'icon', 'is_default',
-            ]);
-        }
-    })->skip('RideType model and API not implemented yet');
-
-    it('returns translated labels based on locale', function () {
-        // Test English (default)
-        $response = \Pest\Laravel\getJson(route('v1.customers.ride-types.index'))
-            ->assertStatus(200);
-
-        $oneWay = collect($response->json('data'))->firstWhere('key', 'ONE_WAY');
-        expect($oneWay['label'])->toBe('One-way ride');
-
-        // Test that Arabic translations exist in the model
-        $rideType = \App\Models\RideType::where('key', 'ONE_WAY')->first();
-        expect($rideType->label_ar)->toBe('رحلة ذهاب فقط');
-    })->skip('RideType model and API not implemented yet');
 });
 
 describe('Change Ride Type API', function () {
@@ -664,10 +619,10 @@ describe('Change Ride Type API', function () {
             ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)
             ->first();
 
-        expect($destination->{App\Models\TripLocation::COLUMN_LOCATION_TITLE})->toBe($newTitle);
-        expect($destination->{App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE})->toBe($newSubTitle);
-        expect((float) $destination->{App\Models\TripLocation::COLUMN_LATITUDE})->toBe($newLatitude);
-        expect((float) $destination->{App\Models\TripLocation::COLUMN_LONGITUDE})->toBe($newLongitude);
+        expect($destination->{App\Models\TripLocation::COLUMN_LOCATION_TITLE})->toBe($newTitle)
+            ->and($destination->{App\Models\TripLocation::COLUMN_LOCATION_SUB_TITLE})->toBe($newSubTitle)
+            ->and((float)$destination->{App\Models\TripLocation::COLUMN_LATITUDE})->toBe($newLatitude)
+            ->and((float)$destination->{App\Models\TripLocation::COLUMN_LONGITUDE})->toBe($newLongitude);
     });
 
     it('validates required fields for change ride type', function () {
@@ -759,7 +714,7 @@ describe('Cancel Trip API', function () {
         expect($trip->status)->toBe(TripStatusEnum::CANCELED_BY_CUSTOMER);
     });
 
-    it('cannot cancel a trip with driver assigned', function () {
+    it('cannot cancel a trip with driver arrived', function () {
         $trip = Trip::create([
             'customer_id' => $this->customer->id,
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
@@ -769,7 +724,7 @@ describe('Cancel Trip API', function () {
             'waiting_price' => null,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
-            'status' => TripStatusEnum::ACCEPTED_RIDER->value,
+            'status' => TripStatusEnum::ARRIVED->value,
         ]);
 
         postJson(route('v1.customers.trips.cancel', $trip))
@@ -782,7 +737,7 @@ describe('Cancel Trip API', function () {
 
         // Verify trip status was NOT updated
         $trip->refresh();
-        expect($trip->status)->toBe(TripStatusEnum::ACCEPTED_RIDER);
+        expect($trip->status)->toBe(TripStatusEnum::ARRIVED);
     });
 
     it('cannot cancel an in-progress trip', function () {
@@ -943,53 +898,53 @@ describe('Confirm Trip API', function () {
     beforeEach(function () {
         // Authenticate a customer
         $this->customer = Customer::factory()->create();
-        \Laravel\Sanctum\Sanctum::actingAs($this->customer, ['*'], 'customer');
+        Sanctum::actingAs($this->customer, ['*'], 'customer');
     });
 
     it('broadcasts new trip request to all eligible riders when trip is confirmed', function () {
         // Clean database to ensure no riders from previous tests
-        \App\Models\Vehicle::query()->delete();
-        \App\Models\Rider::query()->delete();
+        Vehicle::query()->delete();
+        Rider::query()->delete();
 
         // Set config to only match online riders and vehicle types
         config(['trip.matching.only_online_riders' => true]);
         config(['trip.matching.require_vehicle_type_match' => true]);
 
-        \Illuminate\Support\Facades\Event::fake([
-            \App\Events\Socket\Rider\NewTripRequestEvent::class,
+        Event::fake([
+            NewTripRequestEvent::class,
         ]);
 
         // Create vehicle setting for the trip vehicle type
-        $vehicleSetting = \App\Models\VehicleSetting::create([
-            \App\Models\VehicleSetting::COLUMN_TYPE => \App\Models\VehicleSetting::TYPE_VEHICLE_TYPES,
-            \App\Models\VehicleSetting::COLUMN_NAME => 'Wheelchair Accessible',
-            \App\Models\VehicleSetting::COLUMN_NAME_AR => 'نقل كراسي متحركة',
-            \App\Models\VehicleSetting::COLUMN_ORDER => 1,
+        $vehicleSetting = VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
+            VehicleSetting::COLUMN_NAME => 'Wheelchair Accessible',
+            VehicleSetting::COLUMN_NAME_AR => 'نقل كراسي متحركة',
+            VehicleSetting::COLUMN_ORDER => 1,
         ]);
 
         // Create exactly 2 online riders and 1 offline rider
-        $rider1 = \App\Models\Rider::factory()->create([
-            'status' => \App\Enums\Rider\RiderStatusEnum::ONLINE,
+        $rider1 = Rider::factory()->create([
+            'status' => RiderStatusEnum::ONLINE,
         ]);
-        $rider2 = \App\Models\Rider::factory()->create([
-            'status' => \App\Enums\Rider\RiderStatusEnum::ONLINE,
+        $rider2 = Rider::factory()->create([
+            'status' => RiderStatusEnum::ONLINE,
         ]);
-        $rider3 = \App\Models\Rider::factory()->create([
-            'status' => \App\Enums\Rider\RiderStatusEnum::OFFLINE, // Should not receive request
+        $rider3 = Rider::factory()->create([
+            'status' => RiderStatusEnum::OFFLINE, // Should not receive request
         ]);
 
         // Create vehicles for online riders only
-        \App\Models\Vehicle::create([
-            \App\Models\Vehicle::COLUMN_RIDER_ID => $rider1->id,
-            \App\Models\Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
-            \App\Models\Vehicle::COLUMN_PLATE_NUMBER => 'ABC123',
-            \App\Models\Vehicle::COLUMN_YEAR => 2023,
+        Vehicle::create([
+            Vehicle::COLUMN_RIDER_ID => $rider1->id,
+            Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
+            Vehicle::COLUMN_PLATE_NUMBER => 'ABC123',
+            Vehicle::COLUMN_YEAR => 2023,
         ]);
-        \App\Models\Vehicle::create([
-            \App\Models\Vehicle::COLUMN_RIDER_ID => $rider2->id,
-            \App\Models\Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
-            \App\Models\Vehicle::COLUMN_PLATE_NUMBER => 'DEF456',
-            \App\Models\Vehicle::COLUMN_YEAR => 2023,
+        Vehicle::create([
+            Vehicle::COLUMN_RIDER_ID => $rider2->id,
+            Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
+            Vehicle::COLUMN_PLATE_NUMBER => 'DEF456',
+            Vehicle::COLUMN_YEAR => 2023,
         ]);
         // Rider3 (offline) does NOT have a vehicle, so they won't match
 
@@ -1037,12 +992,12 @@ describe('Confirm Trip API', function () {
         expect($trip->status)->toBe(TripStatusEnum::PENDING_RIDER);
 
         // Verify NewTripRequestEvent was dispatched for eligible riders only
-        \Illuminate\Support\Facades\Event::assertDispatched(\App\Events\Socket\Rider\NewTripRequestEvent::class, 2);
+        Event::assertDispatched(NewTripRequestEvent::class, 2);
 
         // Verify event was dispatched for rider1
-        \Illuminate\Support\Facades\Event::assertDispatched(
-            \App\Events\Socket\Rider\NewTripRequestEvent::class,
-            fn ($event) => $event->riderId === $rider1->id
+        Event::assertDispatched(
+            NewTripRequestEvent::class,
+            fn($event) => $event->riderId === $rider1->id
                 && isset($event->tripData['trip_request'])
                 && isset($event->tripData['map_locations'])
                 && isset($event->tripData['formatted_locations'])
@@ -1050,9 +1005,9 @@ describe('Confirm Trip API', function () {
         );
 
         // Verify event was dispatched for rider2
-        \Illuminate\Support\Facades\Event::assertDispatched(
-            \App\Events\Socket\Rider\NewTripRequestEvent::class,
-            fn ($event) => $event->riderId === $rider2->id
+        Event::assertDispatched(
+            NewTripRequestEvent::class,
+            fn($event) => $event->riderId === $rider2->id
                 && isset($event->tripData['trip_request'])
                 && isset($event->tripData['map_locations'])
                 && isset($event->tripData['formatted_locations'])
@@ -1060,37 +1015,37 @@ describe('Confirm Trip API', function () {
         );
 
         // Verify event was NOT dispatched for offline rider
-        \Illuminate\Support\Facades\Event::assertNotDispatched(
-            \App\Events\Socket\Rider\NewTripRequestEvent::class,
-            fn ($event) => $event->riderId === $rider3->id
+        Event::assertNotDispatched(
+            NewTripRequestEvent::class,
+            fn($event) => $event->riderId === $rider3->id
         );
     });
 
     it('dispatches events after database transaction commits', function () {
         // This test verifies that ShouldDispatchAfterCommit interface is working
-        \Illuminate\Support\Facades\Event::fake([
-            \App\Events\Socket\Rider\NewTripRequestEvent::class,
+        Event::fake([
+            NewTripRequestEvent::class,
         ]);
 
         // Create vehicle setting for the trip vehicle type
-        $vehicleSetting = \App\Models\VehicleSetting::create([
-            \App\Models\VehicleSetting::COLUMN_TYPE => \App\Models\VehicleSetting::TYPE_VEHICLE_TYPES,
-            \App\Models\VehicleSetting::COLUMN_NAME => 'Wheelchair Accessible',
-            \App\Models\VehicleSetting::COLUMN_NAME_AR => 'نقل كراسي متحركة',
-            \App\Models\VehicleSetting::COLUMN_ORDER => 1,
+        $vehicleSetting = VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
+            VehicleSetting::COLUMN_NAME => 'Wheelchair Accessible',
+            VehicleSetting::COLUMN_NAME_AR => 'نقل كراسي متحركة',
+            VehicleSetting::COLUMN_ORDER => 1,
         ]);
 
         // Create a rider
-        $rider = \App\Models\Rider::factory()->create([
-            'status' => \App\Enums\Rider\RiderStatusEnum::ONLINE,
+        $rider = Rider::factory()->create([
+            'status' => RiderStatusEnum::ONLINE,
         ]);
 
         // Create vehicle for rider
-        \App\Models\Vehicle::create([
-            \App\Models\Vehicle::COLUMN_RIDER_ID => $rider->id,
-            \App\Models\Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
-            \App\Models\Vehicle::COLUMN_PLATE_NUMBER => 'GHI789',
-            \App\Models\Vehicle::COLUMN_YEAR => 2023,
+        Vehicle::create([
+            Vehicle::COLUMN_RIDER_ID => $rider->id,
+            Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
+            Vehicle::COLUMN_PLATE_NUMBER => 'GHI789',
+            Vehicle::COLUMN_YEAR => 2023,
         ]);
 
         // Create a draft trip
@@ -1139,9 +1094,9 @@ describe('Confirm Trip API', function () {
             ->and($tripRequest->status)->toBe(\App\Enums\Trip\TripRequestStatusEnum::PENDING);
 
         // Verify event was dispatched with correct data
-        \Illuminate\Support\Facades\Event::assertDispatched(
-            \App\Events\Socket\Rider\NewTripRequestEvent::class,
-            fn ($event) => $event->riderId === $rider->id
+        Event::assertDispatched(
+            NewTripRequestEvent::class,
+            fn($event) => $event->riderId === $rider->id
                 && $event->tripData['trip_request']['trip_request_id'] === $tripRequest->id
         );
     });
@@ -1151,7 +1106,7 @@ describe('Get Trip Status API', function () {
     beforeEach(function () {
         // Authenticate a customer
         $this->customer = Customer::factory()->create();
-        \Laravel\Sanctum\Sanctum::actingAs($this->customer, ['*'], 'customer');
+        Sanctum::actingAs($this->customer, ['*'], 'customer');
     });
 
     it('can get trip status for valid statuses', function () {
@@ -1168,7 +1123,7 @@ describe('Get Trip Status API', function () {
             'status' => TripStatusEnum::ACCEPTED_RIDER->value,
         ]);
 
-        \Pest\Laravel\getJson(route('v1.customers.trips.status', $trip))
+        getJson(route('v1.customers.trips.status', $trip))
             ->assertStatus(200);
     });
 
@@ -1185,7 +1140,7 @@ describe('Get Trip Status API', function () {
             'status' => TripStatusEnum::DRAFT->value,
         ]);
 
-        \Pest\Laravel\getJson(route('v1.customers.trips.status', $trip))
+        getJson(route('v1.customers.trips.status', $trip))
             ->assertStatus(406);
     });
 
@@ -1202,7 +1157,7 @@ describe('Get Trip Status API', function () {
             'status' => TripStatusEnum::CANCELED_BY_CUSTOMER->value,
         ]);
 
-        \Pest\Laravel\getJson(route('v1.customers.trips.status', $trip))
+        getJson(route('v1.customers.trips.status', $trip))
             ->assertStatus(406);
     });
 
@@ -1219,7 +1174,7 @@ describe('Get Trip Status API', function () {
             'status' => TripStatusEnum::CANCELLED_BY_RIDER->value,
         ]);
 
-        \Pest\Laravel\getJson(route('v1.customers.trips.status', $trip))
+        getJson(route('v1.customers.trips.status', $trip))
             ->assertStatus(406);
     });
 
@@ -1236,7 +1191,7 @@ describe('Get Trip Status API', function () {
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
 
-        \Pest\Laravel\getJson(route('v1.customers.trips.status', $trip))
+        getJson(route('v1.customers.trips.status', $trip))
             ->assertStatus(406);
     });
 });

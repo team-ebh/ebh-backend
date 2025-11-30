@@ -12,11 +12,11 @@ Route::middleware('auth:rider')
     ->group(function () {
         Route::get('', 'requests')->name('requests');
         Route::get('/active', 'activeTrip')->name('active');
-        Route::post('/{tripRequest}/accept', 'accept')->name('requests.accept');
-        Route::post('/{tripRequest}/decline', 'decline')->name('requests.decline');
-        Route::post('/{tripRequest}/cancel', 'cancel')->name('requests.cancel');
-        Route::post('/{tripRequest}/arrived', 'arrivedTripLocation')->name('requests.arrived');
-        Route::post('/{tripRequest}/picked-up', 'pickUpPassenger')->name('requests.pickup');
-        Route::post('/{tripRequest}/completed', 'completeTripLocation')->name('requests.complete');
+        Route::post('/{tripRequest}/accept', 'accept')->name('accept');
+        Route::post('/{tripRequest}/decline', 'decline')->name('decline');
+        Route::post('/{tripRequest}/cancel', 'cancel')->name('cancel');
+        Route::post('/{tripRequest}/arrived', 'arrivedTripLocation')->name('arrived');
+        Route::post('/{tripRequest}/picked-up', 'pickUpPassenger')->name('picked-up');
+        Route::post('/{tripRequest}/completed', 'completeTripLocation')->name('completed');
         Route::get('/{tripRequest}/estimated-arrival-time', 'estimatedArrivalTime')->name('estimated_arrival_time');
     });

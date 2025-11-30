@@ -7,6 +7,7 @@ namespace App\Actions\Api\V1\Rider\Trip;
 use App\DTOs\Api\V1\Rider\Trip\CompleteTripDTO;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
+use App\Events\Socket\Customer\TripCompletedEvent;
 use App\Exceptions\Rider\InvalidTripActionException;
 use App\Exceptions\Rider\TripNotBelongToRiderException;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
@@ -52,7 +53,7 @@ readonly class CompleteTripAction
      */
     public function markAsCompleted(CompleteTripDTO $dto): array
     {
-        $trip = $dto->tripRequest->trip;
+        $trip = $dto->tripRequest->load('trip')->trip;
         $currentLocation = $this->tripActionService->getCurrentLocation($trip);
 
         $this->validateTripRequestBelongsToRider($dto->tripRequest, $dto->riderId);
@@ -82,7 +83,7 @@ readonly class CompleteTripAction
         );
 
         throw_if(
-            ! $tripRequest->isAccepted(),
+            ! $tripRequest->isAccepted() || $tripRequest->trip->isDraft(),
             InvalidTripActionException::class
         );
     }
@@ -122,6 +123,13 @@ readonly class CompleteTripAction
     private function completeTripAndUpdateRider(Trip $trip): void
     {
         $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::COMPLETED);
+
+        // Broadcast to customer
+        broadcast(new TripCompletedEvent(
+            customerId: $trip->{Trip::COLUMN_CUSTOMER_ID},
+            tripId: $trip->{Trip::COLUMN_ID},
+            riderId: $trip->{Trip::COLUMN_RIDER_ID}
+        ));
 
         $this->riderTripRepository->updateRiderStatusToOnline($trip->{Trip::COLUMN_RIDER_ID});
     }

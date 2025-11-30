@@ -7,6 +7,7 @@ namespace App\Actions\Api\V1\Rider\Trip;
 use App\DTOs\Api\V1\Rider\Trip\PickUpTripDTO;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
+use App\Events\Socket\Customer\TripPickedUpEvent;
 use App\Exceptions\Rider\InvalidTripActionException;
 use App\Exceptions\Rider\TripNotBelongToRiderException;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
@@ -59,6 +60,13 @@ readonly class PickUpTripAction
 
         $this->riderTripRepository->updateTripLocationStatus($currentLocation, TripLocationStatusEnum::PICKED_UP);
         $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::PICKED_UP);
+
+        // Broadcast to customer
+        broadcast(new TripPickedUpEvent(
+            customerId: $trip->{Trip::COLUMN_CUSTOMER_ID},
+            tripId: $trip->{Trip::COLUMN_ID},
+            riderId: $dto->riderId
+        ));
 
         $nextAction = $this->tripActionService->getNextAction($trip->fresh());
 

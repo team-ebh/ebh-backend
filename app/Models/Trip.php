@@ -159,7 +159,7 @@ class Trip extends Model
 
     /**
      * Check trip can be cancelled or not
-     * Only DRAFT and PENDING_RIDER trips can be cancelled by customer
+     * Only DRAFT, PENDING_RIDER and ACCEPTED_RIDER trips can be cancelled by customer
      */
     public function canCancelTrip(): bool
     {

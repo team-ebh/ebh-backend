@@ -7,6 +7,7 @@ namespace App\Actions\Api\V1\Rider\Trip;
 use App\DTOs\Api\V1\Rider\Trip\ArrivedTripDTO;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
+use App\Events\Socket\Customer\TripArrivedEvent;
 use App\Exceptions\Rider\InvalidTripActionException;
 use App\Exceptions\Rider\TripNotBelongToRiderException;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
@@ -51,7 +52,7 @@ readonly class ArriveTripAction
      */
     public function markAsArrived(ArrivedTripDTO $dto): array
     {
-        $trip = $dto->tripRequest->trip;
+        $trip = $dto->tripRequest->load('trip')->trip;
         $currentLocation = $this->tripActionService->getCurrentLocation($trip);
 
         $this->validateTripRequestBelongsToRider($dto->tripRequest, $dto->riderId);
@@ -59,6 +60,13 @@ readonly class ArriveTripAction
 
         $this->riderTripRepository->updateTripLocationStatus($currentLocation, TripLocationStatusEnum::ARRIVED);
         $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::ARRIVED);
+
+        // Broadcast to customer
+        broadcast(new TripArrivedEvent(
+            customerId: $trip->{Trip::COLUMN_CUSTOMER_ID},
+            tripId: $trip->{Trip::COLUMN_ID},
+            riderId: $dto->riderId
+        ));
 
         $nextAction = $this->tripActionService->getNextAction($trip->fresh());
 
@@ -80,7 +88,7 @@ readonly class ArriveTripAction
         );
 
         throw_if(
-            ! $tripRequest->isAccepted(),
+            ! $tripRequest->isAccepted() || $tripRequest->trip->isDraft(),
             InvalidTripActionException::class
         );
     }
