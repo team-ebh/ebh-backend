@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Pipelines\Api\V1\Customer\Trip\GetTripStatus;
 
-use App\Models\TripLocation;
+use App\Services\Trip\TripLocationFormatterService;
 use Closure;
 
 /**
@@ -12,8 +12,12 @@ use Closure;
  *
  * Builds location history from trip locations with sequences
  */
-class BuildLocationHistoryPipe
+readonly class BuildLocationHistoryPipe
 {
+    public function __construct(
+        private TripLocationFormatterService $locationFormatter
+    ) {}
+
     public function handle(TripStatusContext $context, Closure $next): mixed
     {
         if (! $context->found) {
@@ -35,45 +39,15 @@ class BuildLocationHistoryPipe
             ])]);
         }
 
-        $sortedLocations = $context->trip->locations
-            ->sortBy(TripLocation::COLUMN_SEQUENCE)
-            ->values();
-
-        // Build map locations (coordinates only for map display)
-        $context->mapLocations = $sortedLocations
-            ->map(function (TripLocation $location) {
-                return [
-                    'latitude' => $location->{TripLocation::COLUMN_LATITUDE},
-                    'longitude' => $location->{TripLocation::COLUMN_LONGITUDE},
-                    'type' => $location->{TripLocation::COLUMN_TYPE},
-                    'sequence' => $location->{TripLocation::COLUMN_SEQUENCE},
-                ];
-            })
+        // Build map locations using service
+        $context->mapLocations = $this->locationFormatter
+            ->prepareMapLocations($context->trip)
             ->toArray();
 
-        // Build formatted locations (from/to structure)
-        $formattedLocations = [];
-        for ($i = 0; $i < $sortedLocations->count() - 1; $i++) {
-            $from = $sortedLocations[$i];
-            $to = $sortedLocations[$i + 1];
-
-            $formattedLocations[] = [
-                'is_active' => true,
-                'from' => [
-                    'location_title' => $from->{TripLocation::COLUMN_LOCATION_TITLE},
-                    'location_sub_title' => $from->{TripLocation::COLUMN_LOCATION_SUB_TITLE},
-                    'latitude' => $from->{TripLocation::COLUMN_LATITUDE},
-                    'longitude' => $from->{TripLocation::COLUMN_LONGITUDE},
-                ],
-                'to' => [
-                    'location_title' => $to->{TripLocation::COLUMN_LOCATION_TITLE},
-                    'location_sub_title' => $to->{TripLocation::COLUMN_LOCATION_SUB_TITLE},
-                    'latitude' => $to->{TripLocation::COLUMN_LATITUDE},
-                    'longitude' => $to->{TripLocation::COLUMN_LONGITUDE},
-                ],
-            ];
-        }
-        $context->formattedLocations = $formattedLocations;
+        // Build formatted locations using service
+        $context->formattedLocations = $this->locationFormatter
+            ->prepareFormattedLocations($context->trip)
+            ->toArray();
 
         return $next($context);
     }

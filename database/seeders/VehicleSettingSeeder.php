@@ -16,7 +16,7 @@ class VehicleSettingSeeder extends Seeder
     public function run(): void
     {
         // Only run on local, dev, and stage environments
-        if (ApplicationEnvironmentEnum::isProduction()) {
+        if (! ApplicationEnvironmentEnum::isLocalEnvironments()) {
             $this->command->info('VehicleSettingSeeder skipped - not running in local, dev, or stage environment.');
 
             return;
@@ -40,7 +40,18 @@ class VehicleSettingSeeder extends Seeder
             ['name' => 'Van', 'name_ar' => 'فان'],
         ];
 
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_TYPES, $items);
+        foreach ($items as $index => $item) {
+            VehicleSetting::query()->updateOrCreate(
+                [
+                    VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_CAR_TYPES,
+                    VehicleSetting::COLUMN_NAME => $item['name'],
+                ],
+                [
+                    VehicleSetting::COLUMN_NAME_AR => $item['name_ar'],
+                    VehicleSetting::COLUMN_ORDER => $index,
+                ]
+            );
+        }
     }
 
     private function seedCarColors(): void
@@ -60,21 +71,35 @@ class VehicleSettingSeeder extends Seeder
             ['name' => 'Orange', 'name_ar' => 'برتقالي'],
         ];
 
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_COLORS, $items);
+        foreach ($items as $index => $item) {
+            VehicleSetting::query()->updateOrCreate(
+                [
+                    VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_CAR_COLORS,
+                    VehicleSetting::COLUMN_NAME => $item['name'],
+                ],
+                [
+                    VehicleSetting::COLUMN_NAME_AR => $item['name_ar'],
+                    VehicleSetting::COLUMN_ORDER => $index,
+                ]
+            );
+        }
     }
 
     private function seedPassengerCapacity(): void
     {
-        $items = [];
         for ($i = 1; $i <= 6; $i++) {
-            $items[] = [
-                'name' => null,
-                'name_ar' => null,
-                'capacity' => $i,
-            ];
+            VehicleSetting::query()->updateOrCreate(
+                [
+                    VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_PASSENGER_CAPACITY,
+                    VehicleSetting::COLUMN_CAPACITY => $i,
+                ],
+                [
+                    VehicleSetting::COLUMN_NAME => null,
+                    VehicleSetting::COLUMN_NAME_AR => null,
+                    VehicleSetting::COLUMN_ORDER => $i - 1,
+                ]
+            );
         }
-
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_PASSENGER_CAPACITY, $items);
     }
 
     private function seedCarMakes(): void
@@ -85,7 +110,18 @@ class VehicleSettingSeeder extends Seeder
             ['name' => 'Ford', 'name_ar' => 'فورد'],
         ];
 
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_MAKES, $items);
+        foreach ($items as $index => $item) {
+            VehicleSetting::query()->updateOrCreate(
+                [
+                    VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_CAR_MAKES,
+                    VehicleSetting::COLUMN_NAME => $item['name'],
+                ],
+                [
+                    VehicleSetting::COLUMN_NAME_AR => $item['name_ar'],
+                    VehicleSetting::COLUMN_ORDER => $index,
+                ]
+            );
+        }
     }
 
     private function seedCarModels(): void
@@ -96,7 +132,18 @@ class VehicleSettingSeeder extends Seeder
             ['name' => 'Explorer', 'name_ar' => 'إكسبلورر'],
         ];
 
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_MODELS, $items);
+        foreach ($items as $index => $item) {
+            VehicleSetting::query()->updateOrCreate(
+                [
+                    VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_CAR_MODELS,
+                    VehicleSetting::COLUMN_NAME => $item['name'],
+                ],
+                [
+                    VehicleSetting::COLUMN_NAME_AR => $item['name_ar'],
+                    VehicleSetting::COLUMN_ORDER => $index,
+                ]
+            );
+        }
     }
 
     private function seedVehicleTypes(): void
@@ -107,6 +154,17 @@ class VehicleSettingSeeder extends Seeder
             ['name' => 'Mobility Aid', 'name_ar' => 'مساعدات التنقل'],
         ];
 
-        VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_VEHICLE_TYPES, $items);
+        foreach ($items as $index => $item) {
+            VehicleSetting::query()->updateOrCreate(
+                [
+                    VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
+                    VehicleSetting::COLUMN_NAME => $item['name'],
+                ],
+                [
+                    VehicleSetting::COLUMN_NAME_AR => $item['name_ar'],
+                    VehicleSetting::COLUMN_ORDER => $index,
+                ]
+            );
+        }
     }
 }

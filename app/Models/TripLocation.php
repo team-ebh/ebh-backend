@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
+use App\Observers\TripLocationObserver;
 use App\Traits\Model\Aggregates\TripLocationAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy(TripLocationObserver::class)]
 class TripLocation extends Model
 {
     use HasDefaultColumnModelTrait;
@@ -36,6 +40,72 @@ class TripLocation extends Model
     {
         return [
             self::COLUMN_TYPE => TripLocationTypeEnum::class,
+            self::COLUMN_STATUS => TripLocationStatusEnum::class,
         ];
+    }
+
+    protected $attributes = [
+        self::COLUMN_STATUS => TripLocationStatusEnum::PENDING,
+    ];
+
+    /**
+     * Check if location is pending
+     */
+    public function isPending(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripLocationStatusEnum::PENDING;
+    }
+
+    /**
+     * Check if location is arrived
+     */
+    public function isArrived(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripLocationStatusEnum::ARRIVED;
+    }
+
+    /**
+     * Check if location is picked up
+     */
+    public function isPickedUp(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripLocationStatusEnum::PICKED_UP;
+    }
+
+    /**
+     * Check if location is completed
+     */
+    public function isCompleted(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripLocationStatusEnum::COMPLETED;
+    }
+
+    /**
+     * Check if this is an origin location
+     */
+    public function isOrigin(): bool
+    {
+        return $this->{self::COLUMN_TYPE} === TripLocationTypeEnum::ORIGIN;
+    }
+
+    /**
+     * Check if this is a destination location
+     */
+    public function isDestination(): bool
+    {
+        return $this->{self::COLUMN_TYPE} === TripLocationTypeEnum::DESTINATION;
+    }
+
+    /**
+     * Check if location is finished (fully completed and ready to move to next location)
+     * - All locations are finished when status is COMPLETED
+     */
+    public function isFinished(): bool
+    {
+        if ($this->isOrigin()) {
+            return $this->{self::COLUMN_STATUS} === TripLocationStatusEnum::PICKED_UP;
+        }
+
+        return $this->{self::COLUMN_STATUS} === TripLocationStatusEnum::COMPLETED;
     }
 }

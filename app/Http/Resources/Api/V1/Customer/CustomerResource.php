@@ -19,6 +19,15 @@ class CustomerResource extends JsonResource
     {
         return [
             /**
+             * Customer ID
+             *
+             * @example 1
+             *
+             * @var int
+             */
+            'id' => $this->resource->{Customer::COLUMN_ID},
+
+            /**
              * Customer first name
              *
              * @example "John"

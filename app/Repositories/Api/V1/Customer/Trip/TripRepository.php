@@ -6,6 +6,7 @@ namespace App\Repositories\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class TripRepository implements TripRepositoryInterface
 {
-    public function createTrip(TripStoreDTO $dto, array $originLocation, array $destinationLocation, float $accessibilityCost, float $totalPrice): Trip
+    public function createTrip(TripStoreDTO $dto, array $originLocation, array $destinationLocation, ?float $accessibilityCost, float $totalPrice): Trip
     {
         // Create trip
         $trip = Trip::query()->create([
@@ -24,7 +25,7 @@ class TripRepository implements TripRepositoryInterface
             Trip::COLUMN_TRIP_TYPE_ID => $dto->tripTypeId,
             Trip::COLUMN_VEHICLE_TYPE_ID => $dto->vehicleTypeId,
             Trip::COLUMN_PASSENGER_COUNT => $dto->passengerCount,
-            Trip::COLUMN_ACCESSIBILITY_PRICE => $accessibilityCost > 0 ? $accessibilityCost : null,
+            Trip::COLUMN_ACCESSIBILITY_PRICE => ($accessibilityCost && $accessibilityCost > 0) ? $accessibilityCost : null,
             Trip::COLUMN_WAITING_PRICE => null,
             Trip::COLUMN_TOTAL_PRICE => $totalPrice,
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD,
@@ -41,6 +42,7 @@ class TripRepository implements TripRepositoryInterface
                 TripLocation::COLUMN_LATITUDE => $dto->originLatitude,
                 TripLocation::COLUMN_LONGITUDE => $dto->originLongitude,
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
                 TripLocation::COLUMN_SEQUENCE => 1,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -52,13 +54,14 @@ class TripRepository implements TripRepositoryInterface
                 TripLocation::COLUMN_LATITUDE => $dto->destinationLatitude,
                 TripLocation::COLUMN_LONGITUDE => $dto->destinationLongitude,
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
                 TripLocation::COLUMN_SEQUENCE => 2,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
         ];
 
-        TripLocation::insert($locations);
+        TripLocation::query()->insert($locations);
 
         return $trip->fresh(['locations']);
     }

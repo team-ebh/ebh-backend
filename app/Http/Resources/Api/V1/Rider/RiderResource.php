@@ -21,6 +21,15 @@ class RiderResource extends JsonResource
     {
         return [
             /**
+             * Rider ID
+             *
+             * @example 1
+             *
+             * @var int
+             */
+            'id' => $this->resource->{Rider::COLUMN_ID},
+
+            /**
              * Rider full name
              *
              * @example "John Doe"

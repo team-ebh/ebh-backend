@@ -61,6 +61,23 @@ return [
         ],
     ],
     'api' => [
-
+        'validation' => [
+            'decline_reason' => [
+                'required' => 'Decline reason is required',
+                'max' => 'Decline reason must not exceed 500 characters',
+            ],
+        ],
+        'errors' => [
+            'trip_not_available' => 'Trip is no longer available',
+            'trip_already_assigned' => 'This trip has already been assigned to another rider',
+            'rider_not_available' => 'Rider is not available',
+            'rider_must_be_available' => 'You must be available to accept trips',
+        ],
+        'success' => [
+            'trip_accepted' => 'Trip accepted successfully',
+            'trip_declined' => 'Trip declined successfully',
+        ],
+        'location_updated_successfully' => 'Location updated successfully',
     ],
+    'location_updated_successfully' => 'Location updated successfully',
 ];

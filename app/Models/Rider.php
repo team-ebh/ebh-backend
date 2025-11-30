@@ -9,6 +9,7 @@ use App\Traits\Model\Aggregates\RiderAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\HasMediaTrait;
 use App\Traits\Model\LogsActivity;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -43,6 +44,12 @@ class Rider extends User implements HasMedia
 
     public const string COLUMN_ACCESSIBILITY_CERTIFICATIONS = 'accessibility_certifications';
 
+    public const string COLUMN_LATITUDE = 'latitude';
+
+    public const string COLUMN_LONGITUDE = 'longitude';
+
+    public const string COLUMN_LAST_LOCATION_UPDATE = 'last_location_update';
+
     public const string PROFILE_PHOTO = 'profile_photo';
 
     public const string MEDIA_COLLECTION_NAME = 'riders';
@@ -51,6 +58,9 @@ class Rider extends User implements HasMedia
         self::COLUMN_STATUS => RiderStatusEnum::class,
         self::COLUMN_OTP_EXPIRES_AT => 'timestamp',
         self::COLUMN_ACCESSIBILITY_CERTIFICATIONS => 'json',
+        self::COLUMN_LATITUDE => 'decimal:8',
+        self::COLUMN_LONGITUDE => 'decimal:8',
+        self::COLUMN_LAST_LOCATION_UPDATE => 'timestamp',
     ];
 
     protected $hidden = [
@@ -71,7 +81,9 @@ class Rider extends User implements HasMedia
 
     public function isOnline(): bool
     {
-        return $this->{self::COLUMN_STATUS} === RiderStatusEnum::ONLINE;
+        // TODO: for now return true
+        return $this->{self::COLUMN_STATUS} === RiderStatusEnum::ONLINE || $this->{self::COLUMN_STATUS} === RiderStatusEnum::OFFLINE;
+        //        return $this->{self::COLUMN_STATUS} === RiderStatusEnum::ONLINE;
     }
 
     public function isOffline(): bool
@@ -92,5 +104,21 @@ class Rider extends User implements HasMedia
     public function vehicles(): HasMany
     {
         return $this->hasMany(Vehicle::class, Vehicle::COLUMN_RIDER_ID);
+    }
+
+    public function latitude(): Attribute
+    {
+        // TODO: remove this function before production
+        return new Attribute(
+            get: fn ($value) => is_null($value) ? 29.353325 : (float) $value
+        );
+    }
+
+    public function longitude(): Attribute
+    {
+        // TODO: remove this function before production
+        return new Attribute(
+            get: fn ($value) => is_null($value) ? 47.98227 : (float) $value
+        );
     }
 }

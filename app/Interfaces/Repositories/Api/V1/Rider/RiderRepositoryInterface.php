@@ -8,6 +8,8 @@ use App\Models\Rider;
 
 interface RiderRepositoryInterface
 {
+    public function find(int $riderId): ?Rider;
+
     public function findByPhoneNumber(string $phoneNumber): ?Rider;
 
     public function findAndValidateRider(string $phoneNumber): ?Rider;
@@ -21,4 +23,6 @@ interface RiderRepositoryInterface
     public function validateOtp(Rider $rider, string $otp): void;
 
     public function createAuthToken(Rider $rider): string;
+
+    public function updateLocation(Rider $rider, float $latitude, float $longitude): void;
 }

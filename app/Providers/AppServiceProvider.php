@@ -10,11 +10,15 @@ use App\Interfaces\Repositories\Api\V1\Customer\CustomerRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\RiderLocationRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
+use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
+use App\Interfaces\Repositories\TripRequestRepositoryInterface;
 use App\Models\Admin;
 use App\Repositories\Api\V1\Customer\CustomerRepository;
 use App\Repositories\Api\V1\Customer\Trip\RiderLocationRepository;
 use App\Repositories\Api\V1\Customer\Trip\TripRepository;
 use App\Repositories\Api\V1\Rider\RiderRepository;
+use App\Repositories\Api\V1\Rider\Trip\RiderTripRepository;
+use App\Repositories\TripRequestRepository;
 use Carbon\CarbonImmutable;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\Example;
@@ -59,6 +63,8 @@ class AppServiceProvider extends ServiceProvider
         TripRepositoryInterface::class => TripRepository::class,
         RiderLocationRepositoryInterface::class => RiderLocationRepository::class,
         RiderRepositoryInterface::class => RiderRepository::class,
+        RiderTripRepositoryInterface::class => RiderTripRepository::class,
+        TripRequestRepositoryInterface::class => TripRequestRepository::class,
     ];
 
     /**

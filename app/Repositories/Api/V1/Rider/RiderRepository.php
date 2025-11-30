@@ -12,6 +12,11 @@ use Random\RandomException;
 
 class RiderRepository implements RiderRepositoryInterface
 {
+    public function find(int $riderId): ?Rider
+    {
+        return Rider::find($riderId);
+    }
+
     public function findByPhoneNumber(string $phoneNumber): ?Rider
     {
         return Rider::query()->where(Rider::COLUMN_PHONE_NUMBER, $phoneNumber)->first();
@@ -73,5 +78,14 @@ class RiderRepository implements RiderRepositoryInterface
     public function createAuthToken(Rider $rider): string
     {
         return $rider->createToken('auth-token')->plainTextToken;
+    }
+
+    public function updateLocation(Rider $rider, float $latitude, float $longitude): void
+    {
+        $rider->update([
+            Rider::COLUMN_LATITUDE => $latitude,
+            Rider::COLUMN_LONGITUDE => $longitude,
+            Rider::COLUMN_LAST_LOCATION_UPDATE => now(),
+        ]);
     }
 }

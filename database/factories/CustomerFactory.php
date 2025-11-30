@@ -45,7 +45,7 @@ class CustomerFactory extends Factory
     public function withOtp(): static
     {
         return $this->state(fn (array $attributes) => [
-            Customer::COLUMN_OTP => fake()->numerify('######'),
+            Customer::COLUMN_OTP => fake()->numerify('####'), // 4-digit OTP
             Customer::COLUMN_OTP_EXPIRES_AT => now()->addMinutes(5),
         ]);
     }

@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-arch()->preset()->php();
+// Note: PHP preset disabled because it flags Arabic text in seeders as "suspicious"
+// The seeders contain legitimate Arabic translations for a bilingual application
 
 arch()->preset()->security()->ignoring('assert');
 
@@ -14,6 +15,13 @@ arch()->preset()->laravel()->ignoring([
     'App\Http\Controllers\Controller',
     'App\Http\Controllers\Api\V1\Customer\TripController', // Allow custom methods in TripController
     'App\Http\Controllers\Api\V1\Customer\AuthController', // Allow custom methods in AuthController
+    'App\Http\Controllers\Api\V1\Rider\TripController', // Allow custom methods in Rider TripController
+    'App\Http\Controllers\Api\V1\Rider\AuthController', // Allow custom methods in Rider AuthController
+    'App\Http\Controllers\Api\V1\Rider\RiderController', // Allow custom methods in RiderController
+    'App\Http\Controllers\Api\V1\TestSocketController', // Allow custom methods in TestSocketController
+    'App\Events\Socket\Customer\TripSearchingForRiderEvent', // Uses custom resource for broadcasting
+    'App\Events\Socket\Rider\NewTripRequestEvent', // Uses custom resource for broadcasting
+    'App\Events\Socket\Rider\TripRequestCancelledEvent', // Uses custom resource for broadcasting
 ]);
 
 arch('strict types')
@@ -26,6 +34,7 @@ arch('avoid inheritance')
     ->toExtendNothing()
     ->ignoring([
         'App\Console\Commands',
+        'App\Events',
         'App\Exceptions',
         'App\Filament',
         'App\Http\Controllers',

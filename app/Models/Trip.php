@@ -8,12 +8,15 @@ use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
+use App\Observers\TripObserver;
 use App\Traits\Model\Aggregates\TripAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy(TripObserver::class)]
 class Trip extends Model
 {
     use HasDefaultColumnModelTrait;
@@ -21,6 +24,8 @@ class Trip extends Model
     use TripAggregate;
 
     public const string COLUMN_CUSTOMER_ID = 'customer_id';
+
+    public const string COLUMN_RIDER_ID = 'rider_id';
 
     public const string COLUMN_TRIP_TYPE_ID = 'trip_type_id';
 
@@ -54,6 +59,12 @@ class Trip extends Model
     protected function forCustomer($query, int $customerId)
     {
         return $query->where(self::COLUMN_CUSTOMER_ID, $customerId);
+    }
+
+    #[Scope]
+    protected function forRider($query, int $riderId)
+    {
+        return $query->where(self::COLUMN_RIDER_ID, $riderId);
     }
 
     #[Scope]
@@ -127,12 +138,32 @@ class Trip extends Model
     }
 
     /**
+     * Check if trip belongs to rider
+     */
+    public function belongsToRider(int $riderId): bool
+    {
+        return $this->{self::COLUMN_RIDER_ID} === $riderId;
+    }
+
+    /**
+     * Check if trip can be cancelled by rider
+     * Only ACCEPTED_RIDER and ARRIVED trips can be cancelled by rider
+     */
+    public function canBeCancelledByRider(): bool
+    {
+        return in_array($this->{self::COLUMN_STATUS}, [
+            TripStatusEnum::ACCEPTED_RIDER,
+            TripStatusEnum::ARRIVED,
+        ]);
+    }
+
+    /**
      * Check trip can be cancelled or not
-     * Only DRAFT and PENDING_RIDER trips can be cancelled by customer
+     * Only DRAFT, PENDING_RIDER and ACCEPTED_RIDER trips can be cancelled by customer
      */
     public function canCancelTrip(): bool
     {
-        return in_array($this->{self::COLUMN_STATUS}, [TripStatusEnum::DRAFT, TripStatusEnum::PENDING_RIDER]);
+        return in_array($this->{self::COLUMN_STATUS}, [TripStatusEnum::DRAFT, TripStatusEnum::PENDING_RIDER, TripStatusEnum::ACCEPTED_RIDER]);
     }
 
     /**

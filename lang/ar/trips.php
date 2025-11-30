@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Trip\AccessibilityRequirementsEnum;
 use App\Enums\Trip\RideTypeEnum;
+use App\Enums\Trip\TripRequestStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
@@ -55,10 +56,24 @@ return [
             TripStatusEnum::PENDING_RIDER->name => 'في انتظار السائق',
             TripStatusEnum::ACCEPTED_RIDER->name => 'مقبولة من السائق',
             TripStatusEnum::ARRIVED->name => 'وصل',
-            TripStatusEnum::CANCELED_BY_CUSTOMER->name => 'ملغاة من قبل العميل',
-            TripStatusEnum::CANCELLED_BY_RIDER->name => 'ملغاة من قبل السائق',
             TripStatusEnum::PICKED_UP->name => 'تم الاستلام',
             TripStatusEnum::COMPLETED->name => 'مكتملة',
+            TripStatusEnum::CANCELED_BY_CUSTOMER->name => 'ملغاة من قبل العميل',
+            TripStatusEnum::CANCELLED_BY_RIDER->name => 'ملغاة من قبل السائق',
+        ],
+        'trip_request_statuses' => [
+            TripRequestStatusEnum::PENDING->name => 'قيد الانتظار',
+            TripRequestStatusEnum::ACCEPTED->name => 'مقبول',
+            TripRequestStatusEnum::DECLINED->name => 'مرفوض',
+            TripRequestStatusEnum::EXPIRED->name => 'منتهي الصلاحية',
+            TripRequestStatusEnum::CANCELLED->name => 'ملغى',
+            TripRequestStatusEnum::LOCKED->name => 'مقفل',
+        ],
+        'trip_location_statuses' => [
+            'PENDING' => 'قيد الانتظار',
+            'ARRIVED' => 'وصل',
+            'PICKED_UP' => 'تم الاستلام',
+            'COMPLETED' => 'مكتمل',
         ],
         'price_estimation' => 'تقدير السعر',
         'waiting_time_rate_description' => ':price لكل :minutes دقيقة',
@@ -85,4 +100,17 @@ return [
             'trip_status_cannot_be_checked' => 'لا يمكن التحقق من حالة الرحلة. التحقق من الحالة غير متاح للرحلات المسودة أو الملغاة أو المكتملة.',
         ],
     ],
+    'not_your_trip' => 'غير مصرح لك بالوصول إلى هذه الرحلة.',
+    'cannot_cancel_trip_status' => 'لا يمكن إلغاء هذه الرحلة. يمكن للسائق فقط إلغاء الرحلات المقبولة أو الواصلة.',
+    'trip_cancelled_successfully' => 'تم إلغاء الرحلة بنجاح',
+    'trip_request_not_belong_to_rider' => 'طلب الرحلة هذا غير مخصص لك.',
+    'trip_request_declined_successfully' => 'تم رفض طلب الرحلة بنجاح.',
+    'no_active_trip' => 'ليس لديك أي رحلة نشطة.',
+    'invalid_trip_action' => 'إجراء رحلة غير صالح. يرجى التحقق من حالة الرحلة الحالية.',
+    'location_not_available' => 'الموقع غير متاح لهذا الإجراء.',
+    'trip_not_in_progress' => 'الرحلة ليست قيد التنفيذ.',
+    'arrived_at_location_successfully' => 'تم الوصول إلى الموقع بنجاح.',
+    'passenger_picked_up_successfully' => 'تم استلام الراكب بنجاح.',
+    'location_completed_successfully' => 'تم إكمال الموقع بنجاح.',
+    'trip_completed_successfully' => 'تم إكمال الرحلة بنجاح.',
 ];
