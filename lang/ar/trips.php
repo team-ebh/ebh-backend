@@ -73,6 +73,7 @@ return [
             'PENDING' => 'قيد الانتظار',
             'ARRIVED' => 'وصل',
             'PICKED_UP' => 'تم الاستلام',
+            'DROPPED_OFF' => 'تم الإنزال',
             'COMPLETED' => 'مكتمل',
         ],
         'price_estimation' => 'تقدير السعر',

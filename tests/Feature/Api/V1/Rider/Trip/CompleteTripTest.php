@@ -156,14 +156,14 @@ test('rider can complete first destination and get next action for second destin
     // Verify trip is NOT completed yet
     assertDatabaseHas('trips', [
         'id' => $trip->id,
-        'status' => TripStatusEnum::COMPLETED->value,
+        'status' => TripStatusEnum::PICKED_UP->value,
     ]);
 
-    // Verify first destination is completed
+    // Verify first destination is dropped off (not the last location)
     assertDatabaseHas('trip_locations', [
         'trip_id' => $trip->id,
         'sequence' => 2,
-        'status' => TripLocationStatusEnum::COMPLETED->value,
+        'status' => TripLocationStatusEnum::DROPPED_OFF->value,
     ]);
 
     // Verify rider is still busy
@@ -175,18 +175,18 @@ test('rider can complete first destination and get next action for second destin
 
 test('rider can complete all locations and finish trip', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::PICKED_UP->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
-                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::COMPLETED->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PICKED_UP->value,
                 TripLocation::COLUMN_LATITUDE => 29.3759,
                 TripLocation::COLUMN_LONGITUDE => 47.9774,
                 TripLocation::COLUMN_SEQUENCE => 1,
             ],
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
-                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::COMPLETED->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::DROPPED_OFF->value,
                 TripLocation::COLUMN_LATITUDE => 29.3900,
                 TripLocation::COLUMN_LONGITUDE => 47.9900,
                 TripLocation::COLUMN_SEQUENCE => 2,
@@ -323,11 +323,18 @@ test('rider cannot mark trip as completed with invalid status - already complete
         [Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED->value],
         [
             [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PICKED_UP->value,
+                TripLocation::COLUMN_LATITUDE => 29.3900,
+                TripLocation::COLUMN_LONGITUDE => 47.9900,
+                TripLocation::COLUMN_SEQUENCE => 1,
+            ],
+            [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
                 TripLocation::COLUMN_STATUS => TripLocationStatusEnum::COMPLETED->value,
                 TripLocation::COLUMN_LATITUDE => 29.3900,
                 TripLocation::COLUMN_LONGITUDE => 47.9900,
-                TripLocation::COLUMN_SEQUENCE => 1,
+                TripLocation::COLUMN_SEQUENCE => 2,
             ],
         ]
     );
@@ -335,7 +342,34 @@ test('rider cannot mark trip as completed with invalid status - already complete
     $response = actingAs($this->rider, 'rider')
         ->postJson(route('v1.riders.trips.requests.completed', $trip->tripRequest));
 
-    $response->assertStatus(406); // InvalidTripActionException
+    $response->assertStatus(406); // TripNotInProgressException
+});
+
+test('rider cannot mark trip as completed when all locations are finished', function () {
+    $trip = ($this->createTripWithLocations)(
+        [Trip::COLUMN_STATUS => TripStatusEnum::PICKED_UP->value],
+        [
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PICKED_UP->value,
+                TripLocation::COLUMN_LATITUDE => 29.3759,
+                TripLocation::COLUMN_LONGITUDE => 47.9774,
+                TripLocation::COLUMN_SEQUENCE => 1,
+            ],
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::COMPLETED->value,
+                TripLocation::COLUMN_LATITUDE => 29.3900,
+                TripLocation::COLUMN_LONGITUDE => 47.9900,
+                TripLocation::COLUMN_SEQUENCE => 2,
+            ],
+        ]
+    );
+
+    $response = actingAs($this->rider, 'rider')
+        ->postJson(route('v1.riders.trips.requests.completed', $trip->tripRequest));
+
+    $response->assertStatus(406); // TripNotInProgressException - no current location available
 });
 
 test('unauthenticated rider cannot mark trip as completed', function () {

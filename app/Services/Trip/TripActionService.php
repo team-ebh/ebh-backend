@@ -22,7 +22,7 @@ readonly class TripActionService
     public function getNextAction(Trip $trip): ?string
     {
         // TODO:: this functionality must be changed based on trip rider type 2, and 3
-        $locations = $trip->locations()->orderBy(TripLocation::COLUMN_SEQUENCE)->get();
+        $locations = $trip->loadMissing('locations')->locations;
 
         if ($locations->isEmpty()) {
             return null;
@@ -73,7 +73,7 @@ readonly class TripActionService
      */
     public function getCurrentLocation(Trip $trip): ?TripLocation
     {
-        $locations = $trip->locations()->orderBy(TripLocation::COLUMN_SEQUENCE)->get();
+        $locations = $trip->loadMissing('locations')->locations;
 
         return $locations->first(fn (TripLocation $loc) => ! $loc->isFinished());
     }
@@ -105,6 +105,19 @@ readonly class TripActionService
             return false;
         }
 
-        return $location->isDestination() && $location->isPending();
+        return $location->isDestination() && ($location->isPending() || $location->isDroppedOff());
+    }
+
+    /**
+     * Get last location
+     */
+    public function getLastLocation(Trip $trip): ?TripLocation
+    {
+        return $trip->loadMissing('locations')->locations?->last();
+    }
+
+    public function isSameLocation(TripLocation $firstLocation, TripLocation $secondLocation): bool
+    {
+        return $firstLocation->{TripLocation::COLUMN_ID} === $secondLocation->{TripLocation::COLUMN_ID};
     }
 }

@@ -10,6 +10,7 @@ use App\Enums\Trip\TripStatusEnum;
 use App\Events\Socket\Customer\TripCompletedEvent;
 use App\Exceptions\Rider\InvalidTripActionException;
 use App\Exceptions\Rider\TripNotBelongToRiderException;
+use App\Exceptions\Rider\TripNotInProgressException;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Models\Rider;
 use App\Models\Trip;
@@ -54,12 +55,25 @@ readonly class CompleteTripAction
     public function markAsCompleted(CompleteTripDTO $dto): array
     {
         $trip = $dto->tripRequest->load('trip')->trip;
+
+        // Validate trip is in progress
+        $this->validateTripInProgress($trip);
+
         $currentLocation = $this->tripActionService->getCurrentLocation($trip);
+
+        // Validate current location exists
+        $this->validateCurrentLocationExists($currentLocation);
+
+        $lastLocation = $this->tripActionService->getLastLocation($trip);
+        $isLastLocation = $this->tripActionService->isSameLocation($currentLocation, $lastLocation);
 
         $this->validateTripRequestBelongsToRider($dto->tripRequest, $dto->riderId);
         $this->validateCompleteConditions($currentLocation);
 
-        $this->riderTripRepository->updateTripLocationStatus($currentLocation, TripLocationStatusEnum::COMPLETED);
+        $this->riderTripRepository->updateTripLocationStatus(
+            $currentLocation,
+            $isLastLocation ? TripLocationStatusEnum::COMPLETED : TripLocationStatusEnum::DROPPED_OFF,
+        );
         $tripCompleted = $this->checkAndCompleteTrip($trip);
 
         $nextAction = $tripCompleted ? null : $this->tripActionService->getNextAction($trip->fresh());
@@ -68,6 +82,32 @@ readonly class CompleteTripAction
             'next_action' => $nextAction,
             'trip_completed' => $tripCompleted,
         ];
+    }
+
+    /**
+     * Validate trip is in progress (not completed)
+     *
+     * @throws \Throwable
+     */
+    private function validateTripInProgress(Trip $trip): void
+    {
+        throw_if(
+            $trip->isCompleted(),
+            TripNotInProgressException::class
+        );
+    }
+
+    /**
+     * Validate current location exists
+     *
+     * @throws \Throwable
+     */
+    private function validateCurrentLocationExists(?TripLocation $currentLocation): void
+    {
+        throw_if(
+            is_null($currentLocation),
+            TripNotInProgressException::class
+        );
     }
 
     /**

@@ -33,7 +33,8 @@ trait TripAggregate
 
     public function locations(): HasMany
     {
-        return $this->hasMany(TripLocation::class, TripLocation::COLUMN_TRIP_ID);
+        return $this->hasMany(TripLocation::class, TripLocation::COLUMN_TRIP_ID)
+            ->orderBy(TripLocation::COLUMN_SEQUENCE);
     }
 
     public function tripRequests(): HasMany

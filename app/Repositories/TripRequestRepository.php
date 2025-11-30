@@ -36,9 +36,7 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
         $now = now();
 
         // Get trip origin location
-        $origin = $trip->locations()
-            ->orderBy(TripLocation::COLUMN_SEQUENCE)
-            ->first();
+        $origin = $trip->locations()->first();
 
         $requests = $riders->map(function (Rider $rider, int $index) use ($trip, $searchAttempt, $searchRadiusMeters, $expiresAt, $origin, $now) {
             $distanceMeters = null;

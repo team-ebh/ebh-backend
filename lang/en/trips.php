@@ -73,6 +73,7 @@ return [
             'PENDING' => 'Pending',
             'ARRIVED' => 'Arrived',
             'PICKED_UP' => 'Picked Up',
+            'DROPPED_OFF' => 'Dropped Off',
             'COMPLETED' => 'Completed',
         ],
         'price_estimation' => 'Price Estimation',

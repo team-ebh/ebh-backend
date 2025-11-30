@@ -36,9 +36,7 @@ readonly class RiderMatchingService
     public function findEligibleRiders(Trip $trip, int $radiusMeters): Collection
     {
         // Get trip origin location
-        $origin = $trip->locations()
-            ->orderBy(TripLocation::COLUMN_SEQUENCE)
-            ->first();
+        $origin = $trip->locations()->first();
 
         if (! $origin) {
             return new Collection;

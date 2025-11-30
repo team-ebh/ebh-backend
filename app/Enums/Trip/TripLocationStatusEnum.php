@@ -11,7 +11,8 @@ enum TripLocationStatusEnum: int implements HasLabel
     case PENDING = 1;
     case ARRIVED = 2;
     case PICKED_UP = 3;
-    case COMPLETED = 4;
+    case DROPPED_OFF = 4;
+    case COMPLETED = 5;
 
     public function getLabel(): ?string
     {
