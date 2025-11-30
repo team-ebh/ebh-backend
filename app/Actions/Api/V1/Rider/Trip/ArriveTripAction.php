@@ -5,15 +5,9 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Rider\Trip;
 
 use App\DTOs\Api\V1\Rider\Trip\ArrivedTripDTO;
-use App\Enums\Trip\TripLocationStatusEnum;
-use App\Events\Socket\Customer\TripArrivedEvent;
-use App\Exceptions\Rider\InvalidTripActionException;
-use App\Exceptions\Rider\TripNotBelongToRiderException;
-use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
-use App\Models\Trip;
-use App\Models\TripLocation;
-use App\Models\TripRequest;
-use App\Services\Trip\TripActionService;
+use App\Pipelines\Rider\Trip\ArriveTrip\ExecuteAndBroadcastPipe;
+use App\Pipelines\Rider\Trip\ArriveTrip\ValidateAndLoadPipe;
+use Illuminate\Pipeline\Pipeline;
 
 /**
  * Arrived Trip Action
@@ -22,11 +16,6 @@ use App\Services\Trip\TripActionService;
  */
 readonly class ArriveTripAction
 {
-    public function __construct(
-        protected RiderTripRepositoryInterface $riderTripRepository,
-        protected TripActionService $tripActionService,
-    ) {}
-
     /**
      * Execute the action
      *
@@ -43,7 +32,7 @@ readonly class ArriveTripAction
     }
 
     /**
-     * Mark location as arrived
+     * Mark location as arrived using Pipeline pattern
      *
      * @return array{next_action: string|null}
      *
@@ -51,56 +40,16 @@ readonly class ArriveTripAction
      */
     public function markAsArrived(ArrivedTripDTO $dto): array
     {
-        $trip = $dto->tripRequest->load('trip')->trip;
-        $currentLocation = $this->tripActionService->getCurrentLocation($trip);
-
-        $this->validateTripRequestBelongsToRider($dto->tripRequest, $dto->riderId);
-        $this->validateArrivalConditions($currentLocation);
-
-        $this->riderTripRepository->updateTripLocationStatus($currentLocation, TripLocationStatusEnum::ARRIVED);
-
-        // Broadcast to customer
-        broadcast(new TripArrivedEvent(
-            customerId: $trip->{Trip::COLUMN_CUSTOMER_ID},
-            tripId: $trip->{Trip::COLUMN_ID},
-            riderId: $dto->riderId
-        ));
-
-        $nextAction = $this->tripActionService->getNextAction($trip->fresh());
+        $result = app(Pipeline::class)
+            ->send(['dto' => $dto])
+            ->through([
+                ValidateAndLoadPipe::class,
+                ExecuteAndBroadcastPipe::class,
+            ])
+            ->thenReturn();
 
         return [
-            'next_action' => $nextAction,
+            'next_action' => $result['next_action'],
         ];
-    }
-
-    /**
-     * Validate trip request belongs to rider
-     *
-     * @throws \Throwable
-     */
-    private function validateTripRequestBelongsToRider(TripRequest $tripRequest, int $riderId): void
-    {
-        throw_if(
-            ! $tripRequest->belongsToRider($riderId),
-            TripNotBelongToRiderException::class
-        );
-
-        throw_if(
-            ! $tripRequest->isAccepted() || $tripRequest->trip->isDraft(),
-            InvalidTripActionException::class
-        );
-    }
-
-    /**
-     * Validate arrival conditions
-     *
-     * @throws \Throwable
-     */
-    private function validateArrivalConditions(?TripLocation $currentLocation): void
-    {
-        throw_if(
-            ! $this->tripActionService->validateCanArrive($currentLocation),
-            InvalidTripActionException::class
-        );
     }
 }
