@@ -41,6 +41,7 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
         $requests = $riders->map(function (Rider $rider, int $index) use ($trip, $searchAttempt, $searchRadiusMeters, $expiresAt, $origin, $now) {
             $distanceMeters = null;
             $estimatedArrivalSeconds = null;
+            $arrivedAt = null;
 
             // Calculate distance and estimated arrival time if both trip origin and rider location are available
             if ($origin && isset($rider->latitude) && isset($rider->longitude)) {
@@ -53,6 +54,12 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
 
                 $distanceMeters = $calculation['distance_meters'];
                 $estimatedArrivalSeconds = $calculation['estimated_arrival_seconds'];
+
+                // Calculate arrived_at: time to reach rider + total trip duration
+                $totalTripDuration = $this->calculateTotalTripDuration($trip);
+                $arrivedAt = now()
+                    ->addSeconds($estimatedArrivalSeconds ?? 0)
+                    ->addSeconds($totalTripDuration);
             }
 
             return [
@@ -60,6 +67,7 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
                 TripRequest::COLUMN_RIDER_ID => $rider->id,
                 TripRequest::COLUMN_DISTANCE_METERS => $distanceMeters,
                 TripRequest::COLUMN_ESTIMATED_ARRIVAL_SECONDS => $estimatedArrivalSeconds,
+                TripRequest::COLUMN_ARRIVED_AT => $arrivedAt,
                 TripRequest::COLUMN_STATUS => TripRequestStatusEnum::PENDING->value,
                 TripRequest::COLUMN_SENT_AT => $now,
                 TripRequest::COLUMN_SEARCH_RADIUS_METERS => $searchRadiusMeters,
@@ -121,7 +129,6 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
             ->pending()
             ->notExpired()
             ->with('rider')
-            ->orderBy(TripRequest::COLUMN_PRIORITY)
             ->get();
     }
 
@@ -231,5 +238,36 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
             ->pending()
             ->notExpired()
             ->exists();
+    }
+
+    /**
+     * Calculate total trip duration from origin to final destination
+     */
+    private function calculateTotalTripDuration(Trip $trip): int
+    {
+        $locations = $trip->locations()->orderBy(TripLocation::COLUMN_SEQUENCE)->get();
+
+        if ($locations->count() < 2) {
+            return 0;
+        }
+
+        $totalDuration = 0;
+
+        // Calculate duration between consecutive locations
+        for ($i = 0; $i < $locations->count() - 1; $i++) {
+            $currentLocation = $locations[$i];
+            $nextLocation = $locations[$i + 1];
+
+            $result = $this->distanceCalculationService->calculateDistanceAndDuration(
+                originLatitude: (float) $currentLocation->{TripLocation::COLUMN_LATITUDE},
+                originLongitude: (float) $currentLocation->{TripLocation::COLUMN_LONGITUDE},
+                destinationLatitude: (float) $nextLocation->{TripLocation::COLUMN_LATITUDE},
+                destinationLongitude: (float) $nextLocation->{TripLocation::COLUMN_LONGITUDE}
+            );
+
+            $totalDuration += $result['estimated_arrival_seconds'] ?? 0;
+        }
+
+        return $totalDuration;
     }
 }
