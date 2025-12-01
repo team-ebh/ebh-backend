@@ -5,19 +5,13 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Rider\Trip;
 
 use App\DTOs\Api\V1\Rider\Trip\CancelTripDTO;
-use App\Events\Socket\Customer\TripCancelledByRiderEvent;
-use App\Exceptions\Rider\TripCannotBeCancelledByRiderException;
-use App\Exceptions\Rider\TripRequestNotBelongToRiderException;
-use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Models\Trip;
-use App\Models\TripRequest;
+use App\Pipelines\Rider\Trip\CancelTrip\ExecuteAndBroadcastPipe;
+use App\Pipelines\Rider\Trip\CancelTrip\ValidatePipe;
+use Illuminate\Pipeline\Pipeline;
 
 readonly class CancelTripAction
 {
-    public function __construct(
-        private RiderTripRepositoryInterface $riderTripRepository,
-    ) {}
-
     /**
      * Cancel a trip by the rider
      *
@@ -32,54 +26,20 @@ readonly class CancelTripAction
     }
 
     /**
-     * Cancel the trip
+     * Cancel the trip using Pipeline pattern
      *
      * @throws \Throwable
      */
     public function cancelTrip(CancelTripDTO $dto): Trip
     {
-        // Validate cancel conditions
-        $this->validateCancelConditions($dto->tripRequest, $dto->riderId);
+        $result = app(Pipeline::class)
+            ->send(['dto' => $dto])
+            ->through([
+                ValidatePipe::class,
+                ExecuteAndBroadcastPipe::class,
+            ])
+            ->thenReturn();
 
-        // Cancel trip with lock (inside transaction)
-        $trip = $this->riderTripRepository->cancelTripRequestWithLock($dto->tripRequest);
-
-        // Update rider status to ONLINE
-        $this->riderTripRepository->updateRiderStatusToOnline($dto->riderId);
-
-        // Notify customer about trip cancellation
-        broadcast(new TripCancelledByRiderEvent(
-            customerId: $trip->customer_id,
-            tripId: $trip->id,
-            riderId: $dto->riderId
-        ));
-
-        return $trip;
-    }
-
-    /**
-     * Validate conditions for cancelling trip
-     *
-     * @throws \Throwable
-     */
-    private function validateCancelConditions(TripRequest $tripRequest, int $riderId): void
-    {
-        // Verify trip request belongs to this rider
-        throw_if(
-            ! $tripRequest->belongsToRider($riderId),
-            TripRequestNotBelongToRiderException::class
-        );
-
-        // Verify trip request is accepted
-        throw_if(
-            ! $tripRequest->isAccepted(),
-            TripCannotBeCancelledByRiderException::class
-        );
-
-        // Verify trip status is cancellable by rider
-        throw_if(
-            ! $tripRequest->trip->canBeCancelledByRider(),
-            TripCannotBeCancelledByRiderException::class
-        );
+        return $result['trip'];
     }
 }

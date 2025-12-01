@@ -117,6 +117,9 @@
             <p class="text-sm text-blue-800"><strong>Listening for:</strong></p>
             <ul class="list-disc list-inside text-xs text-blue-700 mt-2 space-y-1">
                 <li><code class="bg-blue-100 px-2 py-1 rounded">trip.accepted</code></li>
+                <li><code class="bg-blue-100 px-2 py-1 rounded">trip.arrived</code></li>
+                <li><code class="bg-blue-100 px-2 py-1 rounded">trip.picked_up</code></li>
+                <li><code class="bg-blue-100 px-2 py-1 rounded">trip.completed</code></li>
                 <li><code class="bg-blue-100 px-2 py-1 rounded">trip.cancelled_by_rider</code></li>
             </ul>
         </div>
@@ -337,6 +340,18 @@
 
         channel.listen('.trip.accepted', (data) => {
             log('event', '✅ Trip Accepted by Rider', data);
+        });
+
+        channel.listen('.trip.arrived', (data) => {
+            log('event', '📍 Rider Arrived at Pickup Location', data);
+        });
+
+        channel.listen('.trip.picked_up', (data) => {
+            log('event', '🚗 Customer Picked Up', data);
+        });
+
+        channel.listen('.trip.completed', (data) => {
+            log('event', '🏁 Trip Completed', data);
         });
 
         channel.listen('.trip.cancelled_by_rider', (data) => {

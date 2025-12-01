@@ -33,4 +33,6 @@ interface RiderTripRepositoryInterface
     public function updateTripLocationStatus(TripLocation $location, TripLocationStatusEnum $status): void;
 
     public function updateTripStatus(Trip $trip, TripStatusEnum $status): void;
+
+    public function existsActiveTrip(int $riderId): bool;
 }

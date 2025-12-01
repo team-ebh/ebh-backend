@@ -4,17 +4,34 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Rider;
 
+use App\Actions\Api\V1\Rider\GetAppStateAction;
 use App\Actions\Api\V1\Rider\Location\UpdateLocationAction;
+use App\DTOs\Api\V1\Rider\AppStateDTO;
 use App\DTOs\Api\V1\Rider\Location\UpdateLocationDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Rider\Location\UpdateLocationRequest;
+use App\Http\Resources\Api\V1\Rider\AppStateResource;
+use App\Http\Resources\Api\V1\Rider\RiderResource;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * @tags Rider
  */
 class RiderController extends Controller
 {
+    /**
+     * Get rider profile
+     *
+     * Returns the authenticated rider's profile information
+     *
+     * @authenticated
+     */
+    public function profile(): RiderResource
+    {
+        return new RiderResource(auth('rider')->user());
+    }
+
     /**
      * Update rider's current location
      *
@@ -35,5 +52,22 @@ class RiderController extends Controller
         $action($dto);
 
         return $this->successResponse();
+    }
+
+    /**
+     * Get current app state
+     *
+     * Returns the current state of the rider app to help mobile app determine its state
+     *
+     * @authenticated
+     */
+    public function appState(
+        Request $request,
+        AppStateDTO $dto,
+        GetAppStateAction $action,
+    ): AppStateResource {
+        $dto->getDataFromRequest($request);
+
+        return new AppStateResource($action($dto));
     }
 }

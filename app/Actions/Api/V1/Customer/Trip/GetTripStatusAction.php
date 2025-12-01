@@ -51,6 +51,7 @@ readonly class GetTripStatusAction
 
         return [
             'found' => $result->found,
+            'id' => $result->trip->{Trip::COLUMN_ID},
             'status' => $result->trip->{Trip::COLUMN_STATUS},
             'arrived_time' => $result->arrivedTime,
             'rider' => $result->rider,

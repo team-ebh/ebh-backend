@@ -14,6 +14,7 @@ Route::name('trips.')
 
         Route::middleware(['auth:customer'])
             ->group(function () {
+                Route::get('/active', 'activeTrip')->name('active');
                 Route::post('/', 'store')->name('store');
                 Route::post('/{trip}/change-ride-type', 'changeRideType')->name('change-ride-type');
                 Route::post('/{trip}/confirm', 'confirm')->name('confirm');

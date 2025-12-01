@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Pipelines\Api\V1\Customer\Trip\GetTripStatus;
 
+use App\Models\Vehicle;
+use App\Models\VehicleSetting;
 use Closure;
 
 /**
@@ -19,11 +21,20 @@ class BuildVehicleDataPipe
             return $next($context);
         }
 
-        // TODO: Replace with actual vehicle data from database
+        $vehicle = $context->trip->rider?->vehicle;
+
+        if (! $vehicle) {
+            $context->vehicle = null;
+
+            return $next($context);
+        }
 
         $context->vehicle = [
-            'model' => 'Toyota Camry',
-            'plate_number' => '12345',
+            'model' => implode(' ', array_filter([
+                $vehicle->carMake?->translated(VehicleSetting::COLUMN_NAME),
+                $vehicle->carModel?->translated(VehicleSetting::COLUMN_NAME),
+            ])),
+            'plate_number' => $vehicle->{Vehicle::COLUMN_PLATE_NUMBER},
         ];
 
         return $next($context);

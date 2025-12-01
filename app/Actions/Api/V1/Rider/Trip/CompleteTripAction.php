@@ -5,17 +5,10 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Rider\Trip;
 
 use App\DTOs\Api\V1\Rider\Trip\CompleteTripDTO;
-use App\Enums\Trip\TripLocationStatusEnum;
-use App\Enums\Trip\TripStatusEnum;
-use App\Events\Socket\Customer\TripCompletedEvent;
-use App\Exceptions\Rider\InvalidTripActionException;
-use App\Exceptions\Rider\TripNotBelongToRiderException;
-use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
-use App\Models\Rider;
-use App\Models\Trip;
-use App\Models\TripLocation;
-use App\Models\TripRequest;
-use App\Services\Trip\TripActionService;
+use App\Pipelines\Rider\Trip\CompleteTrip\FinalizeAndCalculatePipe;
+use App\Pipelines\Rider\Trip\CompleteTrip\UpdateStatusPipe;
+use App\Pipelines\Rider\Trip\CompleteTrip\ValidateAndLoadPipe;
+use Illuminate\Pipeline\Pipeline;
 
 /**
  * Complete Trip Action
@@ -24,11 +17,6 @@ use App\Services\Trip\TripActionService;
  */
 readonly class CompleteTripAction
 {
-    public function __construct(
-        private RiderTripRepositoryInterface $riderTripRepository,
-        private TripActionService $tripActionService,
-    ) {}
-
     /**
      * Execute the action
      *
@@ -45,7 +33,7 @@ readonly class CompleteTripAction
     }
 
     /**
-     * Mark location as completed
+     * Mark location as completed using Pipeline pattern
      *
      * @return array{next_action: string|null, trip_completed: bool}
      *
@@ -53,84 +41,18 @@ readonly class CompleteTripAction
      */
     public function markAsCompleted(CompleteTripDTO $dto): array
     {
-        $trip = $dto->tripRequest->load('trip')->trip;
-        $currentLocation = $this->tripActionService->getCurrentLocation($trip);
-
-        $this->validateTripRequestBelongsToRider($dto->tripRequest, $dto->riderId);
-        $this->validateCompleteConditions($currentLocation);
-
-        $this->riderTripRepository->updateTripLocationStatus($currentLocation, TripLocationStatusEnum::COMPLETED);
-        $tripCompleted = $this->checkAndCompleteTrip($trip);
-
-        $nextAction = $tripCompleted ? null : $this->tripActionService->getNextAction($trip->fresh());
+        $result = app(Pipeline::class)
+            ->send(['dto' => $dto])
+            ->through([
+                ValidateAndLoadPipe::class,
+                UpdateStatusPipe::class,
+                FinalizeAndCalculatePipe::class,
+            ])
+            ->thenReturn();
 
         return [
-            'next_action' => $nextAction,
-            'trip_completed' => $tripCompleted,
+            'next_action' => $result['next_action'],
+            'trip_completed' => $result['trip_completed'],
         ];
-    }
-
-    /**
-     * Validate trip request belongs to rider
-     *
-     * @throws \Throwable
-     */
-    private function validateTripRequestBelongsToRider(TripRequest $tripRequest, int $riderId): void
-    {
-        throw_if(
-            ! $tripRequest->belongsToRider($riderId),
-            TripNotBelongToRiderException::class
-        );
-
-        throw_if(
-            ! $tripRequest->isAccepted() || $tripRequest->trip->isDraft(),
-            InvalidTripActionException::class
-        );
-    }
-
-    /**
-     * Validate complete conditions
-     *
-     * @throws \Throwable
-     */
-    private function validateCompleteConditions(?TripLocation $currentLocation): void
-    {
-        throw_if(
-            ! $this->tripActionService->validateCanComplete($currentLocation),
-            InvalidTripActionException::class
-        );
-    }
-
-    /**
-     * Check if all locations are finished and complete trip if needed
-     */
-    private function checkAndCompleteTrip(Trip $trip): bool
-    {
-        $allLocationsFinished = $trip->locations->every(fn ($location) => $location->isFinished());
-
-        if ($allLocationsFinished) {
-            $this->completeTripAndUpdateRider($trip);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Complete trip and update rider status
-     */
-    private function completeTripAndUpdateRider(Trip $trip): void
-    {
-        $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::COMPLETED);
-
-        // Broadcast to customer
-        broadcast(new TripCompletedEvent(
-            customerId: $trip->{Trip::COLUMN_CUSTOMER_ID},
-            tripId: $trip->{Trip::COLUMN_ID},
-            riderId: $trip->{Trip::COLUMN_RIDER_ID}
-        ));
-
-        $this->riderTripRepository->updateRiderStatusToOnline($trip->{Trip::COLUMN_RIDER_ID});
     }
 }

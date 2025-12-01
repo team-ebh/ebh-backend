@@ -73,25 +73,15 @@ test('rider can cancel accepted trip successfully', function () {
     ]);
 });
 
-test('rider can cancel trip that has arrived status', function () {
+test('rider cannot cancel trip that is on trip', function () {
     $trip = ($this->createTrip)([
-        'status' => TripStatusEnum::ARRIVED->value,
+        'status' => TripStatusEnum::ON_TRIP->value,
     ]);
 
     $response = actingAs($this->rider, 'rider')
         ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
 
-    $response->assertOk();
-
-    assertDatabaseHas('trips', [
-        'id' => $trip->id,
-        'status' => TripStatusEnum::CANCELLED_BY_RIDER->value,
-    ]);
-
-    assertDatabaseHas('trip_requests', [
-        'id' => $trip->tripRequest->id,
-        'status' => TripRequestStatusEnum::CANCELLED->value,
-    ]);
+    $response->assertUnprocessable();
 });
 
 test('rider can cancel trip', function () {
@@ -131,9 +121,9 @@ test('rider cannot cancel trip with invalid status - draft', function () {
     $response->assertUnprocessable();
 });
 
-test('rider cannot cancel trip with invalid status - picked up', function () {
+test('rider cannot cancel trip with invalid status - on trip', function () {
     $trip = ($this->createTrip)([
-        'status' => TripStatusEnum::PICKED_UP->value,
+        'status' => TripStatusEnum::ON_TRIP->value,
     ]);
 
     $response = actingAs($this->rider, 'rider')

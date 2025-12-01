@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Traits\Model\Aggregates;
 
 use App\Models\Customer;
+use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripAccessibility;
 use App\Models\TripLocation;
@@ -26,6 +27,11 @@ trait TripAggregate
         return $this->belongsTo(Customer::class, Trip::COLUMN_CUSTOMER_ID);
     }
 
+    public function rider(): BelongsTo
+    {
+        return $this->belongsTo(Rider::class, Trip::COLUMN_RIDER_ID);
+    }
+
     public function accessibility(): HasMany
     {
         return $this->hasMany(TripAccessibility::class, TripAccessibility::COLUMN_TRIP_ID);
@@ -33,7 +39,8 @@ trait TripAggregate
 
     public function locations(): HasMany
     {
-        return $this->hasMany(TripLocation::class, TripLocation::COLUMN_TRIP_ID);
+        return $this->hasMany(TripLocation::class, TripLocation::COLUMN_TRIP_ID)
+            ->orderBy(TripLocation::COLUMN_SEQUENCE);
     }
 
     public function tripRequests(): HasMany

@@ -414,6 +414,30 @@ app/
    }
    ```
 
+8. **ALWAYS select only required fields when eager loading relationships** to optimize query performance:
+   ```php
+   // ❌ BAD - Loads all columns from all tables
+   Trip::query()
+       ->with(['rider', 'rider.vehicle', 'rider.vehicle.carMake'])
+       ->first();
+
+   // ✅ GOOD - Only loads required fields
+   Trip::query()
+       ->with([
+           'rider:id,first_name,last_name,phone_number,rating',
+           'rider.vehicle:id,rider_id,car_make_id,plate_number',
+           'rider.vehicle.carMake:id,name',
+       ])
+       ->first();
+   ```
+
+   **Key Points:**
+   - Always specify columns after `:` in the relationship name
+   - Include foreign keys (e.g., `rider_id`, `car_make_id`) to maintain relationships
+   - Include primary keys (`id`) for all models in the chain
+   - Only include fields that are actually used in Resources/responses
+   - This significantly reduces database query size and memory usage
+
 ## Special Features
 
 ### Translation System
@@ -515,6 +539,80 @@ Available global helpers (see `app/Helpers/general.php`):
 - Response structure validation
 - Error handling scenarios
 - Edge cases
+
+#### Socket Event Tests (CRITICAL - NEVER SKIP!)
+
+**🚨 MANDATORY: Every socket event MUST have tests! 🚨**
+
+When you create or modify ANY socket event that extends `BaseSocketEvent`, you MUST:
+
+1. **Create event dispatch tests** in the corresponding feature test file
+2. **Test event data structure** to ensure correct payload
+3. **Test event channels** to verify correct recipients
+4. **Test event timing** to ensure it fires after database commits
+
+**Example Socket Event Tests:**
+
+```php
+// Test that event is dispatched
+test('trip accepted event is dispatched when rider accepts trip', function () {
+    Event::fake([TripAcceptedEvent::class]);
+
+    // ... perform action that should trigger event
+
+    Event::assertDispatched(
+        TripAcceptedEvent::class,
+        fn ($event) => $event->customerId === $expectedCustomerId
+            && $event->tripId === $expectedTripId
+            && $event->riderId === $expectedRiderId
+    );
+});
+
+// Test that event is NOT dispatched when it shouldn't be
+test('trip completed event is NOT dispatched when trip has more locations', function () {
+    Event::fake([TripCompletedEvent::class]);
+
+    // ... perform action with incomplete trip
+
+    Event::assertNotDispatched(TripCompletedEvent::class);
+});
+```
+
+**Socket Events That Must Be Tested:**
+
+Customer Events (`app/Events/Socket/Customer/`):
+- `TripAcceptedEvent` - When rider accepts trip ✅ (AcceptTripBusyStatusTest.php:125-151)
+- `TripArrivedEvent` - When rider arrives at pickup location ✅ (ArriveTripTest.php:261-286)
+- `TripPickedUpEvent` - When rider picks up customer ✅ (PickUpTripTest.php:268-293)
+- `TripCompletedEvent` - When trip is completed ✅ (CompleteTripTest.php:394-419)
+- `TripCancelledByRiderEvent` - When rider cancels trip ✅ (CancelTripTest.php)
+
+Rider Events (`app/Events/Socket/Rider/`):
+- `NewTripRequestEvent` - When new trip request is sent to rider
+- `TripRequestLockedEvent` - When trip is locked (accepted by another rider) ✅ (AcceptTripBusyStatusTest.php:153-254)
+- `TripCancelledByCustomerEvent` - When customer cancels trip
+
+**How to Find Event Tests:**
+
+Use these patterns to locate existing event tests:
+```bash
+# Find all socket event test files
+find tests -name "*Test.php" -exec grep -l "Event::fake" {} \;
+
+# Search for specific event tests
+grep -r "TripArrivedEvent" tests/
+grep -r "TripPickedUpEvent" tests/
+grep -r "TripCompletedEvent" tests/
+```
+
+**Testing Checklist for New Socket Events:**
+
+- [ ] Event is dispatched with correct data
+- [ ] Event is sent to correct channel(s)
+- [ ] Event is NOT dispatched when conditions aren't met
+- [ ] Event data matches expected structure
+- [ ] Event fires AFTER database transaction commits
+- [ ] Test file is in correct location: `tests/Feature/Api/V1/{Customer|Rider}/`
 
 ### Test Structure
 
@@ -635,6 +733,11 @@ All models have:
 8. **Never use raw database queries** - use Eloquent/Query Builder
 9. **Never skip Request validation** when accepting input
 10. **Never mix Customer and Rider code** - Keep them completely separated
+11. **🚨 NEVER create socket events without tests** - Every `BaseSocketEvent` MUST have corresponding tests that verify:
+    - Event is dispatched with correct data
+    - Event is sent to correct channels
+    - Event fires after DB commits
+    - See "Socket Event Tests" section for details
 
 ## Quick Reference
 

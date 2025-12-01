@@ -38,7 +38,7 @@ beforeEach(function () {
             Trip::COLUMN_PASSENGER_COUNT => 1,
             Trip::COLUMN_TOTAL_PRICE => 5.000,
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
-            Trip::COLUMN_STATUS => TripStatusEnum::ARRIVED->value,
+            Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER->value,
         ], $tripOverrides));
 
         foreach ($locations as $location) {
@@ -65,7 +65,7 @@ beforeEach(function () {
 
 test('rider can mark trip as picked up at origin location successfully', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ARRIVED->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
@@ -97,7 +97,7 @@ test('rider can mark trip as picked up at origin location successfully', functio
     // Verify trip status updated
     assertDatabaseHas('trips', [
         'id' => $trip->id,
-        'status' => TripStatusEnum::PICKED_UP->value,
+        'status' => TripStatusEnum::ON_TRIP->value,
     ]);
 
     // Verify origin location status updated
@@ -110,7 +110,7 @@ test('rider can mark trip as picked up at origin location successfully', functio
 
 test('rider can mark trip as picked up and get next action', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ARRIVED->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
@@ -146,7 +146,7 @@ test('rider cannot mark trip as picked up that does not belong to them', functio
     $trip = ($this->createTripWithLocations)(
         [
             Trip::COLUMN_RIDER_ID => $otherRider->{Rider::COLUMN_ID},
-            Trip::COLUMN_STATUS => TripStatusEnum::ARRIVED->value,
+            Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER->value,
         ],
         [
             [
@@ -206,9 +206,9 @@ test('rider cannot mark trip as picked up with invalid status - accepted rider',
     $response->assertStatus(406); // InvalidTripActionException
 });
 
-test('rider cannot mark trip as picked up with invalid status - already picked up', function () {
+test('rider cannot mark trip as picked up with invalid status - already on trip', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::PICKED_UP->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
@@ -248,7 +248,7 @@ test('rider cannot mark trip as picked up with invalid status - completed', func
 
 test('unauthenticated rider cannot mark trip as picked up', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ARRIVED->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
@@ -269,7 +269,7 @@ test('trip picked up event is dispatched when rider marks trip as picked up', fu
     Event::fake([TripPickedUpEvent::class]);
 
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ARRIVED->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,

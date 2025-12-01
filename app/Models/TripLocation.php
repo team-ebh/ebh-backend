@@ -81,6 +81,14 @@ class TripLocation extends Model
     }
 
     /**
+     * Check if location is dropped off
+     */
+    public function isDroppedOff(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripLocationStatusEnum::DROPPED_OFF;
+    }
+
+    /**
      * Check if this is an origin location
      */
     public function isOrigin(): bool
@@ -98,7 +106,8 @@ class TripLocation extends Model
 
     /**
      * Check if location is finished (fully completed and ready to move to next location)
-     * - All locations are finished when status is COMPLETED
+     * - Origin locations are finished when status is PICKED_UP
+     * - Destination locations are finished when status is COMPLETED or DROPPED_OFF
      */
     public function isFinished(): bool
     {
@@ -106,6 +115,9 @@ class TripLocation extends Model
             return $this->{self::COLUMN_STATUS} === TripLocationStatusEnum::PICKED_UP;
         }
 
-        return $this->{self::COLUMN_STATUS} === TripLocationStatusEnum::COMPLETED;
+        return in_array($this->{self::COLUMN_STATUS}, [
+            TripLocationStatusEnum::DROPPED_OFF,
+            TripLocationStatusEnum::COMPLETED,
+        ]);
     }
 }

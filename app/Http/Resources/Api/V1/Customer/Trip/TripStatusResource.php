@@ -30,6 +30,15 @@ class TripStatusResource extends JsonResource
             'found' => $this->resource['found'],
 
             /**
+             * Trip ID
+             *
+             * @example 123
+             *
+             * @var int
+             */
+            'id' => $this->resource['id'],
+
+            /**
              * Status
              *
              * Current trip status

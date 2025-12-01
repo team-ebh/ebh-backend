@@ -36,12 +36,18 @@ class ChangeRideTypeRequest extends FormRequest
                 'string',
                 'max:255',
             ],
+            /**
+             * @example 29.353325
+             */
             'destination_latitude' => [
                 $isRoundTrip || $isRoundTripWait ? 'required' : 'nullable',
                 'numeric',
                 'min:-90',
                 'max:90',
             ],
+            /**
+             * @example 47.98227
+             */
             'destination_longitude' => [
                 $isRoundTrip || $isRoundTripWait ? 'required' : 'nullable',
                 'numeric',
