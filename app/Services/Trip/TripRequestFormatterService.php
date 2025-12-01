@@ -24,7 +24,7 @@ class TripRequestFormatterService
             'trip_request_id' => $tripRequest->{TripRequest::COLUMN_ID},
             'distance' => $tripRequest->{TripRequest::COLUMN_DISTANCE_METERS},
             'eta' => $tripRequest->{TripRequest::COLUMN_ESTIMATED_ARRIVAL_SECONDS},
-            'arrived_at' => $tripRequest->{TripRequest::COLUMN_ARRIVED_AT}?->timestamp,
+            'arrived_at' => $tripRequest->{TripRequest::COLUMN_ARRIVED_AT},
             'passenger_count' => $tripRequest->trip->{Trip::COLUMN_PASSENGER_COUNT},
             'trip_accessibility' => $tripRequest->trip->loadMissing('accessibility')->accessibility,
         ];
