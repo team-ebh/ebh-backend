@@ -8,6 +8,7 @@ use App\Actions\Api\V1\Customer\GetAppStateAction;
 use App\DTOs\Api\V1\Customer\AppStateDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\Customer\AppStateResource;
+use App\Http\Resources\Api\V1\Customer\CustomerResource;
 use Illuminate\Http\Request;
 
 /**
@@ -15,6 +16,18 @@ use Illuminate\Http\Request;
  */
 class CustomerController extends Controller
 {
+    /**
+     * Get customer profile
+     *
+     * Returns the authenticated customer's profile information
+     *
+     * @authenticated
+     */
+    public function profile(): CustomerResource
+    {
+        return new CustomerResource(auth('customer')->user());
+    }
+
     /**
      * Get current app state
      *
