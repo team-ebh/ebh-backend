@@ -26,6 +26,8 @@ class TripRequest extends Model
 
     public const string COLUMN_ESTIMATED_ARRIVAL_SECONDS = 'estimated_arrival_seconds';
 
+    public const string COLUMN_ARRIVED_AT = 'arrived_at';
+
     public const string COLUMN_STATUS = 'status';
 
     public const string COLUMN_SENT_AT = 'sent_at';
@@ -47,6 +49,7 @@ class TripRequest extends Model
         self::COLUMN_EXPIRES_AT => 'timestamp',
         self::COLUMN_DISTANCE_METERS => 'integer',
         self::COLUMN_ESTIMATED_ARRIVAL_SECONDS => 'integer',
+        self::COLUMN_ARRIVED_AT => 'timestamp',
     ];
 
     protected $attributes = [self::COLUMN_STATUS => TripRequestStatusEnum::PENDING];
