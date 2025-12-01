@@ -162,4 +162,15 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
             Trip::COLUMN_STATUS => $status,
         ]);
     }
+
+    /**
+     * Check if rider has an active trip
+     */
+    public function existsActiveTrip(int $riderId): bool
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_RIDER_ID, $riderId)
+            ->activeTrips()
+            ->exists();
+    }
 }

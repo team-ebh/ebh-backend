@@ -9,4 +9,6 @@ use App\Models\Trip;
 interface CustomerTripRepositoryInterface
 {
     public function getActiveTrip(int $customerId): ?Trip;
+
+    public function existsActiveTrip(int $customerId): bool;
 }

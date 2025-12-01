@@ -25,4 +25,15 @@ readonly class CustomerTripRepository implements CustomerTripRepositoryInterface
             ])
             ->first();
     }
+
+    /**
+     * Check if customer has an active trip
+     */
+    public function existsActiveTrip(int $customerId): bool
+    {
+        return Trip::query()
+            ->forCustomer($customerId)
+            ->activeTrips()
+            ->exists();
+    }
 }

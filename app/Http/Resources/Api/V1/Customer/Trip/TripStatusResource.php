@@ -67,7 +67,7 @@ class TripStatusResource extends JsonResource
              */
             'rider' => $this->when(
                 $this->resource['rider'] !== null,
-                fn() => new RiderInfoResource($this->resource['rider'])
+                fn () => new RiderInfoResource($this->resource['rider'])
             ),
 
             /**
@@ -79,7 +79,7 @@ class TripStatusResource extends JsonResource
              */
             'vehicle' => $this->when(
                 $this->resource['vehicle'] !== null,
-                fn() => new VehicleInfoResource($this->resource['vehicle'])
+                fn () => new VehicleInfoResource($this->resource['vehicle'])
             ),
 
             /**
