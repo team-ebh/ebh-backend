@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
@@ -73,6 +74,17 @@ class Trip extends Model
         return $query->where(self::COLUMN_STATUS, $status);
     }
 
+    #[Scope]
+    protected function activeTrips($query)
+    {
+        return $query->whereNotIn(self::COLUMN_STATUS, [
+            TripStatusEnum::DRAFT,
+            TripStatusEnum::COMPLETED,
+            TripStatusEnum::CANCELED_BY_CUSTOMER,
+            TripStatusEnum::CANCELLED_BY_RIDER,
+        ]);
+    }
+
     /**
      * Check if trip is draft
      */
@@ -103,6 +115,26 @@ class Trip extends Model
     public function isOnTrip(): bool
     {
         return $this->{self::COLUMN_STATUS} === TripStatusEnum::ON_TRIP;
+    }
+
+    /**
+     * Check if rider has arrived at pickup location
+     */
+    public function isArrived(): bool
+    {
+        return $this->locations()
+            ->where(TripLocation::COLUMN_STATUS, TripLocationStatusEnum::ARRIVED)
+            ->exists();
+    }
+
+    /**
+     * Check if customer has been picked up
+     */
+    public function isPickedUp(): bool
+    {
+        return $this->locations()
+            ->where(TripLocation::COLUMN_STATUS, TripLocationStatusEnum::PICKED_UP)
+            ->exists();
     }
 
     /**

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1\Customer;
 use App\Actions\Api\V1\Customer\Trip\CancelTripAction;
 use App\Actions\Api\V1\Customer\Trip\ChangeRideTypeAction;
 use App\Actions\Api\V1\Customer\Trip\ConfirmTripAction;
+use App\Actions\Api\V1\Customer\Trip\GetActiveTripAction;
 use App\Actions\Api\V1\Customer\Trip\GetEstimatedArrivalTimeAction;
 use App\Actions\Api\V1\Customer\Trip\GetRiderLocationAction;
 use App\Actions\Api\V1\Customer\Trip\GetTripFormDataAction;
@@ -15,6 +16,7 @@ use App\Actions\Api\V1\Customer\Trip\StoreTripAction;
 use App\DTOs\Api\V1\Customer\Trip\CancelTripDTO;
 use App\DTOs\Api\V1\Customer\Trip\ChangeRideTypeDTO;
 use App\DTOs\Api\V1\Customer\Trip\ConfirmTripDTO;
+use App\DTOs\Api\V1\Customer\Trip\GetActiveTripDTO;
 use App\DTOs\Api\V1\Customer\Trip\GetEstimatedArrivalTimeDTO;
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
 use App\Http\Controllers\Controller;
@@ -105,6 +107,31 @@ class TripController extends Controller
         $action($dto);
 
         return $this->successResponse();
+    }
+
+    /**
+     * Get customer's active trip
+     *
+     * Returns the current active trip information for the customer (not completed/cancelled).
+     * Returns null if customer has no active trip.
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function activeTrip(
+        Request $request,
+        GetActiveTripDTO $dto,
+        GetActiveTripAction $action,
+    ): TripStatusResource | JsonResponse {
+        $dto->getDataFromRequest($request);
+        $activeTrip = $action($dto);
+
+        if (is_null($activeTrip)) {
+            return response()->json(['data' => null]);
+        }
+
+        return new TripStatusResource($activeTrip);
     }
 
     /**

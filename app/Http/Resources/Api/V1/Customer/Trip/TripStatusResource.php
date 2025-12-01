@@ -30,6 +30,15 @@ class TripStatusResource extends JsonResource
             'found' => $this->resource['found'],
 
             /**
+             * Trip ID
+             *
+             * @example 123
+             *
+             * @var int
+             */
+            'id' => $this->resource['id'],
+
+            /**
              * Status
              *
              * Current trip status
@@ -58,7 +67,7 @@ class TripStatusResource extends JsonResource
              */
             'rider' => $this->when(
                 $this->resource['rider'] !== null,
-                fn () => new RiderInfoResource($this->resource['rider'])
+                fn() => new RiderInfoResource($this->resource['rider'])
             ),
 
             /**
@@ -70,7 +79,7 @@ class TripStatusResource extends JsonResource
              */
             'vehicle' => $this->when(
                 $this->resource['vehicle'] !== null,
-                fn () => new VehicleInfoResource($this->resource['vehicle'])
+                fn() => new VehicleInfoResource($this->resource['vehicle'])
             ),
 
             /**

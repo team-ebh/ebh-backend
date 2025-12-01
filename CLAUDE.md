@@ -414,6 +414,30 @@ app/
    }
    ```
 
+8. **ALWAYS select only required fields when eager loading relationships** to optimize query performance:
+   ```php
+   // ❌ BAD - Loads all columns from all tables
+   Trip::query()
+       ->with(['rider', 'rider.vehicle', 'rider.vehicle.carMake'])
+       ->first();
+
+   // ✅ GOOD - Only loads required fields
+   Trip::query()
+       ->with([
+           'rider:id,first_name,last_name,phone_number,rating',
+           'rider.vehicle:id,rider_id,car_make_id,plate_number',
+           'rider.vehicle.carMake:id,name',
+       ])
+       ->first();
+   ```
+
+   **Key Points:**
+   - Always specify columns after `:` in the relationship name
+   - Include foreign keys (e.g., `rider_id`, `car_make_id`) to maintain relationships
+   - Include primary keys (`id`) for all models in the chain
+   - Only include fields that are actually used in Resources/responses
+   - This significantly reduces database query size and memory usage
+
 ## Special Features
 
 ### Translation System
