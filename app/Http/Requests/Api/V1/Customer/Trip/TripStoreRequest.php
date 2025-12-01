@@ -23,12 +23,18 @@ class TripStoreRequest extends FormRequest
             // Origin location
             'origin_location_title' => ['required', 'string', 'max:255'],
             'origin_location_sub_title' => ['required', 'string', 'max:255'],
+            /**
+             * @example 29.353325
+             */
             'origin_latitude' => [
                 'required',
                 'numeric',
                 'min:-90',
                 'max:90',
             ],
+            /**
+             * @example 47.98227
+             */
             'origin_longitude' => [
                 'required',
                 'numeric',
@@ -39,12 +45,18 @@ class TripStoreRequest extends FormRequest
             // Destination location
             'destination_location_title' => ['required', 'string', 'max:255'],
             'destination_location_sub_title' => ['required', 'string', 'max:255'],
+            /**
+             * @example 29.327636
+             */
             'destination_latitude' => [
                 'required',
                 'numeric',
                 'min:-90',
                 'max:90',
             ],
+            /**
+             * @example 47.982201
+             */
             'destination_longitude' => [
                 'required',
                 'numeric',
