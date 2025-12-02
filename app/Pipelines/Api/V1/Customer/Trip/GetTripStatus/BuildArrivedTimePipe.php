@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Pipelines\Api\V1\Customer\Trip\GetTripStatus;
 
+use App\Models\TripRequest;
 use Closure;
 
 /**
@@ -19,9 +20,11 @@ class BuildArrivedTimePipe
             return $next($context);
         }
 
-        // TODO:: must be dynamic with trip table
         if ($context->trip->isAcceptedByRider() || $context->trip->isArrived() || $context->trip->isPickedUp()) {
-            $context->arrivedTime = now()->addMinutes(5)->timestamp;
+            $context->arrivedTime = $context->trip
+                ->load('acceptedTripRequest:id,trip_id,arrived_at')
+                ?->acceptedTripRequest
+                ->{TripRequest::COLUMN_ARRIVED_AT};
         }
 
         return $next($context);
