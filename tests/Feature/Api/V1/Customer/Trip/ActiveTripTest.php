@@ -344,11 +344,12 @@ test('active trip API does not have N+1 query problem', function () {
     // Expected queries (all properly eager loaded - no N+1 problem):
     // 1. Get active trip (with conditions)
     // 2. Get rider (eager loaded)
-    // 3. Get vehicle (eager loaded)
-    // 4. Get carMake (eager loaded from vehicle_settings)
-    // 5. Get carModel (eager loaded from vehicle_settings)
-    // 6. Get media for rider profile photo
-    // 7. Get trip locations (lazy loaded in BuildLocationHistoryPipe)
-    // Total: 7 queries, all necessary and optimized
-    expect(count($queries))->toBeLessThanOrEqual(8);
+    // 3. Get rider accessibility certifications (eager loaded)
+    // 4. Get vehicle (eager loaded)
+    // 5. Get carMake (eager loaded from vehicle_settings)
+    // 6. Get carModel (eager loaded from vehicle_settings)
+    // 7. Get media for rider profile photo
+    // 8. Get trip locations (lazy loaded in BuildLocationHistoryPipe)
+    // Total: 8 queries, all necessary and optimized
+    expect(count($queries))->toBeLessThanOrEqual(9);
 });

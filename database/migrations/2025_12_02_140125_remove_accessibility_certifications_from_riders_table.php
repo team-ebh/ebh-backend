@@ -14,9 +14,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('riders', function (Blueprint $table) {
-            $table->json('accessibility_certifications')
-                ->nullable()
-                ->after('otp_expires_at');
+            $table->dropColumn('accessibility_certifications');
         });
     }
 
@@ -26,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('riders', function (Blueprint $table) {
-            $table->dropColumn('accessibility_certifications');
+            $table->json('accessibility_certifications')
+                ->nullable()
+                ->after('otp_expires_at');
         });
     }
 };

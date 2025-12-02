@@ -6,6 +6,7 @@ namespace App\Traits\Model\Aggregates;
 
 use App\Models\Company;
 use App\Models\Rider;
+use App\Models\RiderAccessibilityCertification;
 use App\Models\RiderDocument;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -25,5 +26,13 @@ trait RiderAggregate
     public function documents(): HasMany
     {
         return $this->hasMany(RiderDocument::class, RiderDocument::COLUMN_RIDER_ID);
+    }
+
+    public function accessibilityCertifications(): HasMany
+    {
+        return $this->hasMany(
+            RiderAccessibilityCertification::class,
+            RiderAccessibilityCertification::COLUMN_RIDER_ID
+        );
     }
 }

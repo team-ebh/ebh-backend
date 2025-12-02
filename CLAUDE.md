@@ -343,9 +343,22 @@ app/
 5. **Resource fields must be documented** with description, type, and example
 
 6. **Model relationships should be aggregated in traits** for better organization:
-    - Create relationship aggregate traits in `app/Traits/Model/Aggregates/`
-    - Name pattern: `{ModelName}Aggregate`
-    - Keep all `BelongsTo`, `HasMany`, `BelongsToMany` relationships in the aggregate trait
+
+   **🚨 IMPORTANT: Always create relationship aggregate traits for models with relationships! 🚨**
+
+   **When to create:**
+   - Create an aggregate trait for ANY model that has relationships (BelongsTo, HasMany, HasOne, BelongsToMany, etc.)
+   - Even if the model has only one relationship, create the aggregate trait for consistency
+
+   **Naming and location:**
+   - Create relationship aggregate traits in `app/Traits/Model/Aggregates/`
+   - Name pattern: `{ModelName}Aggregate` (e.g., `VehicleAggregate`, `RiderAggregate`, `RiderAccessibilityCertificationAggregate`)
+   - Namespace: `App\Traits\Model\Aggregates`
+
+   **What to include:**
+   - Keep ALL relationship methods in the aggregate trait (`BelongsTo`, `HasMany`, `HasOne`, `BelongsToMany`, `MorphTo`, etc.)
+   - NEVER define relationships directly in the model class
+   - Only relationship methods belong in the aggregate trait - no other methods
 
 7. **Socket Events must extend `BaseSocketEvent`** for consistent real-time broadcasting:
    ```php
@@ -387,30 +400,116 @@ app/
     - Broadcast channels must be defined in `routes/channels.php`
     - Dispatch events using `broadcast()` helper: `broadcast(new TripAcceptedEvent(...))`
 
-   Example aggregate trait pattern:
+   **Example: Model with multiple relationships**
    ```php
    // app/Traits/Model/Aggregates/VehicleAggregate.php
+   <?php
+
+   declare(strict_types=1);
+
+   namespace App\Traits\Model\Aggregates;
+
+   use App\Models\Rider;
+   use App\Models\Vehicle;
+   use App\Models\VehicleSetting;
+   use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
    /**
     * Vehicle Aggregate Trait
     *
     * Contains all relationship methods for the Vehicle model
     */
-   trait VehicleAggregate {
-       public function rider(): BelongsTo {
+   trait VehicleAggregate
+   {
+       public function rider(): BelongsTo
+       {
            return $this->belongsTo(Rider::class, Vehicle::COLUMN_RIDER_ID);
        }
 
-       public function carType(): BelongsTo {
+       public function carType(): BelongsTo
+       {
            return $this->belongsTo(VehicleSetting::class, Vehicle::COLUMN_CAR_TYPE_ID);
+       }
+
+       public function carMake(): BelongsTo
+       {
+           return $this->belongsTo(VehicleSetting::class, Vehicle::COLUMN_CAR_MAKE_ID);
+       }
+
+       public function carModel(): BelongsTo
+       {
+           return $this->belongsTo(VehicleSetting::class, Vehicle::COLUMN_CAR_MODEL_ID);
        }
    }
 
    // app/Models/Vehicle.php
-   use App\Traits\Model\Aggregates\VehicleAggregate;
+   <?php
 
-   class Vehicle extends Model {
+   declare(strict_types=1);
+
+   namespace App\Models;
+
+   use App\Traits\Model\Aggregates\VehicleAggregate;
+   use App\Traits\Model\HasDefaultColumnModelTrait;
+   use Illuminate\Database\Eloquent\Model;
+
+   class Vehicle extends Model
+   {
        use HasDefaultColumnModelTrait;
-       use VehicleAggregate;
+       use VehicleAggregate;  // ✅ Use the aggregate trait
+
+       public const string COLUMN_RIDER_ID = 'rider_id';
+       public const string COLUMN_CAR_TYPE_ID = 'car_type_id';
+       // ... other constants and properties
+   }
+   ```
+
+   **Example: Model with single relationship**
+   ```php
+   // app/Traits/Model/Aggregates/RiderAccessibilityCertificationAggregate.php
+   <?php
+
+   declare(strict_types=1);
+
+   namespace App\Traits\Model\Aggregates;
+
+   use App\Models\Rider;
+   use App\Models\RiderAccessibilityCertification;
+   use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+   /**
+    * RiderAccessibilityCertification Aggregate Trait
+    *
+    * Contains all relationship methods for the RiderAccessibilityCertification model
+    */
+   trait RiderAccessibilityCertificationAggregate
+   {
+       public function rider(): BelongsTo
+       {
+           return $this->belongsTo(Rider::class, RiderAccessibilityCertification::COLUMN_RIDER_ID);
+       }
+   }
+
+   // app/Models/RiderAccessibilityCertification.php
+   <?php
+
+   declare(strict_types=1);
+
+   namespace App\Models;
+
+   use App\Traits\Model\Aggregates\RiderAccessibilityCertificationAggregate;
+   use App\Traits\Model\HasDefaultColumnModelTrait;
+   use Illuminate\Database\Eloquent\Model;
+
+   class RiderAccessibilityCertification extends Model
+   {
+       use HasDefaultColumnModelTrait;
+       use RiderAccessibilityCertificationAggregate;  // ✅ Use the aggregate trait
+
+       public const string COLUMN_RIDER_ID = 'rider_id';
+       // ... other constants and properties
+
+       // ❌ NEVER define relationships here - they belong in the aggregate trait
    }
    ```
 

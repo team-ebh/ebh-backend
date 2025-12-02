@@ -45,8 +45,6 @@ class Rider extends User implements HasMedia
 
     public const string COLUMN_OTP_EXPIRES_AT = 'otp_expires_at';
 
-    public const string COLUMN_ACCESSIBILITY_CERTIFICATIONS = 'accessibility_certifications';
-
     public const string COLUMN_LATITUDE = 'latitude';
 
     public const string COLUMN_LONGITUDE = 'longitude';
@@ -60,7 +58,6 @@ class Rider extends User implements HasMedia
     protected $casts = [
         self::COLUMN_STATUS => RiderStatusEnum::class,
         self::COLUMN_OTP_EXPIRES_AT => 'timestamp',
-        self::COLUMN_ACCESSIBILITY_CERTIFICATIONS => 'json',
         self::COLUMN_LATITUDE => 'decimal:8',
         self::COLUMN_LONGITUDE => 'decimal:8',
         self::COLUMN_LAST_LOCATION_UPDATE => 'timestamp',

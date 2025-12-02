@@ -70,14 +70,9 @@ readonly class RiderMatchingService
             $tripAccessibilityRequirements = $trip->accessibility->pluck('accessibility_requirement_id')->toArray();
 
             if (! empty($tripAccessibilityRequirements)) {
-                $query->where(function ($q) use ($tripAccessibilityRequirements) {
-                    foreach ($tripAccessibilityRequirements as $requirement) {
-                        $q->whereJsonContains(
-                            Rider::COLUMN_ACCESSIBILITY_CERTIFICATIONS,
-                            $requirement
-                        );
-                    }
-                });
+                $query->whereHas('accessibilityCertifications', function ($q) use ($tripAccessibilityRequirements) {
+                    $q->whereIn('certification_type', $tripAccessibilityRequirements);
+                }, '=', count($tripAccessibilityRequirements));
             }
         }
 
@@ -152,7 +147,8 @@ readonly class RiderMatchingService
             $tripAccessibilityRequirements = $trip->accessibility->pluck('accessibility_requirement_id')->toArray();
 
             if (! empty($tripAccessibilityRequirements)) {
-                $riderCertifications = $rider->{Rider::COLUMN_ACCESSIBILITY_CERTIFICATIONS} ?? [];
+                $rider->loadMissing('accessibilityCertifications');
+                $riderCertifications = $rider->accessibilityCertifications->pluck('certification_type')->toArray();
 
                 foreach ($tripAccessibilityRequirements as $requirement) {
                     if (! in_array($requirement, $riderCertifications, true)) {

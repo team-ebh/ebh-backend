@@ -28,13 +28,16 @@ class BuildRiderDataPipe
             return $next($context);
         }
 
+        // Load accessibility certifications relationship
+        $rider->loadMissing('accessibilityCertifications');
+
         $context->rider = [
             'id' => $rider->{Rider::COLUMN_ID},
             'image' => $rider->getFirstMediaLink(Rider::PROFILE_PHOTO),
             'name' => $rider->{Rider::COLUMN_FULL_NAME},
             'phone_number' => $rider->{Rider::COLUMN_PHONE_NUMBER},
             'rating' => 4.8, // TODO: Implement actual rating calculation
-            'accessibility_certifications' => $rider->{Rider::COLUMN_ACCESSIBILITY_CERTIFICATIONS} ?? [],
+            'accessibility_certifications' => $rider->accessibilityCertifications,
         ];
 
         return $next($context);

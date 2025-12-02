@@ -205,13 +205,24 @@ class RiderInfolist
                             ->color(fn ($state) => $state?->getColor() ?? 'gray')
                             ->columnSpan(1),
 
-                        TextEntry::make(Rider::COLUMN_ACCESSIBILITY_CERTIFICATIONS)
+                        TextEntry::make('accessibilityCertifications.certification_type')
                             ->label(trans('riders.admin.fields.accessibility_certifications.label'))
                             ->icon('heroicon-o-check-circle')
                             ->listWithLineBreaks()
                             ->formatStateUsing(function ($state) {
+                                if (! $state) {
+                                    return '-';
+                                }
+
+                                // $state is already cast to enum by the model
+                                if ($state instanceof AccessibilityCertificationEnum) {
+                                    return $state->getLabel();
+                                }
+
+                                // Fallback for string values
                                 return AccessibilityCertificationEnum::from($state)->getLabel();
                             })
+                            ->placeholder('-')
                             ->columnSpanFull(),
                     ]),
             ]);
