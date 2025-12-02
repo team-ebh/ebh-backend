@@ -21,19 +21,17 @@ readonly class UpdateRiderStatusAction
 {
     public function __construct(
         private RiderTripRepositoryInterface $riderTripRepository
-    )
-    {
-    }
+    ) {}
 
     /**
      * @throws CannotChangeRiderStatusException
      * @throws \Throwable
      */
-    public function __invoke(UpdateRiderStatusDTO $dto): Rider
+    public function __invoke(UpdateRiderStatusDTO $dto): void
     {
-        return safeProcess()
+        safeProcess()
             ->withTransaction()
-            ->onFailed(fn($e) => throw $e)
+            ->onFailed(fn ($e) => throw $e)
             ->do([$this, 'updateStatus'], $dto);
     }
 
@@ -43,7 +41,7 @@ readonly class UpdateRiderStatusAction
      * @throws CannotChangeRiderStatusException
      * @throws \Throwable
      */
-    public function updateStatus(UpdateRiderStatusDTO $dto): Rider
+    public function updateStatus(UpdateRiderStatusDTO $dto): void
     {
         $rider = $this->riderTripRepository->getRider($dto->riderId);
 
@@ -57,8 +55,6 @@ readonly class UpdateRiderStatusAction
             CannotChangeRiderStatusException::class
         );
 
-        $this->riderTripRepository->updateRiderStatus($dto->riderId, $dto->status);
-
-        return $rider->fresh();
+        $this->riderTripRepository->updateRiderStatus($rider, $dto->status);
     }
 }

@@ -31,7 +31,7 @@ interface RiderTripRepositoryInterface
 
     public function updateRiderStatusToOnline(int $riderId): void;
 
-    public function updateRiderStatus(int $riderId, RiderStatusEnum $status): void;
+    public function updateRiderStatus(Rider $rider, RiderStatusEnum $status): void;
 
     public function updateTripLocationStatus(TripLocation $location, TripLocationStatusEnum $status): void;
 

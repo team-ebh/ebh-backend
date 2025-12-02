@@ -136,23 +136,20 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
      */
     public function updateRiderStatusToOnline(int $riderId): void
     {
-        Rider::query()
-            ->where(Rider::COLUMN_ID, $riderId)
-            ->update([
-                Rider::COLUMN_STATUS => RiderStatusEnum::ONLINE,
-            ]);
+        $rider = Rider::query()->findOrFail($riderId);
+        $rider->update([
+            Rider::COLUMN_STATUS => RiderStatusEnum::ONLINE,
+        ]);
     }
 
     /**
      * Update rider status
      */
-    public function updateRiderStatus(int $riderId, RiderStatusEnum $status): void
+    public function updateRiderStatus(Rider $rider, RiderStatusEnum $status): void
     {
-        Rider::query()
-            ->where(Rider::COLUMN_ID, $riderId)
-            ->update([
-                Rider::COLUMN_STATUS => $status,
-            ]);
+        $rider->update([
+            Rider::COLUMN_STATUS => $status,
+        ]);
     }
 
     /**

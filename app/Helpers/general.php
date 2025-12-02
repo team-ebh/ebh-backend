@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\ApplicationEnvironmentEnum;
 use App\Services\SafeProcess;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 if (! function_exists('adminPanelDataFormat')) {
     function adminPanelDataFormat(): string
@@ -140,5 +141,18 @@ if (! function_exists('numericVal')) {
     function numericVal(null | string | float | int | array $numericValue): float | int | string | null | array
     {
         return is_numeric($numericValue) ? $numericValue + 0 : $numericValue;
+    }
+}
+
+if (! function_exists('getAuthenticatedUser')) {
+    /**
+     * Get the currently authenticated user from any guard.
+     * Checks in order: customer, rider, admin (web).
+     */
+    function getAuthenticatedUser(): mixed
+    {
+        return Auth::guard('customer')->user()
+            ?? Auth::guard('rider')->user()
+            ?? Auth::guard('web')->user();
     }
 }

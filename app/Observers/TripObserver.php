@@ -6,7 +6,6 @@ namespace App\Observers;
 
 use App\Models\Trip;
 use App\Models\TripStatusLog;
-use Illuminate\Support\Facades\Auth;
 
 class TripObserver
 {
@@ -23,7 +22,7 @@ class TripObserver
      * Handle the Trip "updating" event.
      * Log status changes when trip is updated.
      */
-    public function updating(Trip $trip): void
+    public function updated(Trip $trip): void
     {
         if ($trip->isDirty(Trip::COLUMN_STATUS)) {
             $this->logStatusChange($trip, $trip->{Trip::COLUMN_STATUS});
@@ -35,7 +34,7 @@ class TripObserver
      */
     private function logStatusChange(Trip $trip, mixed $status): void
     {
-        $changedBy = $this->getAuthenticatedUser();
+        $changedBy = getAuthenticatedUser();
 
         TripStatusLog::query()->create([
             TripStatusLog::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
@@ -43,16 +42,5 @@ class TripObserver
             TripStatusLog::COLUMN_CHANGED_BY_TYPE => $changedBy?->getMorphClass(),
             TripStatusLog::COLUMN_CHANGED_BY_ID => $changedBy?->id,
         ]);
-    }
-
-    /**
-     * Get the currently authenticated user from any guard.
-     * Checks in order: customer, rider, admin (web).
-     */
-    private function getAuthenticatedUser(): mixed
-    {
-        return Auth::guard('customer')->user()
-            ?? Auth::guard('rider')->user()
-            ?? Auth::guard('web')->user();
     }
 }

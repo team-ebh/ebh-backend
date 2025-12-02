@@ -8,6 +8,7 @@ use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
 use App\Models\Customer;
 use App\Models\Rider;
+use App\Models\RiderStatusLog;
 use App\Models\Trip;
 
 use function Pest\Laravel\putJson;
@@ -225,5 +226,58 @@ describe('Update Rider Status API', function () {
 
         $this->rider->refresh();
         expect($this->rider->status)->toBe(RiderStatusEnum::OFFLINE);
+    });
+
+    it('creates status log when status changes via API', function () {
+        // Initial status log count (1 from rider creation)
+        $initialLogCount = RiderStatusLog::query()
+            ->where(RiderStatusLog::COLUMN_RIDER_ID, $this->rider->{Rider::COLUMN_ID})
+            ->count();
+
+        expect($initialLogCount)->toBe(1);
+
+        // Change status from ONLINE to OFFLINE
+        putJson(route('v1.riders.status.update'), [
+            'status' => RiderStatusEnum::OFFLINE->value,
+        ], $this->headers)
+            ->assertOk();
+
+        // Verify new log was created
+        $afterFirstChangeLogCount = RiderStatusLog::query()
+            ->where(RiderStatusLog::COLUMN_RIDER_ID, $this->rider->{Rider::COLUMN_ID})
+            ->count();
+
+        expect($afterFirstChangeLogCount)->toBe(2);
+
+        // Verify the latest log has the correct status
+        $latestLog = RiderStatusLog::query()
+            ->where(RiderStatusLog::COLUMN_RIDER_ID, $this->rider->{Rider::COLUMN_ID})
+            ->latest('id')
+            ->first();
+
+        expect($latestLog->{RiderStatusLog::COLUMN_STATUS})->toBe(RiderStatusEnum::OFFLINE);
+
+        // Change status from OFFLINE to ONLINE
+        putJson(route('v1.riders.status.update'), [
+            'status' => RiderStatusEnum::ONLINE->value,
+        ], $this->headers)
+            ->assertOk();
+
+        // Verify another log was created
+        $finalLogCount = RiderStatusLog::query()
+            ->where(RiderStatusLog::COLUMN_RIDER_ID, $this->rider->{Rider::COLUMN_ID})
+            ->count();
+
+        expect($finalLogCount)->toBe(3);
+
+        // Verify the latest log has the correct status
+        $latestLog = RiderStatusLog::query()
+            ->where(RiderStatusLog::COLUMN_RIDER_ID, $this->rider->{Rider::COLUMN_ID})
+            ->latest('id')
+            ->first();
+
+        expect($latestLog->{RiderStatusLog::COLUMN_STATUS})->toBe(RiderStatusEnum::ONLINE);
+        expect($latestLog->{RiderStatusLog::COLUMN_CHANGED_BY_TYPE})->toBe($this->rider->getMorphClass());
+        expect($latestLog->{RiderStatusLog::COLUMN_CHANGED_BY_ID})->toBe($this->rider->{Rider::COLUMN_ID});
     });
 });

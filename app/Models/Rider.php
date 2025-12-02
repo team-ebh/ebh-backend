@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Rider\RiderStatusEnum;
+use App\Observers\RiderObserver;
 use App\Traits\Model\Aggregates\RiderAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\HasMediaTrait;
 use App\Traits\Model\LogsActivity;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +19,7 @@ use Illuminate\Foundation\Auth\User;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\MediaLibrary\HasMedia;
 
+#[ObservedBy(RiderObserver::class)]
 class Rider extends User implements HasMedia
 {
     use HasApiTokens;

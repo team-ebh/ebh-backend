@@ -522,6 +522,7 @@ Available global helpers (see `app/Helpers/general.php`):
 - `getDefaultImageUrl()` - Default image fallback
 - `generateOtpCode()` - Generate 4-digit OTP
 - `defaultPrefixPhoneNumber()` - Default phone prefix (+965)
+- `getAuthenticatedUser()` - Get currently authenticated user from any guard (customer, rider, admin)
 
 ## Code Style Conventions
 
