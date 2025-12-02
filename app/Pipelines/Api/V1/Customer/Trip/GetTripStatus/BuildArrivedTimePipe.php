@@ -23,8 +23,8 @@ class BuildArrivedTimePipe
         if ($context->trip->isAcceptedByRider() || $context->trip->isArrived() || $context->trip->isPickedUp()) {
             $context->arrivedTime = $context->trip
                 ->load('acceptedTripRequest:id,trip_id,arrived_at')
-                ?->acceptedTripRequest
-                ->{TripRequest::COLUMN_ARRIVED_AT};
+                ->acceptedTripRequest
+                ?->{TripRequest::COLUMN_ARRIVED_AT};
         }
 
         return $next($context);

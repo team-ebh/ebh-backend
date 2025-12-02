@@ -1041,8 +1041,9 @@ describe('Confirm Trip API', function () {
             NewTripRequestEvent::class,
         ]);
 
-        // Create vehicle setting for the trip vehicle type
+        // Create vehicle setting that matches the enum value
         $vehicleSetting = VehicleSetting::create([
+            VehicleSetting::COLUMN_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
             VehicleSetting::COLUMN_NAME => 'Wheelchair Accessible',
             VehicleSetting::COLUMN_NAME_AR => 'نقل كراسي متحركة',
@@ -1060,16 +1061,16 @@ describe('Confirm Trip API', function () {
             'status' => RiderStatusEnum::OFFLINE, // Should not receive request
         ]);
 
-        // Create vehicles for online riders only
+        // Create vehicles for online riders with matching vehicle type
         Vehicle::create([
             Vehicle::COLUMN_RIDER_ID => $rider1->id,
-            Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
+            Vehicle::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             Vehicle::COLUMN_PLATE_NUMBER => 'ABC123',
             Vehicle::COLUMN_YEAR => 2023,
         ]);
         Vehicle::create([
             Vehicle::COLUMN_RIDER_ID => $rider2->id,
-            Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
+            Vehicle::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             Vehicle::COLUMN_PLATE_NUMBER => 'DEF456',
             Vehicle::COLUMN_YEAR => 2023,
         ]);
