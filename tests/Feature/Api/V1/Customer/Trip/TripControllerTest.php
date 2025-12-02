@@ -669,6 +669,21 @@ describe('Cancel Trip API', function () {
         // Authenticate a customer
         $this->customer = Customer::factory()->create();
         Sanctum::actingAs($this->customer, ['*'], 'customer');
+
+        // Helper function to create a trip
+        $this->createTrip = function (array $overrides = []) {
+            return Trip::create(array_merge([
+                'customer_id' => $this->customer->id,
+                'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+                'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+                'passenger_count' => 2,
+                'accessibility_price' => null,
+                'waiting_price' => null,
+                'total_price' => 5.000,
+                'currency' => CurrencyEnum::KWD->value,
+                'status' => TripStatusEnum::DRAFT->value,
+            ], $overrides));
+        };
     });
 
     it('can cancel a pending trip', function () {
@@ -865,6 +880,38 @@ describe('Cancel Trip API', function () {
             ->assertStatus(200);
 
         Event::assertNotDispatched(TripCancelledByCustomerEvent::class);
+    });
+
+    it('changes rider status from busy to online when customer cancels trip', function () {
+        $rider = Rider::factory()->create([
+            'status' => RiderStatusEnum::BUSY,
+        ]);
+
+        $trip = ($this->createTrip)([
+            'rider_id' => $rider->id,
+            'status' => TripStatusEnum::ACCEPTED_RIDER->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip))
+            ->assertStatus(200);
+
+        // Verify rider status changed from BUSY to ONLINE
+        $rider->refresh();
+        expect($rider->status)->toBe(RiderStatusEnum::ONLINE);
+    });
+
+    it('does not change rider status when cancelling trip without assigned rider', function () {
+        $trip = ($this->createTrip)([
+            'rider_id' => null,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        postJson(route('v1.customers.trips.cancel', $trip))
+            ->assertStatus(200);
+
+        // Verify trip was cancelled successfully without errors
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::CANCELED_BY_CUSTOMER);
     });
 });
 

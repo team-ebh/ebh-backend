@@ -9,6 +9,7 @@ use App\Enums\Trip\TripStatusEnum;
 use App\Events\Socket\Rider\TripCancelledByCustomerEvent;
 use App\Exceptions\Trip\TripCannotBeCancelledException;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
+use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Models\Trip;
 
 /**
@@ -16,11 +17,13 @@ use App\Models\Trip;
  *
  * Cancels the trip and changes status to CANCELLED
  * Only PENDING or CONFIRMED trips can be cancelled
+ * If rider is assigned, their status will be changed from BUSY to ONLINE
  */
 readonly class CancelTripAction
 {
     public function __construct(
-        private TripRepositoryInterface $tripRepository
+        private TripRepositoryInterface $tripRepository,
+        private RiderTripRepositoryInterface $riderTripRepository
     ) {}
 
     /**
@@ -40,8 +43,13 @@ readonly class CancelTripAction
             TripStatusEnum::CANCELED_BY_CUSTOMER
         );
 
-        // Notify rider if trip has been assigned to a rider
+        // Notify rider and update their status if trip has been assigned to a rider
         if ($dto->trip->{Trip::COLUMN_RIDER_ID}) {
+            // Update rider status from BUSY to ONLINE
+            $this->riderTripRepository->updateRiderStatusToOnline(
+                $dto->trip->{Trip::COLUMN_RIDER_ID}
+            );
+
             // Load accepted trip request to get its ID
             $acceptedTripRequest = $dto->trip->load('acceptedTripRequest:id,trip_id')->acceptedTripRequest;
 
