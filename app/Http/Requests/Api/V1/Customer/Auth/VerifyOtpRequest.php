@@ -11,12 +11,17 @@ class VerifyOtpRequest extends FormRequest
     public function rules(): array
     {
         return [
+            /**
+             * @example 65656565
+             */
             'phone_number' => [
                 'required',
                 'regex:/^[0-9]{8}$/',
             ],
             /**
              * On the dev and stage servers, use the code 0421 to pass the OTP
+             *
+             * @example 0421
              */
             'otp' => [
                 'required',

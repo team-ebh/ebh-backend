@@ -17,6 +17,8 @@ class VerifyOtpRequest extends FormRequest
             ],
             /**
              * On the dev and stage servers, use the code 0421 to pass the OTP
+             *
+             * @example 0421
              */
             'otp' => [
                 'required',
