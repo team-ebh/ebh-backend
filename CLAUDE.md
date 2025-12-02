@@ -438,6 +438,35 @@ app/
    - Only include fields that are actually used in Resources/responses
    - This significantly reduces database query size and memory usage
 
+9. **ALWAYS use Repository pattern for database operations** (never touch database directly in Actions):
+   ```php
+   // ❌ BAD - Direct model update in Action
+   $rider->update([
+       Rider::COLUMN_STATUS => $dto->status,
+   ]);
+
+   // ✅ GOOD - Use repository method
+   $this->riderTripRepository->updateRiderStatus($dto->riderId, $dto->status);
+   ```
+
+   **Key Points:**
+   - All database operations (create, read, update, delete) MUST go through repositories
+   - Actions should NEVER directly call `Model::create()`, `$model->update()`, `$model->delete()`, or query builders
+   - Create repository methods for any database operation needed in Actions
+   - Repositories centralize data access logic and make testing easier
+   - This includes bulk operations, queries, and any Eloquent/Query Builder usage
+
+   **Repository Pattern Flow:**
+   ```
+   Controller → DTO → Action → Repository → Database
+   ```
+
+   **When to create new repository methods:**
+   - When you need to create/update/delete a model in an Action
+   - When you need to perform any query on a model
+   - When you need to update relationships between models
+   - When you need to perform bulk operations
+
 ## Special Features
 
 ### Translation System
@@ -730,7 +759,7 @@ All models have:
 5. **Never skip API documentation** (@tags, @authenticated, field docs)
 6. **Never hardcode language logic** - use `translated()` methods
 7. **Never skip tests** for new features
-8. **Never use raw database queries** - use Eloquent/Query Builder
+8. **Never touch database directly in Actions** - ALWAYS use Repository pattern for ALL database operations (create, read, update, delete)
 9. **Never skip Request validation** when accepting input
 10. **Never mix Customer and Rider code** - Keep them completely separated
 11. **🚨 NEVER create socket events without tests** - Every `BaseSocketEvent` MUST have corresponding tests that verify:

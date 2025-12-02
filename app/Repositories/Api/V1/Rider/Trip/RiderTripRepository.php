@@ -144,6 +144,18 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     }
 
     /**
+     * Update rider status
+     */
+    public function updateRiderStatus(int $riderId, RiderStatusEnum $status): void
+    {
+        Rider::query()
+            ->where(Rider::COLUMN_ID, $riderId)
+            ->update([
+                Rider::COLUMN_STATUS => $status,
+            ]);
+    }
+
+    /**
      * Update trip location status
      */
     public function updateTripLocationStatus(TripLocation $location, TripLocationStatusEnum $status): void
