@@ -131,4 +131,12 @@ class TripRepository implements TripRepositoryInterface
                 TripLocation::COLUMN_LONGITUDE => $longitude,
             ]);
     }
+
+    public function deleteDraftTrips(int $customerId): void
+    {
+        Trip::query()
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->where(Trip::COLUMN_STATUS, TripStatusEnum::DRAFT)
+            ->delete();
+    }
 }
