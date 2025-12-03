@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Pipelines\Api\V1\Customer\Trip\GetTripStatus;
 
-use App\Models\TripRequest;
+use App\DTOs\Api\V1\Customer\Trip\GetEstimatedArrivalTimeDTO;
+use App\Pipelines\Customer\Trip\GetEstimatedArrivalTime\ValidateAndLoadPipe;
+use App\Pipelines\Shared\Trip\GetEstimatedArrivalTime\CalculateEstimatedTimePipe;
 use Closure;
+use Illuminate\Pipeline\Pipeline;
 
 /**
  * Build Arrived Time Pipe
  *
- * Calculates arrived time timestamp if driver has arrived
+ * Calculates estimated arrival time if trip is in ACCEPTED_RIDER or ON_TRIP status
  */
 class BuildArrivedTimePipe
 {
@@ -20,11 +23,24 @@ class BuildArrivedTimePipe
             return $next($context);
         }
 
-        if ($context->trip->isAcceptedByRider() || $context->trip->isArrived() || $context->trip->isPickedUp()) {
-            $context->arrivedTime = $context->trip
-                ->load('acceptedTripRequest:id,trip_id,arrived_at')
-                ->acceptedTripRequest
-                ?->{TripRequest::COLUMN_ARRIVED_AT};
+        // Only calculate estimated arrival time for trips that are in progress
+        if ($context->trip->isAcceptedByRider() || $context->trip->isOnTrip()) {
+            $context->arrivedTime = safeProcess()
+                ->onFailed(fn ($e) => null)  // If calculation fails (no rider location, etc.), return null
+                ->do(function () use ($context) {
+                    $dto = new GetEstimatedArrivalTimeDTO();
+                    $dto->trip = $context->trip;
+
+                    $result = app(Pipeline::class)
+                        ->send(['dto' => $dto])
+                        ->through([
+                            ValidateAndLoadPipe::class,
+                            CalculateEstimatedTimePipe::class,
+                        ])
+                        ->thenReturn();
+
+                    return $result['result']['estimated_arrival_seconds'];
+                });
         }
 
         return $next($context);

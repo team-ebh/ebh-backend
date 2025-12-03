@@ -8,7 +8,7 @@ use App\Interfaces\DTOs\RequestDataTransferObject;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 
-readonly class GetEstimatedArrivalTimeDTO implements RequestDataTransferObject
+class GetEstimatedArrivalTimeDTO implements RequestDataTransferObject
 {
     public int $customerId;
 
