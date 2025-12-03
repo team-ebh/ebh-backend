@@ -6,10 +6,9 @@ namespace App\Actions\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\CancelTripDTO;
 use App\Enums\Trip\TripStatusEnum;
-use App\Events\Socket\Rider\TripCancelledByCustomerEvent;
 use App\Exceptions\Trip\TripCannotBeCancelledException;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
-use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
+use App\Jobs\CancelTripRequestsJob;
 use App\Models\Trip;
 
 /**
@@ -17,13 +16,12 @@ use App\Models\Trip;
  *
  * Cancels the trip and changes status to CANCELLED
  * Only PENDING or CONFIRMED trips can be cancelled
- * If rider is assigned, their status will be changed from BUSY to ONLINE
+ * Dispatches background job to cancel all trip requests and notify riders
  */
 readonly class CancelTripAction
 {
     public function __construct(
-        private TripRepositoryInterface $tripRepository,
-        private RiderTripRepositoryInterface $riderTripRepository
+        private TripRepositoryInterface $tripRepository
     ) {}
 
     /**
@@ -43,22 +41,11 @@ readonly class CancelTripAction
             TripStatusEnum::CANCELED_BY_CUSTOMER
         );
 
-        // Notify rider and update their status if trip has been assigned to a rider
-        if ($dto->trip->{Trip::COLUMN_RIDER_ID}) {
-            // Update rider status from BUSY to ONLINE
-            $this->riderTripRepository->updateRiderStatusToOnline(
-                $dto->trip->{Trip::COLUMN_RIDER_ID}
-            );
-
-            // Load accepted trip request to get its ID
-            $acceptedTripRequest = $dto->trip->load('acceptedTripRequest:id,trip_id')->acceptedTripRequest;
-
-            broadcast(new TripCancelledByCustomerEvent(
-                riderId: $dto->trip->{Trip::COLUMN_RIDER_ID},
-                tripId: $dto->trip->{Trip::COLUMN_ID},
-                customerId: $dto->trip->{Trip::COLUMN_CUSTOMER_ID},
-                tripRequestId: $acceptedTripRequest?->id
-            ));
-        }
+        // Dispatch background job to cancel all trip requests and notify riders
+        CancelTripRequestsJob::dispatch(
+            tripId: $dto->trip->{Trip::COLUMN_ID},
+            customerId: $dto->trip->{Trip::COLUMN_CUSTOMER_ID},
+            riderId: $dto->trip->{Trip::COLUMN_RIDER_ID}
+        );
     }
 }

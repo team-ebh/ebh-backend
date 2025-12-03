@@ -44,21 +44,6 @@ interface TripRequestRepositoryInterface
     public function getByTripAndRider(Trip $trip, Rider $rider): ?TripRequest;
 
     /**
-     * Cancel all pending trip requests for a trip
-     */
-    public function cancelPendingByTrip(Trip $trip, string $reason = 'trip_assigned'): int;
-
-    /**
-     * Cancel all pending trip requests for a rider
-     */
-    public function cancelPendingByRider(Rider $rider, string $reason = 'rider_busy'): int;
-
-    /**
-     * Mark expired trip requests as expired
-     */
-    public function markExpiredRequests(): int;
-
-    /**
      * Get count of pending requests for a trip
      */
     public function getPendingCountForTrip(Trip $trip): int;

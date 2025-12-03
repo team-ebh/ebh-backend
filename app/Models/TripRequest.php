@@ -34,8 +34,6 @@ class TripRequest extends Model
 
     public const string COLUMN_RESPONDED_AT = 'responded_at';
 
-    public const string COLUMN_DECLINE_REASON = 'decline_reason';
-
     public const string COLUMN_SEARCH_RADIUS_METERS = 'search_radius_meters';
 
     public const string COLUMN_SEARCH_ATTEMPT = 'search_attempt';

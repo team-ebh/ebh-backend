@@ -173,49 +173,6 @@ readonly class TripRequestRepository implements TripRequestRepositoryInterface
     }
 
     /**
-     * Cancel all pending trip requests for a trip
-     */
-    public function cancelPendingByTrip(Trip $trip, string $reason = 'trip_assigned'): int
-    {
-        return TripRequest::query()
-            ->forTrip($trip->id)
-            ->pending()
-            ->update([
-                TripRequest::COLUMN_STATUS => TripRequestStatusEnum::CANCELLED->value,
-                TripRequest::COLUMN_RESPONDED_AT => now(),
-                TripRequest::COLUMN_DECLINE_REASON => $reason,
-            ]);
-    }
-
-    /**
-     * Cancel all pending trip requests for a rider
-     */
-    public function cancelPendingByRider(Rider $rider, string $reason = 'rider_busy'): int
-    {
-        return TripRequest::query()
-            ->forRider($rider->id)
-            ->pending()
-            ->update([
-                TripRequest::COLUMN_STATUS => TripRequestStatusEnum::CANCELLED->value,
-                TripRequest::COLUMN_RESPONDED_AT => now(),
-                TripRequest::COLUMN_DECLINE_REASON => $reason,
-            ]);
-    }
-
-    /**
-     * Mark expired trip requests as expired
-     */
-    public function markExpiredRequests(): int
-    {
-        return TripRequest::query()
-            ->expired()
-            ->update([
-                TripRequest::COLUMN_STATUS => TripRequestStatusEnum::EXPIRED->value,
-                TripRequest::COLUMN_RESPONDED_AT => now(),
-            ]);
-    }
-
-    /**
      * Get count of pending requests for a trip
      */
     public function getPendingCountForTrip(Trip $trip): int

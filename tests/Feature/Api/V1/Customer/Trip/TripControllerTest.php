@@ -7,19 +7,23 @@ use App\Enums\Rider\RiderStatusEnum;
 use App\Enums\Trip\AccessibilityRequirementsEnum;
 use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
+use App\Enums\Trip\TripRequestStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
 use App\Events\Socket\Rider\NewTripRequestEvent;
 use App\Events\Socket\Rider\TripCancelledByCustomerEvent;
+use App\Jobs\CancelTripRequestsJob;
 use App\Models\Customer;
 use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripLocation;
+use App\Models\TripRequest;
 use App\Models\Vehicle;
 use App\Models\VehicleSetting;
 use App\Services\GeocodingService;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
 
 use function Pest\Laravel\get;
@@ -939,7 +943,7 @@ describe('Cancel Trip API', function () {
         expect($trip->status)->toBe(TripStatusEnum::CANCELED_BY_CUSTOMER);
     });
 
-    it('dispatches event to rider when customer cancels trip with assigned rider', function () {
+    it('dispatches event to rider when customer cancels trip with trip requests', function () {
         Event::fake([TripCancelledByCustomerEvent::class]);
 
         $rider = Rider::factory()->create();
@@ -953,20 +957,38 @@ describe('Cancel Trip API', function () {
             'waiting_price' => null,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
-            'status' => TripStatusEnum::PENDING_RIDER->value,
+            'status' => TripStatusEnum::ACCEPTED_RIDER->value,
+        ]);
+
+        // Create an accepted trip request
+        $tripRequest = TripRequest::create([
+            TripRequest::COLUMN_TRIP_ID => $trip->id,
+            TripRequest::COLUMN_RIDER_ID => $rider->id,
+            TripRequest::COLUMN_STATUS => TripRequestStatusEnum::ACCEPTED->value,
+            TripRequest::COLUMN_SENT_AT => now(),
+            TripRequest::COLUMN_RESPONDED_AT => now(),
         ]);
 
         postJson(route('v1.customers.trips.cancel', $trip))
             ->assertStatus(200);
 
-        Event::assertDispatched(TripCancelledByCustomerEvent::class, function ($event) use ($trip, $rider) {
+        // Run the job manually to test event dispatch
+        $job = new CancelTripRequestsJob(
+            tripId: $trip->id,
+            customerId: $this->customer->id,
+            riderId: $rider->id
+        );
+        $job->handle(app()->make(\App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface::class));
+
+        Event::assertDispatched(TripCancelledByCustomerEvent::class, function ($event) use ($trip, $rider, $tripRequest) {
             return $event->riderId === $rider->id
                 && $event->tripId === $trip->id
-                && $event->customerId === $this->customer->id;
+                && $event->customerId === $this->customer->id
+                && $event->tripRequestId === $tripRequest->id;
         });
     });
 
-    it('does not dispatch event when customer cancels trip without assigned rider', function () {
+    it('does not dispatch event when customer cancels trip without trip requests', function () {
         Event::fake([TripCancelledByCustomerEvent::class]);
 
         $trip = Trip::create([
@@ -985,6 +1007,14 @@ describe('Cancel Trip API', function () {
         postJson(route('v1.customers.trips.cancel', $trip))
             ->assertStatus(200);
 
+        // Run the job manually
+        $job = new CancelTripRequestsJob(
+            tripId: $trip->id,
+            customerId: $this->customer->id,
+            riderId: null
+        );
+        $job->handle(app()->make(\App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface::class));
+
         Event::assertNotDispatched(TripCancelledByCustomerEvent::class);
     });
 
@@ -1000,6 +1030,14 @@ describe('Cancel Trip API', function () {
 
         postJson(route('v1.customers.trips.cancel', $trip))
             ->assertStatus(200);
+
+        // Run the job manually to test rider status update
+        $job = new CancelTripRequestsJob(
+            tripId: $trip->id,
+            customerId: $this->customer->id,
+            riderId: $rider->id
+        );
+        $job->handle(app()->make(\App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface::class));
 
         // Verify rider status changed from BUSY to ONLINE
         $rider->refresh();
@@ -1018,6 +1056,121 @@ describe('Cancel Trip API', function () {
         // Verify trip was cancelled successfully without errors
         $trip->refresh();
         expect($trip->status)->toBe(TripStatusEnum::CANCELED_BY_CUSTOMER);
+    });
+
+    it('dispatches job to cancel trip requests when customer cancels trip', function () {
+        Queue::fake();
+
+        $trip = ($this->createTrip)([
+            'status' => TripStatusEnum::PENDING_RIDER->value,
+        ]);
+
+        // Cancel the trip
+        postJson(route('v1.customers.trips.cancel', $trip))
+            ->assertStatus(200);
+
+        // Verify job was dispatched
+        Queue::assertPushed(CancelTripRequestsJob::class, function ($job) use ($trip) {
+            return $job->tripId === $trip->id
+                && $job->customerId === $this->customer->id;
+        });
+    });
+
+    it('cancels all pending and accepted trip requests in background job', function () {
+        Event::fake([TripCancelledByCustomerEvent::class]);
+
+        // Create riders
+        $rider1 = Rider::factory()->create();
+        $rider2 = Rider::factory()->create();
+        $rider3 = Rider::factory()->create();
+        $rider4 = Rider::factory()->create();
+        $rider5 = Rider::factory()->create();
+
+        // Create trip
+        $trip = ($this->createTrip)([
+            'status' => TripStatusEnum::PENDING_RIDER->value,
+        ]);
+
+        // Create trip requests with different statuses
+        $pendingRequest = TripRequest::create([
+            TripRequest::COLUMN_TRIP_ID => $trip->id,
+            TripRequest::COLUMN_RIDER_ID => $rider1->id,
+            TripRequest::COLUMN_STATUS => TripRequestStatusEnum::PENDING->value,
+            TripRequest::COLUMN_SENT_AT => now(),
+        ]);
+
+        $acceptedRequest = TripRequest::create([
+            TripRequest::COLUMN_TRIP_ID => $trip->id,
+            TripRequest::COLUMN_RIDER_ID => $rider2->id,
+            TripRequest::COLUMN_STATUS => TripRequestStatusEnum::ACCEPTED->value,
+            TripRequest::COLUMN_SENT_AT => now(),
+            TripRequest::COLUMN_RESPONDED_AT => now(),
+        ]);
+
+        $expiredRequest = TripRequest::create([
+            TripRequest::COLUMN_TRIP_ID => $trip->id,
+            TripRequest::COLUMN_RIDER_ID => $rider3->id,
+            TripRequest::COLUMN_STATUS => TripRequestStatusEnum::EXPIRED->value,
+            TripRequest::COLUMN_SENT_AT => now()->subMinutes(5),
+        ]);
+
+        $declinedRequest = TripRequest::create([
+            TripRequest::COLUMN_TRIP_ID => $trip->id,
+            TripRequest::COLUMN_RIDER_ID => $rider4->id,
+            TripRequest::COLUMN_STATUS => TripRequestStatusEnum::DECLINED->value,
+            TripRequest::COLUMN_SENT_AT => now(),
+            TripRequest::COLUMN_RESPONDED_AT => now(),
+        ]);
+
+        $cancelledRequest = TripRequest::create([
+            TripRequest::COLUMN_TRIP_ID => $trip->id,
+            TripRequest::COLUMN_RIDER_ID => $rider5->id,
+            TripRequest::COLUMN_STATUS => TripRequestStatusEnum::CANCELLED->value,
+            TripRequest::COLUMN_SENT_AT => now(),
+            TripRequest::COLUMN_RESPONDED_AT => now(),
+        ]);
+
+        // Run the job manually
+        $job = new CancelTripRequestsJob(
+            tripId: $trip->id,
+            customerId: $this->customer->id,
+            riderId: null
+        );
+        $job->handle(app()->make(\App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface::class));
+
+        // Verify pending and accepted trip requests are cancelled
+        $pendingRequest->refresh();
+        expect($pendingRequest->{TripRequest::COLUMN_STATUS})->toBe(TripRequestStatusEnum::CANCELLED);
+        expect($pendingRequest->{TripRequest::COLUMN_RESPONDED_AT})->not->toBeNull();
+
+        $acceptedRequest->refresh();
+        expect($acceptedRequest->{TripRequest::COLUMN_STATUS})->toBe(TripRequestStatusEnum::CANCELLED);
+        expect($acceptedRequest->{TripRequest::COLUMN_RESPONDED_AT})->not->toBeNull();
+
+        // Verify other statuses remain unchanged
+        $expiredRequest->refresh();
+        expect($expiredRequest->{TripRequest::COLUMN_STATUS})->toBe(TripRequestStatusEnum::EXPIRED);
+
+        $declinedRequest->refresh();
+        expect($declinedRequest->{TripRequest::COLUMN_STATUS})->toBe(TripRequestStatusEnum::DECLINED);
+
+        $cancelledRequest->refresh();
+        expect($cancelledRequest->{TripRequest::COLUMN_STATUS})->toBe(TripRequestStatusEnum::CANCELLED);
+
+        // Verify events were dispatched for pending and accepted requests only
+        Event::assertDispatched(TripCancelledByCustomerEvent::class, 2);
+        Event::assertDispatched(
+            TripCancelledByCustomerEvent::class,
+            fn ($event) => $event->riderId === $rider1->id
+                && $event->tripId === $trip->id
+                && $event->tripRequestId === $pendingRequest->id
+        );
+        Event::assertDispatched(
+            TripCancelledByCustomerEvent::class,
+            fn ($event) => $event->riderId === $rider2->id
+                && $event->tripId === $trip->id
+                && $event->tripRequestId === $acceptedRequest->id
+        );
     });
 });
 
