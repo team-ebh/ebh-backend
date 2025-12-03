@@ -2,12 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Pipelines\Rider\Trip\GetEstimatedArrivalTime;
+namespace App\Pipelines\Customer\Trip\GetEstimatedArrivalTime;
 
 use App\Exceptions\Rider\InvalidTripActionException;
-use App\Exceptions\Rider\LocationNotAvailableException;
-use App\Exceptions\Rider\TripNotBelongToRiderException;
-use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
+use App\Exceptions\Trip\RiderLocationNotAvailableException;
 use App\Models\Rider;
 use App\Services\Trip\TripActionService;
 use Closure;
@@ -15,7 +13,6 @@ use Closure;
 readonly class ValidateAndLoadPipe
 {
     public function __construct(
-        private RiderRepositoryInterface $riderRepository,
         private TripActionService $tripActionService,
     ) {}
 
@@ -27,19 +24,7 @@ readonly class ValidateAndLoadPipe
     public function handle(array $payload, Closure $next): mixed
     {
         $dto = $payload['dto'];
-        $tripRequest = $dto->tripRequest;
-        $trip = $tripRequest->trip;
-
-        // Validate trip request belongs to rider and is accepted
-        throw_if(
-            ! $tripRequest->belongsToRider($dto->riderId),
-            TripNotBelongToRiderException::class
-        );
-
-        throw_if(
-            ! $tripRequest->isAccepted(),
-            InvalidTripActionException::class
-        );
+        $trip = $dto->trip;
 
         // Validate trip status (must be ACCEPTED_RIDER or ON_TRIP)
         throw_if(
@@ -47,13 +32,21 @@ readonly class ValidateAndLoadPipe
             InvalidTripActionException::class
         );
 
+        // Get accepted trip request for the trip
+        $acceptedTripRequest = $trip->loadMissing('acceptedTripRequest')->acceptedTripRequest;
+
+        throw_if(
+            ! $acceptedTripRequest,
+            InvalidTripActionException::class
+        );
+
         // Get rider with valid location
-        $rider = $this->riderRepository->find($dto->riderId);
+        $rider = $acceptedTripRequest->rider;
 
         // TODO:: must be read from redis service
         throw_if(
             ! $rider || ! $rider->{Rider::COLUMN_LATITUDE} || ! $rider->{Rider::COLUMN_LONGITUDE},
-            LocationNotAvailableException::class
+            RiderLocationNotAvailableException::class
         );
 
         // Get current active location that rider needs to reach
