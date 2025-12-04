@@ -35,7 +35,9 @@ class CancelTripRequestsJob implements ShouldQueue
         public int $tripId,
         public int $customerId,
         public ?int $riderId = null
-    ) {}
+    ) {
+        $this->afterCommit();
+    }
 
     public function handle(RiderTripRepositoryInterface $riderTripRepository): void
     {
