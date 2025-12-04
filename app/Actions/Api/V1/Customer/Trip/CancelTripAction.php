@@ -8,6 +8,7 @@ use App\DTOs\Api\V1\Customer\Trip\CancelTripDTO;
 use App\Enums\Trip\TripStatusEnum;
 use App\Exceptions\Trip\TripCannotBeCancelledException;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
+use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Jobs\CancelTripRequestsJob;
 use App\Models\Trip;
 
@@ -21,7 +22,8 @@ use App\Models\Trip;
 readonly class CancelTripAction
 {
     public function __construct(
-        private TripRepositoryInterface $tripRepository
+        private TripRepositoryInterface $tripRepository,
+        private RiderTripRepositoryInterface $riderTripRepository,
     ) {}
 
     /**
@@ -35,11 +37,19 @@ readonly class CancelTripAction
             TripCannotBeCancelledException::class
         );
 
-        // Update trip status
-        $this->tripRepository->updateStatus(
-            $dto->trip,
-            TripStatusEnum::CANCELED_BY_CUSTOMER
-        );
+        safeProcess()
+            ->withTransaction()
+            ->onFailed(fn ($e) => throw $e)
+            ->do(function () use ($dto) {
+                $this->tripRepository->updateStatus(
+                    $dto->trip,
+                    TripStatusEnum::CANCELED_BY_CUSTOMER
+                );
+
+                if ($dto->trip->{Trip::COLUMN_RIDER_ID}) {
+                    $this->riderTripRepository->updateRiderStatusToOnline($dto->trip->{Trip::COLUMN_RIDER_ID});
+                }
+            });
 
         // Dispatch background job to cancel all trip requests and notify riders
         CancelTripRequestsJob::dispatch(

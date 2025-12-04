@@ -6,7 +6,6 @@ namespace App\Jobs;
 
 use App\Enums\Trip\TripRequestStatusEnum;
 use App\Events\Socket\Rider\TripCancelledByCustomerEvent;
-use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Models\Trip;
 use App\Models\TripRequest;
 use Illuminate\Bus\Queueable;
@@ -39,12 +38,12 @@ class CancelTripRequestsJob implements ShouldQueue
         $this->afterCommit();
     }
 
-    public function handle(RiderTripRepositoryInterface $riderTripRepository): void
+    public function handle(): void
     {
         safeProcess()
             ->withTransaction()
             ->onFailed(fn ($e) => throw $e)
-            ->do(function () use ($riderTripRepository) {
+            ->do(function () {
                 $trip = Trip::query()->find($this->tripId);
 
                 if (! $trip) {
@@ -75,11 +74,6 @@ class CancelTripRequestsJob implements ShouldQueue
                         customerId: $this->customerId,
                         tripRequestId: $tripRequest->{TripRequest::COLUMN_ID}
                     ));
-                }
-
-                // Update rider status from BUSY to ONLINE if trip was assigned to a rider
-                if ($this->riderId) {
-                    $riderTripRepository->updateRiderStatusToOnline($this->riderId);
                 }
             });
     }
