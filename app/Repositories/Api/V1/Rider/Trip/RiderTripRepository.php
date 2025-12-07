@@ -55,7 +55,7 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     {
         return Trip::query()
             ->forRider($riderId)
-            ->where(Trip::COLUMN_STATUS, TripStatusEnum::ACCEPTED_RIDER)
+            ->activeTrips()
             ->with(['customer', 'locations', 'accessibility'])
             ->first();
     }
