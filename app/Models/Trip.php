@@ -78,6 +78,7 @@ class Trip extends Model
     {
         return $query->whereNotIn(self::COLUMN_STATUS, [
             TripStatusEnum::DRAFT,
+            TripStatusEnum::ON_TRIP,
             TripStatusEnum::COMPLETED,
             TripStatusEnum::CANCELED_BY_CUSTOMER,
             TripStatusEnum::CANCELLED_BY_RIDER,
