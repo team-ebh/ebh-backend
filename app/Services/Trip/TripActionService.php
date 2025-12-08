@@ -83,7 +83,7 @@ readonly class TripActionService
      */
     public function validateCanArrive(?TripLocation $location): bool
     {
-        return $location && $location->isPending();
+        return $location && $location->isPending() && $location->isOrigin();
     }
 
     /**
