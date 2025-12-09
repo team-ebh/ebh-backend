@@ -18,11 +18,6 @@ readonly class GetRiderSettingsAction
      */
     public function __invoke(): array
     {
-        return [
-            'trip_request_timeout_seconds' => 45,
-            'rider_location_update_interval_seconds_online' => 15,
-            'rider_location_update_interval_seconds_busy' => 30,
-            'arriving_at_poll_interval_seconds' => 60,
-        ];
+        return config('app_settings.rider');
     }
 }
