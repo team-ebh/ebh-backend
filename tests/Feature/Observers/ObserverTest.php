@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\Company\CompanyStatusEnum;
 use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Customer\CustomerStatusEnum;
 use App\Enums\Rider\RiderStatusEnum;
@@ -17,6 +16,120 @@ use App\Models\Trip;
 use App\Models\TripRequest;
 use App\Models\TripRequestStatusLog;
 use App\Models\TripStatusLog;
+use App\Models\RiderStatusLog;
+
+test('RiderObserver creates status log on rider creation', function () {
+    $company = Company::query()->create([
+        Company::COLUMN_NAME => 'Test Company',
+        Company::COLUMN_PHONE_NUMBER => sprintf('+9655000%04d', rand(1, 9999)),
+        Company::COLUMN_ADDRESS => 'Test Address',
+    ]);
+
+    $rider = Rider::query()->create([
+        Rider::COLUMN_FULL_NAME => 'Test Rider',
+        Rider::COLUMN_EMAIL => sprintf('rider%d@test.com', rand(1, 9999)),
+        Rider::COLUMN_PHONE_NUMBER => sprintf('+9655000%04d', rand(1, 9999)),
+        Rider::COLUMN_COMPANY_ID => $company->id,
+        Rider::COLUMN_STATUS => RiderStatusEnum::OFFLINE,
+    ]);
+
+    // Verify log was created
+    $logCount = RiderStatusLog::query()
+        ->where(RiderStatusLog::COLUMN_RIDER_ID, $rider->{Rider::COLUMN_ID})
+        ->count();
+
+    expect($logCount)->toBe(1);
+
+    $log = RiderStatusLog::query()
+        ->where(RiderStatusLog::COLUMN_RIDER_ID, $rider->{Rider::COLUMN_ID})
+        ->first();
+
+    expect($log->{RiderStatusLog::COLUMN_STATUS})->toBe(RiderStatusEnum::OFFLINE);
+});
+
+test('RiderObserver creates status log when rider status changes', function () {
+    $company = Company::query()->create([
+        Company::COLUMN_NAME => 'Test Company',
+        Company::COLUMN_PHONE_NUMBER => sprintf('+9655000%04d', rand(1, 9999)),
+        Company::COLUMN_ADDRESS => 'Test Address',
+    ]);
+
+    $rider = Rider::query()->create([
+        Rider::COLUMN_FULL_NAME => 'Test Rider',
+        Rider::COLUMN_EMAIL => sprintf('rider%d@test.com', rand(1, 9999)),
+        Rider::COLUMN_PHONE_NUMBER => sprintf('+9655000%04d', rand(1, 9999)),
+        Rider::COLUMN_COMPANY_ID => $company->id,
+        Rider::COLUMN_STATUS => RiderStatusEnum::OFFLINE,
+    ]);
+
+    // Initial log should exist
+    expect(RiderStatusLog::query()
+        ->where(RiderStatusLog::COLUMN_RIDER_ID, $rider->{Rider::COLUMN_ID})
+        ->count())->toBe(1);
+
+    // Change status to ONLINE
+    $rider->update([Rider::COLUMN_STATUS => RiderStatusEnum::ONLINE]);
+
+    // Should have 2 logs now
+    $logCount = RiderStatusLog::query()
+        ->where(RiderStatusLog::COLUMN_RIDER_ID, $rider->{Rider::COLUMN_ID})
+        ->count();
+
+    expect($logCount)->toBe(2);
+
+    // Verify latest log has ONLINE status
+    $latestLog = RiderStatusLog::query()
+        ->where(RiderStatusLog::COLUMN_RIDER_ID, $rider->{Rider::COLUMN_ID})
+        ->latest('id')
+        ->first();
+
+    expect($latestLog->{RiderStatusLog::COLUMN_STATUS})->toBe(RiderStatusEnum::ONLINE);
+
+    // Change status to BUSY
+    $rider->update([Rider::COLUMN_STATUS => RiderStatusEnum::BUSY]);
+
+    // Should have 3 logs now
+    expect(RiderStatusLog::query()
+        ->where(RiderStatusLog::COLUMN_RIDER_ID, $rider->{Rider::COLUMN_ID})
+        ->count())->toBe(3);
+
+    // Verify latest log has BUSY status
+    $latestLog = RiderStatusLog::query()
+        ->where(RiderStatusLog::COLUMN_RIDER_ID, $rider->{Rider::COLUMN_ID})
+        ->latest('id')
+        ->first();
+
+    expect($latestLog->{RiderStatusLog::COLUMN_STATUS})->toBe(RiderStatusEnum::BUSY);
+});
+
+test('RiderObserver does not create log when status does not change', function () {
+    $company = Company::query()->create([
+        Company::COLUMN_NAME => 'Test Company',
+        Company::COLUMN_PHONE_NUMBER => sprintf('+9655000%04d', rand(1, 9999)),
+        Company::COLUMN_ADDRESS => 'Test Address',
+    ]);
+
+    $rider = Rider::query()->create([
+        Rider::COLUMN_FULL_NAME => 'Test Rider',
+        Rider::COLUMN_EMAIL => sprintf('rider%d@test.com', rand(1, 9999)),
+        Rider::COLUMN_PHONE_NUMBER => sprintf('+9655000%04d', rand(1, 9999)),
+        Rider::COLUMN_COMPANY_ID => $company->id,
+        Rider::COLUMN_STATUS => RiderStatusEnum::OFFLINE,
+    ]);
+
+    // Should have 1 log
+    expect(RiderStatusLog::query()
+        ->where(RiderStatusLog::COLUMN_RIDER_ID, $rider->{Rider::COLUMN_ID})
+        ->count())->toBe(1);
+
+    // Update other fields but not status
+    $rider->update([Rider::COLUMN_FULL_NAME => 'Updated Rider Name']);
+
+    // Should still have only 1 log
+    expect(RiderStatusLog::query()
+        ->where(RiderStatusLog::COLUMN_RIDER_ID, $rider->{Rider::COLUMN_ID})
+        ->count())->toBe(1);
+});
 
 test('TripObserver creates status log on trip creation', function () {
     $customer = Customer::query()->create([

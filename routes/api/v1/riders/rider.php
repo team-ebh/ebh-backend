@@ -11,4 +11,5 @@ Route::middleware('auth:rider')
         Route::get('/profile', 'profile')->name('profile');
         Route::post('/location', 'updateLocation')->name('location.update');
         Route::get('/app-state', 'appState')->name('app-state');
+        Route::put('/status', 'updateStatus')->name('status.update');
     });

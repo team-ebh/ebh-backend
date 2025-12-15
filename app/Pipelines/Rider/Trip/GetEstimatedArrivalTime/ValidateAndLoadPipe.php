@@ -41,9 +41,16 @@ readonly class ValidateAndLoadPipe
             InvalidTripActionException::class
         );
 
+        // Validate trip status (must be ACCEPTED_RIDER or ON_TRIP)
+        throw_if(
+            ! $trip->isAcceptedByRider() && ! $trip->isOnTrip(),
+            InvalidTripActionException::class
+        );
+
         // Get rider with valid location
         $rider = $this->riderRepository->find($dto->riderId);
 
+        // TODO:: must be read from redis service
         throw_if(
             ! $rider || ! $rider->{Rider::COLUMN_LATITUDE} || ! $rider->{Rider::COLUMN_LONGITUDE},
             LocationNotAvailableException::class

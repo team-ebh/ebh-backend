@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Rider\RiderStatusEnum;
+use App\Observers\RiderObserver;
 use App\Traits\Model\Aggregates\RiderAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\HasMediaTrait;
 use App\Traits\Model\LogsActivity;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +19,7 @@ use Illuminate\Foundation\Auth\User;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\MediaLibrary\HasMedia;
 
+#[ObservedBy(RiderObserver::class)]
 class Rider extends User implements HasMedia
 {
     use HasApiTokens;
@@ -42,8 +45,6 @@ class Rider extends User implements HasMedia
 
     public const string COLUMN_OTP_EXPIRES_AT = 'otp_expires_at';
 
-    public const string COLUMN_ACCESSIBILITY_CERTIFICATIONS = 'accessibility_certifications';
-
     public const string COLUMN_LATITUDE = 'latitude';
 
     public const string COLUMN_LONGITUDE = 'longitude';
@@ -57,7 +58,6 @@ class Rider extends User implements HasMedia
     protected $casts = [
         self::COLUMN_STATUS => RiderStatusEnum::class,
         self::COLUMN_OTP_EXPIRES_AT => 'timestamp',
-        self::COLUMN_ACCESSIBILITY_CERTIFICATIONS => 'json',
         self::COLUMN_LATITUDE => 'decimal:8',
         self::COLUMN_LONGITUDE => 'decimal:8',
         self::COLUMN_LAST_LOCATION_UPDATE => 'timestamp',
@@ -81,9 +81,7 @@ class Rider extends User implements HasMedia
 
     public function isOnline(): bool
     {
-        // TODO: for now return true
-        return $this->{self::COLUMN_STATUS} === RiderStatusEnum::ONLINE || $this->{self::COLUMN_STATUS} === RiderStatusEnum::OFFLINE;
-        //        return $this->{self::COLUMN_STATUS} === RiderStatusEnum::ONLINE;
+        return $this->{self::COLUMN_STATUS} === RiderStatusEnum::ONLINE;
     }
 
     public function isOffline(): bool

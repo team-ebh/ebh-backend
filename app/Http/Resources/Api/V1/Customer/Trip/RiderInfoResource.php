@@ -86,13 +86,22 @@ class RiderInfoResource extends JsonResource
     {
         $certifications = $this->resource['accessibility_certifications'] ?? [];
 
+        // Check if certifications is already an array of certification types (from new table structure)
+        if (empty($certifications)) {
+            return [];
+        }
+
+        // If it's a collection of objects (from relationship), extract certification_type
+        if (is_object($certifications) && method_exists($certifications, 'pluck')) {
+            $certifications = $certifications->pluck('certification_type')->toArray();
+        }
+
         return collect($certifications)
-            ->map(function (string $certification) {
-                $enum = AccessibilityCertificationEnum::tryFrom($certification);
+            ->map(function (AccessibilityCertificationEnum $certification) {
 
                 return [
-                    'id' => $certification,
-                    'label' => $enum?->getLabel() ?? $certification,
+                    'id' => $certification->value,
+                    'label' => $certification->getLabel(),
                 ];
             })
             ->values()

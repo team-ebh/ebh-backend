@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Rider\Trip;
 
 use App\DTOs\Api\V1\Rider\Trip\GetEstimatedArrivalTimeDTO;
-use App\Pipelines\Rider\Trip\GetEstimatedArrivalTime\CalculateEstimatedTimePipe;
 use App\Pipelines\Rider\Trip\GetEstimatedArrivalTime\ValidateAndLoadPipe;
+use App\Pipelines\Shared\Trip\GetEstimatedArrivalTime\CalculateEstimatedTimePipe;
 use Illuminate\Pipeline\Pipeline;
 
 /**

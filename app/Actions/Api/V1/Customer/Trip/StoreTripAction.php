@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
-use App\Models\Trip;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\AttachAccessibilityRequirementsPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\BuildPriceBreakdownPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\CalculatePricingPipe;
+use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\CheckActiveTripPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\CreateTripPipe;
+use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\DeleteDraftTripsPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\ReverseGeocodeDestinationPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\ReverseGeocodeOriginPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\TripCreationContext;
@@ -48,6 +49,8 @@ readonly class StoreTripAction
         $result = app(Pipeline::class)
             ->send($context)
             ->through([
+                DeleteDraftTripsPipe::class,
+                CheckActiveTripPipe::class,
                 ReverseGeocodeOriginPipe::class,
                 ReverseGeocodeDestinationPipe::class,
                 CalculatePricingPipe::class,

@@ -18,7 +18,8 @@ readonly class CustomerTripRepository implements CustomerTripRepositoryInterface
             ->forCustomer($customerId)
             ->activeTrips()
             ->with([
-                'rider:id,full_name,phone_number,accessibility_certifications',
+                'rider:id,full_name,phone_number',
+                'rider.accessibilityCertifications:id,rider_id,certification_type',
                 'rider.vehicle:id,rider_id,car_make_id,car_model_id,plate_number',
                 'rider.vehicle.carMake:id,name,name_ar',
                 'rider.vehicle.carModel:id,name,name_ar',

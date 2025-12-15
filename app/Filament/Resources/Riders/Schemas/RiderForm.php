@@ -87,10 +87,25 @@ class RiderForm
                     ->icon('heroicon-o-check-circle')
                     ->description(trans('riders.admin.form.accessibility_certifications_description'))
                     ->schema([
-                        CheckboxList::make(Rider::COLUMN_ACCESSIBILITY_CERTIFICATIONS)
+                        CheckboxList::make('accessibility_certification_ids')
+                            ->label(trans('riders.admin.fields.accessibility_certifications.label'))
                             ->options(AccessibilityCertificationEnum::getOptions())
                             ->columns(2)
-                            ->columnSpanFull(),
+                            ->columnSpanFull()
+                            ->afterStateHydrated(function (CheckboxList $component, $state, $livewire) {
+                                $record = $livewire->getRecord();
+                                if ($record && $record->accessibilityCertifications) {
+                                    $certifications = $record->accessibilityCertifications
+                                        ->pluck('certification_type')
+                                        ->map(function ($cert) {
+                                            // certification_type is already cast to enum, get its value
+                                            return $cert instanceof \BackedEnum ? $cert->value : $cert;
+                                        })
+                                        ->toArray();
+
+                                    $component->state($certifications);
+                                }
+                            }),
                     ]),
 
                 Section::make(trans('vehicles.admin.sections.vehicle_information.title'))

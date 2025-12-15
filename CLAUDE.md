@@ -343,9 +343,22 @@ app/
 5. **Resource fields must be documented** with description, type, and example
 
 6. **Model relationships should be aggregated in traits** for better organization:
-    - Create relationship aggregate traits in `app/Traits/Model/Aggregates/`
-    - Name pattern: `{ModelName}Aggregate`
-    - Keep all `BelongsTo`, `HasMany`, `BelongsToMany` relationships in the aggregate trait
+
+   **🚨 IMPORTANT: Always create relationship aggregate traits for models with relationships! 🚨**
+
+   **When to create:**
+   - Create an aggregate trait for ANY model that has relationships (BelongsTo, HasMany, HasOne, BelongsToMany, etc.)
+   - Even if the model has only one relationship, create the aggregate trait for consistency
+
+   **Naming and location:**
+   - Create relationship aggregate traits in `app/Traits/Model/Aggregates/`
+   - Name pattern: `{ModelName}Aggregate` (e.g., `VehicleAggregate`, `RiderAggregate`, `RiderAccessibilityCertificationAggregate`)
+   - Namespace: `App\Traits\Model\Aggregates`
+
+   **What to include:**
+   - Keep ALL relationship methods in the aggregate trait (`BelongsTo`, `HasMany`, `HasOne`, `BelongsToMany`, `MorphTo`, etc.)
+   - NEVER define relationships directly in the model class
+   - Only relationship methods belong in the aggregate trait - no other methods
 
 7. **Socket Events must extend `BaseSocketEvent`** for consistent real-time broadcasting:
    ```php
@@ -387,30 +400,116 @@ app/
     - Broadcast channels must be defined in `routes/channels.php`
     - Dispatch events using `broadcast()` helper: `broadcast(new TripAcceptedEvent(...))`
 
-   Example aggregate trait pattern:
+   **Example: Model with multiple relationships**
    ```php
    // app/Traits/Model/Aggregates/VehicleAggregate.php
+   <?php
+
+   declare(strict_types=1);
+
+   namespace App\Traits\Model\Aggregates;
+
+   use App\Models\Rider;
+   use App\Models\Vehicle;
+   use App\Models\VehicleSetting;
+   use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
    /**
     * Vehicle Aggregate Trait
     *
     * Contains all relationship methods for the Vehicle model
     */
-   trait VehicleAggregate {
-       public function rider(): BelongsTo {
+   trait VehicleAggregate
+   {
+       public function rider(): BelongsTo
+       {
            return $this->belongsTo(Rider::class, Vehicle::COLUMN_RIDER_ID);
        }
 
-       public function carType(): BelongsTo {
+       public function carType(): BelongsTo
+       {
            return $this->belongsTo(VehicleSetting::class, Vehicle::COLUMN_CAR_TYPE_ID);
+       }
+
+       public function carMake(): BelongsTo
+       {
+           return $this->belongsTo(VehicleSetting::class, Vehicle::COLUMN_CAR_MAKE_ID);
+       }
+
+       public function carModel(): BelongsTo
+       {
+           return $this->belongsTo(VehicleSetting::class, Vehicle::COLUMN_CAR_MODEL_ID);
        }
    }
 
    // app/Models/Vehicle.php
-   use App\Traits\Model\Aggregates\VehicleAggregate;
+   <?php
 
-   class Vehicle extends Model {
+   declare(strict_types=1);
+
+   namespace App\Models;
+
+   use App\Traits\Model\Aggregates\VehicleAggregate;
+   use App\Traits\Model\HasDefaultColumnModelTrait;
+   use Illuminate\Database\Eloquent\Model;
+
+   class Vehicle extends Model
+   {
        use HasDefaultColumnModelTrait;
-       use VehicleAggregate;
+       use VehicleAggregate;  // ✅ Use the aggregate trait
+
+       public const string COLUMN_RIDER_ID = 'rider_id';
+       public const string COLUMN_CAR_TYPE_ID = 'car_type_id';
+       // ... other constants and properties
+   }
+   ```
+
+   **Example: Model with single relationship**
+   ```php
+   // app/Traits/Model/Aggregates/RiderAccessibilityCertificationAggregate.php
+   <?php
+
+   declare(strict_types=1);
+
+   namespace App\Traits\Model\Aggregates;
+
+   use App\Models\Rider;
+   use App\Models\RiderAccessibilityCertification;
+   use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+   /**
+    * RiderAccessibilityCertification Aggregate Trait
+    *
+    * Contains all relationship methods for the RiderAccessibilityCertification model
+    */
+   trait RiderAccessibilityCertificationAggregate
+   {
+       public function rider(): BelongsTo
+       {
+           return $this->belongsTo(Rider::class, RiderAccessibilityCertification::COLUMN_RIDER_ID);
+       }
+   }
+
+   // app/Models/RiderAccessibilityCertification.php
+   <?php
+
+   declare(strict_types=1);
+
+   namespace App\Models;
+
+   use App\Traits\Model\Aggregates\RiderAccessibilityCertificationAggregate;
+   use App\Traits\Model\HasDefaultColumnModelTrait;
+   use Illuminate\Database\Eloquent\Model;
+
+   class RiderAccessibilityCertification extends Model
+   {
+       use HasDefaultColumnModelTrait;
+       use RiderAccessibilityCertificationAggregate;  // ✅ Use the aggregate trait
+
+       public const string COLUMN_RIDER_ID = 'rider_id';
+       // ... other constants and properties
+
+       // ❌ NEVER define relationships here - they belong in the aggregate trait
    }
    ```
 
@@ -437,6 +536,35 @@ app/
    - Include primary keys (`id`) for all models in the chain
    - Only include fields that are actually used in Resources/responses
    - This significantly reduces database query size and memory usage
+
+9. **ALWAYS use Repository pattern for database operations** (never touch database directly in Actions):
+   ```php
+   // ❌ BAD - Direct model update in Action
+   $rider->update([
+       Rider::COLUMN_STATUS => $dto->status,
+   ]);
+
+   // ✅ GOOD - Use repository method
+   $this->riderTripRepository->updateRiderStatus($dto->riderId, $dto->status);
+   ```
+
+   **Key Points:**
+   - All database operations (create, read, update, delete) MUST go through repositories
+   - Actions should NEVER directly call `Model::create()`, `$model->update()`, `$model->delete()`, or query builders
+   - Create repository methods for any database operation needed in Actions
+   - Repositories centralize data access logic and make testing easier
+   - This includes bulk operations, queries, and any Eloquent/Query Builder usage
+
+   **Repository Pattern Flow:**
+   ```
+   Controller → DTO → Action → Repository → Database
+   ```
+
+   **When to create new repository methods:**
+   - When you need to create/update/delete a model in an Action
+   - When you need to perform any query on a model
+   - When you need to update relationships between models
+   - When you need to perform bulk operations
 
 ## Special Features
 
@@ -493,6 +621,7 @@ Available global helpers (see `app/Helpers/general.php`):
 - `getDefaultImageUrl()` - Default image fallback
 - `generateOtpCode()` - Generate 4-digit OTP
 - `defaultPrefixPhoneNumber()` - Default phone prefix (+965)
+- `getAuthenticatedUser()` - Get currently authenticated user from any guard (customer, rider, admin)
 
 ## Code Style Conventions
 
@@ -730,7 +859,7 @@ All models have:
 5. **Never skip API documentation** (@tags, @authenticated, field docs)
 6. **Never hardcode language logic** - use `translated()` methods
 7. **Never skip tests** for new features
-8. **Never use raw database queries** - use Eloquent/Query Builder
+8. **Never touch database directly in Actions** - ALWAYS use Repository pattern for ALL database operations (create, read, update, delete)
 9. **Never skip Request validation** when accepting input
 10. **Never mix Customer and Rider code** - Keep them completely separated
 11. **🚨 NEVER create socket events without tests** - Every `BaseSocketEvent` MUST have corresponding tests that verify:

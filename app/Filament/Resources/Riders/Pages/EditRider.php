@@ -43,17 +43,25 @@ class EditRider extends EditRecord
         // Store documents data for afterSave
         $this->documentsData = $data['documents'] ?? [];
 
-        // Remove documents from main data
-        unset($data['documents']);
+        // Store accessibility certification IDs for afterSave
+        $this->accessibilityCertificationIds = $data['accessibility_certification_ids'] ?? [];
+
+        // Remove documents and certifications from main data
+        unset($data['documents'], $data['accessibility_certification_ids']);
 
         return $data;
     }
 
     public array $accessibilityFeatureIds = [];
 
+    public array $accessibilityCertificationIds = [];
+
     protected function afterSave(): void
     {
         $rider = $this->record;
+
+        // Sync rider accessibility certifications
+        $this->syncAccessibilityCertifications($rider);
 
         // Sync vehicle accessibility features
         if ($rider->vehicle) {
@@ -64,12 +72,27 @@ class EditRider extends EditRecord
         $this->handleDocuments($rider);
     }
 
+    protected function syncAccessibilityCertifications(\App\Models\Rider $rider): void
+    {
+        // Delete existing certifications
+        $rider->accessibilityCertifications()->delete();
+
+        // Create new certifications
+        foreach ($this->accessibilityCertificationIds as $certificationId) {
+            \App\Models\RiderAccessibilityCertification::create([
+                \App\Models\RiderAccessibilityCertification::COLUMN_RIDER_ID => $rider->id,
+                \App\Models\RiderAccessibilityCertification::COLUMN_CERTIFICATION_TYPE => $certificationId,
+            ]);
+        }
+    }
+
     protected function beforeFill(): void
     {
-        // Ensure documents and vehicle relations are loaded
+        // Ensure documents, vehicle, and certifications relations are loaded
         $this->record->load([
             'documents.media',
             'vehicle.accessibilityFeatures',
+            'accessibilityCertifications',
         ]);
     }
 }

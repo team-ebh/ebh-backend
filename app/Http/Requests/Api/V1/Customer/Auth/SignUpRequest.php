@@ -26,6 +26,9 @@ class SignUpRequest extends FormRequest
                 'email',
                 'max:255',
             ],
+            /**
+             * @example 65656565
+             */
             'phone_number' => [
                 'required',
                 'string',

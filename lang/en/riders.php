@@ -66,6 +66,10 @@ return [
                 'required' => 'Decline reason is required',
                 'max' => 'Decline reason must not exceed 500 characters',
             ],
+            'status' => [
+                'required' => 'Status is required',
+                'in' => 'Status must be either online or offline',
+            ],
         ],
         'errors' => [
             'trip_not_available' => 'Trip is no longer available',
@@ -73,9 +77,13 @@ return [
             'rider_not_available' => 'Rider is not available',
             'rider_must_be_available' => 'You must be available to accept trips',
         ],
+        'exceptions' => [
+            'cannot_change_status' => 'Cannot change status. You must complete or cancel your active trip first, or wait until you are not busy.',
+        ],
         'success' => [
             'trip_accepted' => 'Trip accepted successfully',
             'trip_declined' => 'Trip declined successfully',
+            'status_updated' => 'Status updated successfully',
         ],
         'location_updated_successfully' => 'Location updated successfully',
     ],

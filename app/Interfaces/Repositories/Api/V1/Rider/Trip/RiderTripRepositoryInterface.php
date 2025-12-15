@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Repositories\Api\V1\Rider\Trip;
 
+use App\Enums\Rider\RiderStatusEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Models\Rider;
@@ -29,6 +30,8 @@ interface RiderTripRepositoryInterface
     public function cancelTripRequestWithLock(TripRequest $tripRequest): Trip;
 
     public function updateRiderStatusToOnline(int $riderId): void;
+
+    public function updateRiderStatus(Rider $rider, RiderStatusEnum $status): void;
 
     public function updateTripLocationStatus(TripLocation $location, TripLocationStatusEnum $status): void;
 

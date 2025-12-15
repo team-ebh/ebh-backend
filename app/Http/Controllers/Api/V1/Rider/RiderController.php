@@ -6,10 +6,13 @@ namespace App\Http\Controllers\Api\V1\Rider;
 
 use App\Actions\Api\V1\Rider\GetAppStateAction;
 use App\Actions\Api\V1\Rider\Location\UpdateLocationAction;
+use App\Actions\Api\V1\Rider\UpdateRiderStatusAction;
 use App\DTOs\Api\V1\Rider\AppStateDTO;
 use App\DTOs\Api\V1\Rider\Location\UpdateLocationDTO;
+use App\DTOs\Api\V1\Rider\UpdateRiderStatusDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Rider\Location\UpdateLocationRequest;
+use App\Http\Requests\Api\V1\Rider\UpdateRiderStatusRequest;
 use App\Http\Resources\Api\V1\Rider\AppStateResource;
 use App\Http\Resources\Api\V1\Rider\RiderResource;
 use Illuminate\Http\JsonResponse;
@@ -69,5 +72,27 @@ class RiderController extends Controller
         $dto->getDataFromRequest($request);
 
         return new AppStateResource($action($dto));
+    }
+
+    /**
+     * Update rider status
+     *
+     * Allows rider to change their status between ONLINE and OFFLINE.
+     * Cannot change status if currently BUSY or has an active trip.
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function updateStatus(
+        UpdateRiderStatusRequest $request,
+        UpdateRiderStatusDTO $dto,
+        UpdateRiderStatusAction $action
+    ): JsonResponse {
+        $dto->getDataFromRequest($request);
+
+        $action($dto);
+
+        return $this->successResponse();
     }
 }
