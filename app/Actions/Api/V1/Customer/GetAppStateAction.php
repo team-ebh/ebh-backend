@@ -23,17 +23,18 @@ readonly class GetAppStateAction
 
     public function __invoke(AppStateDTO $dto): CustomerAppStateEnum
     {
-        // Check if customer has unpaid trips
+        // Check if customer has active trip (first priority)
+        if ($this->customerTripRepository->existsActiveTrip($dto->customerId)) {
+            return CustomerAppStateEnum::HAS_ACTIVE_TRIP;
+        }
+
+        // Check if customer has completed trips without payment
         $lastTrip = $this->tripRepository->getLastTrip($dto->customerId);
 
-        if ($lastTrip && ! $lastTrip->hasCompletedAndPaidPayment()) {
+        if ($lastTrip && ! $lastTrip->hasPaidPayment()) {
             return CustomerAppStateEnum::HAS_PENDING_PAYMENT;
         }
 
-        if (! $this->customerTripRepository->existsActiveTrip($dto->customerId)) {
-            return CustomerAppStateEnum::NO_TRIP;
-        }
-
-        return CustomerAppStateEnum::HAS_ACTIVE_TRIP;
+        return CustomerAppStateEnum::NO_TRIP;
     }
 }
