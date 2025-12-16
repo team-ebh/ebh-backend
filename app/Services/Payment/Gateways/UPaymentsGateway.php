@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Payment\Gateways;
 
+use App\Enums\Payment\PaymentLogTypeEnum;
 use App\Interfaces\Repositories\Payment\PaymentLogRepositoryInterface;
 use App\Interfaces\Repositories\Payment\PaymentRepositoryInterface;
 use App\Services\Payment\Contracts\PaymentGatewayCustomerTokenInterface;
@@ -54,6 +55,7 @@ class UPaymentsGateway implements PaymentGatewayCustomerTokenInterface, PaymentG
                 $url = $this->buildUrl($this->baseUrl, '/api/v1/charge');
 
                 $response = $this->makeHttpRequest(
+                    type: PaymentLogTypeEnum::GENERATE_LINK,
                     method: 'post',
                     url: $url,
                     data: $payload,
@@ -79,6 +81,7 @@ class UPaymentsGateway implements PaymentGatewayCustomerTokenInterface, PaymentG
                 $url = $this->buildUrl($this->baseUrl, '/api/v1/create-customer-unique-token');
 
                 $response = $this->makeHttpRequest(
+                    type: PaymentLogTypeEnum::GENERATE_LINK,
                     method: 'post',
                     url: $url,
                     data: $payload,
@@ -114,6 +117,7 @@ class UPaymentsGateway implements PaymentGatewayCustomerTokenInterface, PaymentG
                 $url = $this->buildUrl($this->baseUrl, "/api/v1/get-payment-status/{$gatewayReferenceId}");
 
                 $response = $this->makeHttpRequest(
+                    type: PaymentLogTypeEnum::CHECK_STATUS,
                     method: 'get',
                     url: $url,
                     headers: ['Authorization' => 'Bearer ' . $this->apiKey],

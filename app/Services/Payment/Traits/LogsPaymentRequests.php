@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Payment\Traits;
 
+use App\Enums\Payment\PaymentLogTypeEnum;
 use App\Services\Payment\DTOs\PaymentLogDTO;
 
 /**
@@ -18,6 +19,7 @@ trait LogsPaymentRequests
      * Log HTTP request/response to payment gateway
      */
     protected function logHttpRequest(
+        PaymentLogTypeEnum $type,
         string $method,
         string $url,
         array $requestData,
@@ -29,6 +31,7 @@ trait LogsPaymentRequests
         ?string $error = null
     ): void {
         $dto = new PaymentLogDTO(
+            type: $type,
             method: $method,
             url: $url,
             requestHeaders: $this->sanitizeHeaders($this->getHttpHeaders()),

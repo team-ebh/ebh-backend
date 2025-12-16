@@ -17,6 +17,7 @@ class PaymentLogRepository implements PaymentLogRepositoryInterface
     {
         return PaymentLog::query()->create([
             PaymentLog::COLUMN_PAYMENT_ID => $dto->paymentId,
+            PaymentLog::COLUMN_TYPE => $dto->type,
             PaymentLog::COLUMN_METHOD => $dto->method,
             PaymentLog::COLUMN_URL => $dto->url,
             PaymentLog::COLUMN_REQUEST_HEADERS => $dto->requestHeaders,

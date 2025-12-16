@@ -16,7 +16,8 @@ return new class extends Migration
         Schema::create('payment_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('payment_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->string('method')->index()->nullable(); // POST, GET, etc.
+            $table->string('type'); // generate_link, check_status
+            $table->string('method')->nullable(); // POST, GET, etc.
             $table->text('url')->nullable();
             $table->json('request_headers')->nullable();
             $table->json('request_body')->nullable();

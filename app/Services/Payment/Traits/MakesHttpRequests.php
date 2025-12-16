@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Payment\Traits;
 
+use App\Enums\Payment\PaymentLogTypeEnum;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -18,6 +19,7 @@ trait MakesHttpRequests
     /**
      * Make HTTP request to payment gateway
      *
+     * @param  PaymentLogTypeEnum  $type  Type of payment operation (generate_link, check_status)
      * @param  string  $method  HTTP method (get, post, put, delete)
      * @param  string  $url  Full URL to request
      * @param  array  $data  Request payload
@@ -27,6 +29,7 @@ trait MakesHttpRequests
      * @throws \Throwable
      */
     protected function makeHttpRequest(
+        PaymentLogTypeEnum $type,
         string $method,
         string $url,
         array $data = [],
@@ -36,10 +39,11 @@ trait MakesHttpRequests
         $startTime = microtime(true);
 
         return safeProcess()
-            ->onFailed(function ($e) use ($method, $url, $data, $startTime, $paymentId) {
+            ->onFailed(function ($e) use ($type, $method, $url, $data, $startTime, $paymentId) {
                 $responseTime = $this->calculateResponseTime($startTime);
 
                 $this->logHttpRequest(
+                    type: $type,
                     method: $method,
                     url: $url,
                     requestData: $data,
@@ -60,7 +64,7 @@ trait MakesHttpRequests
 
                 throw $e;
             })
-            ->do(function () use ($method, $url, $data, $headers, $startTime, $paymentId) {
+            ->do(function () use ($type, $method, $url, $data, $headers, $startTime, $paymentId) {
                 $response = Http::withHeaders(array_merge(
                     $this->getHttpHeaders(),
                     $headers
@@ -72,6 +76,7 @@ trait MakesHttpRequests
                 $statusCode = $response->status();
 
                 $this->logHttpRequest(
+                    type: $type,
                     method: $method,
                     url: $url,
                     requestData: $data,
@@ -122,6 +127,7 @@ trait MakesHttpRequests
      * Abstract methods that must be implemented by using class
      */
     abstract protected function logHttpRequest(
+        PaymentLogTypeEnum $type,
         string $method,
         string $url,
         array $requestData,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Payment\PaymentLogTypeEnum;
 use App\Traits\Model\Aggregates\PaymentLogAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,8 @@ class PaymentLog extends Model
     use PaymentLogAggregate;
 
     public const string COLUMN_PAYMENT_ID = 'payment_id';
+
+    public const string COLUMN_TYPE = 'type';
 
     public const string COLUMN_METHOD = 'method';
 
@@ -34,6 +37,7 @@ class PaymentLog extends Model
     public const string COLUMN_ERROR = 'error';
 
     protected $casts = [
+        self::COLUMN_TYPE => PaymentLogTypeEnum::class,
         self::COLUMN_REQUEST_HEADERS => 'array',
         self::COLUMN_REQUEST_BODY => 'array',
         self::COLUMN_RESPONSE_HEADERS => 'array',

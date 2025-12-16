@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Payment\DTOs;
 
+use App\Enums\Payment\PaymentLogTypeEnum;
+
 /**
  * Payment Log DTO
  *
@@ -12,6 +14,7 @@ namespace App\Services\Payment\DTOs;
 class PaymentLogDTO
 {
     public function __construct(
+        public readonly PaymentLogTypeEnum $type,
         public readonly string $method,
         public readonly string $url,
         public readonly array $requestHeaders,
