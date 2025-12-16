@@ -1653,7 +1653,7 @@ describe('Check Pending Payment API', function () {
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
 
-        $response = getJson(route('v1.customers.trips.check-pending-payment'));
+        $response = getJson(route('v1.customers.payments.check-pending'));
 
         $response->assertStatus(200)
             ->assertJson([
@@ -1664,7 +1664,7 @@ describe('Check Pending Payment API', function () {
     });
 
     it('returns false when customer has no trips', function () {
-        $response = getJson(route('v1.customers.trips.check-pending-payment'));
+        $response = getJson(route('v1.customers.payments.check-pending'));
 
         $response->assertStatus(200)
             ->assertJson([
@@ -1687,7 +1687,7 @@ describe('Check Pending Payment API', function () {
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
 
-        $response = getJson(route('v1.customers.trips.check-pending-payment'));
+        $response = getJson(route('v1.customers.payments.check-pending'));
 
         $response->assertStatus(200)
             ->assertJson([
@@ -1721,7 +1721,7 @@ describe('Check Pending Payment API', function () {
             'status' => \App\Enums\Payment\PaymentStatusEnum::PAID->value,
         ]);
 
-        $response = getJson(route('v1.customers.trips.check-pending-payment'));
+        $response = getJson(route('v1.customers.payments.check-pending'));
 
         $response->assertStatus(200)
             ->assertJson([
@@ -1756,7 +1756,7 @@ describe('Check Pending Payment API', function () {
             'status' => TripStatusEnum::CANCELED_BY_CUSTOMER->value,
         ]);
 
-        $response = getJson(route('v1.customers.trips.check-pending-payment'));
+        $response = getJson(route('v1.customers.payments.check-pending'));
 
         $response->assertStatus(200)
             ->assertJson([

@@ -6,7 +6,6 @@ namespace App\Http\Controllers\Api\V1\Customer;
 
 use App\Actions\Api\V1\Customer\Trip\CancelTripAction;
 use App\Actions\Api\V1\Customer\Trip\ChangeRideTypeAction;
-use App\Actions\Api\V1\Customer\Trip\CheckPendingPaymentAction;
 use App\Actions\Api\V1\Customer\Trip\ConfirmTripAction;
 use App\Actions\Api\V1\Customer\Trip\GetActiveTripAction;
 use App\Actions\Api\V1\Customer\Trip\GetEstimatedArrivalTimeAction;
@@ -16,7 +15,6 @@ use App\Actions\Api\V1\Customer\Trip\GetTripStatusAction;
 use App\Actions\Api\V1\Customer\Trip\StoreTripAction;
 use App\DTOs\Api\V1\Customer\Trip\CancelTripDTO;
 use App\DTOs\Api\V1\Customer\Trip\ChangeRideTypeDTO;
-use App\DTOs\Api\V1\Customer\Trip\CheckPendingPaymentDTO;
 use App\DTOs\Api\V1\Customer\Trip\ConfirmTripDTO;
 use App\DTOs\Api\V1\Customer\Trip\GetActiveTripDTO;
 use App\DTOs\Api\V1\Customer\Trip\GetEstimatedArrivalTimeDTO;
@@ -27,7 +25,6 @@ use App\Http\Requests\Api\V1\Customer\Trip\ConfirmTripRequest;
 use App\Http\Requests\Api\V1\Customer\Trip\TripStoreRequest;
 use App\Http\Resources\Api\V1\Customer\Trip\ChangeRideTypeResource;
 use App\Http\Resources\Api\V1\Customer\Trip\EstimatedArrivalTimeResource;
-use App\Http\Resources\Api\V1\Customer\Trip\PendingPaymentResource;
 use App\Http\Resources\Api\V1\Customer\Trip\RiderLocationResource;
 use App\Http\Resources\Api\V1\Customer\Trip\TripFormDataResource;
 use App\Http\Resources\Api\V1\Customer\Trip\TripResource;
@@ -138,24 +135,6 @@ class TripController extends Controller
         }
 
         return new TripStatusResource($activeTrip);
-    }
-
-    /**
-     * Check if customer has pending payment
-     *
-     * Returns true if customer has unpaid trips, false otherwise.
-     * Customer should call this endpoint before creating a new trip.
-     *
-     * @authenticated
-     */
-    public function checkPendingPayment(
-        Request $request,
-        CheckPendingPaymentDTO $dto,
-        CheckPendingPaymentAction $action,
-    ): PendingPaymentResource {
-        $dto->getDataFromRequest($request);
-
-        return new PendingPaymentResource($action($dto));
     }
 
     /**

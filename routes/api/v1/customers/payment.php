@@ -13,6 +13,7 @@ Route::name('payments.')
         Route::any('/webhook', 'processWebhook')->name('webhook');
 
         Route::middleware('auth:customer')->group(function () {
+            Route::get('/check-pending', 'checkPendingPayment')->name('check-pending');
             Route::post('/link', 'getLink')->name('link');
         });
     });

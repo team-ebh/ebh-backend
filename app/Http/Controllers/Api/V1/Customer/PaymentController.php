@@ -6,19 +6,43 @@ namespace App\Http\Controllers\Api\V1\Customer;
 
 use App\Actions\Api\V1\Customer\Payment\GetPaymentLinkAction;
 use App\Actions\Api\V1\Customer\Payment\ProcessPaymentAction;
+use App\Actions\Api\V1\Customer\Trip\CheckPendingPaymentAction;
 use App\DTOs\Api\V1\Customer\Payment\ProcessPaymentDTO;
+use App\DTOs\Api\V1\Customer\Trip\CheckPendingPaymentDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Customer\Payment\ProcessPaymentCallbackRequest;
 use App\Http\Requests\Api\V1\Customer\Payment\ProcessPaymentWebhookRequest;
 use App\Http\Resources\Api\V1\Customer\Payment\PaymentLinkResource;
+use App\Http\Resources\Api\V1\Customer\Trip\PendingPaymentResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 /**
  * @tags Payment
  */
 class PaymentController extends Controller
 {
+    /**
+     * Check pending payment
+     *
+     * Checks if customer has any pending payment for completed trips.
+     * Returns true if there is a completed trip without payment, false otherwise.
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function checkPendingPayment(
+        Request $request,
+        CheckPendingPaymentDTO $dto,
+        CheckPendingPaymentAction $action,
+    ): PendingPaymentResource {
+        $dto->getDataFromRequest($request);
+
+        return new PendingPaymentResource($action($dto));
+    }
+
     /**
      * Get payment link
      *
