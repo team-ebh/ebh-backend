@@ -36,7 +36,8 @@ readonly class FinalizeAndCalculatePipe
             broadcast(new TripCompletedEvent(
                 customerId: $trip->{Trip::COLUMN_CUSTOMER_ID},
                 tripId: $trip->{Trip::COLUMN_ID},
-                riderId: $trip->{Trip::COLUMN_RIDER_ID}
+                riderId: $trip->{Trip::COLUMN_RIDER_ID},
+                hasPendingPayment: $trip->isKnetPayment()
             ));
 
             $this->riderTripRepository->updateRiderStatusToOnline($trip->{Trip::COLUMN_RIDER_ID});
