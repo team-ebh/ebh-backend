@@ -77,8 +77,8 @@ return [
         'api_key' => env('UPAYMENTS_API_KEY'),
         'test_url' => env('UPAYMENTS_TEST_URL', 'https://sandboxapi.upayments.com'),
         'live_url' => env('UPAYMENTS_LIVE_URL', 'https://api.upayments.com'),
-        'callback_url' => env('UPAYMENTS_CALLBACK_URL', getApiUrl() . '/v1/customers/payment/callback'),
-        'webhook_url' => env('UPAYMENTS_WEBHOOK_URL', getApiUrl() . '/v1/customers/payment/webhook'),
+        'callback_url' => env('UPAYMENTS_CALLBACK_URL', getApiUrl() . '/v1/customers/payments/callback'),
+        'webhook_url' => env('UPAYMENTS_WEBHOOK_URL', getApiUrl() . '/v1/customers/payments/webhook'),
     ],
 
     /*
