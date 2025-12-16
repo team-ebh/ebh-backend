@@ -1659,6 +1659,10 @@ describe('Check Pending Payment API', function () {
             ->assertJson([
                 'data' => [
                     'has_pending_payment' => true,
+                    'price' => [
+                        'total_price' => 5.0,
+                        'currency' => 'KWD',
+                    ],
                 ],
             ]);
     });
@@ -1670,6 +1674,7 @@ describe('Check Pending Payment API', function () {
             ->assertJson([
                 'data' => [
                     'has_pending_payment' => false,
+                    'price' => null,
                 ],
             ]);
     });
@@ -1693,6 +1698,7 @@ describe('Check Pending Payment API', function () {
             ->assertJson([
                 'data' => [
                     'has_pending_payment' => false,
+                    'price' => null,
                 ],
             ]);
     });
@@ -1727,6 +1733,7 @@ describe('Check Pending Payment API', function () {
             ->assertJson([
                 'data' => [
                     'has_pending_payment' => false,
+                    'price' => null,
                 ],
             ]);
     });
@@ -1762,6 +1769,7 @@ describe('Check Pending Payment API', function () {
             ->assertJson([
                 'data' => [
                     'has_pending_payment' => false,
+                    'price' => null,
                 ],
             ]);
     });

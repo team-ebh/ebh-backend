@@ -6,12 +6,13 @@ namespace App\Actions\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\CheckPendingPaymentDTO;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
+use App\Models\Trip;
 
 /**
  * Check Pending Payment Action
  *
  * Checks if customer has any unpaid trips
- * Returns true if customer has unpaid trips, false otherwise
+ * Returns payment status and price information
  */
 readonly class CheckPendingPaymentAction
 {
@@ -19,17 +20,23 @@ readonly class CheckPendingPaymentAction
         private TripRepositoryInterface $tripRepository,
     ) {}
 
-    /**
-     * Check if customer has pending payment
-     */
-    public function __invoke(CheckPendingPaymentDTO $dto): bool
+    public function __invoke(CheckPendingPaymentDTO $dto): array
     {
         $lastTrip = $this->tripRepository->getLastTrip($dto->customerId);
 
-        if (! $lastTrip) {
-            return false;
+        if (! $lastTrip || $lastTrip->hasPaidPayment()) {
+            return [
+                'has_pending_payment' => false,
+                'price' => null,
+            ];
         }
 
-        return ! $lastTrip->hasCompletedAndPaidPayment();
+        return [
+            'has_pending_payment' => true,
+            'price' => [
+                'price' => (float) $lastTrip->{Trip::COLUMN_TOTAL_PRICE},
+                'currency' => $lastTrip->{Trip::COLUMN_CURRENCY},
+            ],
+        ];
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1\Customer\Trip;
 
+use App\Http\Resources\Api\PriceResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,9 +23,20 @@ class PendingPaymentResource extends JsonResource
              *
              * @var bool
              *
-             * @example false
+             * @example true
              */
-            'has_pending_payment' => $this->resource,
+            'has_pending_payment' => $this->resource['has_pending_payment'],
+
+            /**
+             * Price information
+             *
+             * Contains total price and currency if customer has pending payment, null otherwise
+             *
+             * @var PriceResource|null
+             */
+            'price' => $this->when(! is_null($this->resource['price']), function () {
+                return new PriceResource($this->resource['price']['price'], $this->resource['price']['currency']);
+            }),
         ];
     }
 }
