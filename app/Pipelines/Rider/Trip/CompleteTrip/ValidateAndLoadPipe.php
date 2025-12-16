@@ -57,6 +57,12 @@ readonly class ValidateAndLoadPipe
             TripNotBelongToRiderException::class
         );
 
+        // Validate trip is assigned to this rider
+        throw_if(
+            ! $trip->belongsToRider($dto->riderId),
+            TripNotBelongToRiderException::class
+        );
+
         throw_if(
             ! $dto->tripRequest->isAccepted() || $trip->isDraft(),
             InvalidTripActionException::class

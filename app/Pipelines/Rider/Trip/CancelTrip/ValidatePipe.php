@@ -26,6 +26,12 @@ class ValidatePipe
             TripRequestNotBelongToRiderException::class
         );
 
+        // Verify trip is assigned to this rider
+        throw_if(
+            ! $tripRequest->trip->belongsToRider($dto->riderId),
+            TripRequestNotBelongToRiderException::class
+        );
+
         // Verify trip request is accepted
         throw_if(
             ! $tripRequest->isAccepted(),
