@@ -1172,6 +1172,78 @@ describe('Cancel Trip API', function () {
                 && $event->tripRequestId === $acceptedRequest->id
         );
     });
+
+    it('cannot cancel trip that belongs to another customer', function () {
+        // Create another customer
+        $otherCustomer = Customer::factory()->create();
+
+        // Create trip for other customer
+        $trip = Trip::create([
+            'customer_id' => $otherCustomer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Try to cancel the trip as authenticated customer
+        $response = postJson(route('v1.customers.trips.cancel', $trip));
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('trips.not_your_trip'),
+                ],
+            ]);
+    });
+});
+
+describe('Change Ride Type API', function () {
+    beforeEach(function () {
+        // Authenticate a customer
+        $this->customer = Customer::factory()->create();
+        Sanctum::actingAs($this->customer, ['*'], 'customer');
+    });
+
+    it('cannot change ride type for trip that belongs to another customer', function () {
+        // Create another customer
+        $otherCustomer = Customer::factory()->create();
+
+        // Create trip for other customer
+        $trip = Trip::create([
+            'customer_id' => $otherCustomer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Create trip locations
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Origin',
+            TripLocation::COLUMN_LATITUDE => 29.37694,
+            TripLocation::COLUMN_LONGITUDE => 47.98306,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_SEQUENCE => 1,
+        ]);
+
+        // Try to change ride type as authenticated customer
+        $response = postJson(route('v1.customers.trips.change-ride-type', $trip), [
+            'ride_type_id' => RideTypeEnum::ONE_WAY->value,
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('trips.not_your_trip'),
+                ],
+            ]);
+    });
 });
 
 describe('Confirm Trip API', function () {
@@ -1531,6 +1603,34 @@ describe('Confirm Trip API', function () {
         $newTrip->refresh();
         expect($newTrip->status)->toBe(TripStatusEnum::PENDING_RIDER);
     });
+
+    it('cannot confirm trip that belongs to another customer', function () {
+        // Create another customer
+        $otherCustomer = Customer::factory()->create();
+
+        // Create trip for other customer
+        $trip = Trip::create([
+            'customer_id' => $otherCustomer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Try to confirm the trip as authenticated customer
+        $response = postJson(route('v1.customers.trips.confirm', $trip), [
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('trips.not_your_trip'),
+                ],
+            ]);
+    });
 });
 
 describe('Check Pending Payment API', function () {
@@ -1758,5 +1858,99 @@ describe('Get Trip Status API', function () {
 
         getJson(route('v1.customers.trips.status', $trip))
             ->assertStatus(406);
+    });
+
+    it('cannot get trip status for trip that belongs to another customer', function () {
+        // Create another customer
+        $otherCustomer = Customer::factory()->create();
+
+        // Create trip for other customer
+        $trip = Trip::create([
+            'customer_id' => $otherCustomer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::ACCEPTED_RIDER->value,
+        ]);
+
+        // Try to get trip status as authenticated customer
+        $response = getJson(route('v1.customers.trips.status', $trip));
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('trips.not_your_trip'),
+                ],
+            ]);
+    });
+});
+
+describe('Get Rider Location API', function () {
+    beforeEach(function () {
+        // Authenticate a customer
+        $this->customer = Customer::factory()->create();
+        Sanctum::actingAs($this->customer, ['*'], 'customer');
+    });
+
+    it('cannot get rider location for trip that belongs to another customer', function () {
+        // Create another customer
+        $otherCustomer = Customer::factory()->create();
+
+        // Create trip for other customer
+        $trip = Trip::create([
+            'customer_id' => $otherCustomer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::ACCEPTED_RIDER->value,
+        ]);
+
+        // Try to get rider location as authenticated customer
+        $response = getJson(route('v1.customers.trips.rider-location', $trip));
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('trips.not_your_trip'),
+                ],
+            ]);
+    });
+});
+
+describe('Get Estimated Arrival Time API', function () {
+    beforeEach(function () {
+        // Authenticate a customer
+        $this->customer = Customer::factory()->create();
+        Sanctum::actingAs($this->customer, ['*'], 'customer');
+    });
+
+    it('cannot get estimated arrival time for trip that belongs to another customer', function () {
+        // Create another customer
+        $otherCustomer = Customer::factory()->create();
+
+        // Create trip for other customer
+        $trip = Trip::create([
+            'customer_id' => $otherCustomer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::ACCEPTED_RIDER->value,
+        ]);
+
+        // Try to get estimated arrival time as authenticated customer
+        $response = getJson(route('v1.customers.trips.estimated-arrival-time', $trip));
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('trips.not_your_trip'),
+                ],
+            ]);
     });
 });

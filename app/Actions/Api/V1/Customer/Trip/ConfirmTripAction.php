@@ -6,9 +6,11 @@ namespace App\Actions\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\ConfirmTripDTO;
 use App\Enums\Trip\TripStatusEnum;
+use App\Exceptions\Customer\TripNotBelongToCustomerException;
 use App\Exceptions\Trip\CustomerHasUnpaidTripException;
 use App\Exceptions\Trip\TripNotPendingException;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
+use App\Models\Trip;
 use App\Services\Trip\TripRequestService;
 
 /**
@@ -27,6 +29,7 @@ readonly class ConfirmTripAction
     ) {}
 
     /**
+     * @throws TripNotBelongToCustomerException
      * @throws TripNotPendingException
      * @throws CustomerHasUnpaidTripException
      * @throws \Throwable
@@ -46,6 +49,12 @@ readonly class ConfirmTripAction
      */
     public function confirmTrip(ConfirmTripDTO $dto): void
     {
+        // Validate trip belongs to authenticated customer
+        throw_if(
+            ! $dto->trip->belongsToCustomer($dto->customerId),
+            TripNotBelongToCustomerException::class
+        );
+
         throw_if(
             ! $dto->trip->isDraft(),
             TripNotPendingException::class

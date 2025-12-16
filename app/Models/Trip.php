@@ -155,6 +155,14 @@ class Trip extends Model
     }
 
     /**
+     * Check if trip belongs to customer
+     */
+    public function belongsToCustomer(int $customerId): bool
+    {
+        return $this->{self::COLUMN_CUSTOMER_ID} === $customerId;
+    }
+
+    /**
      * Check if trip belongs to rider
      */
     public function belongsToRider(int $riderId): bool

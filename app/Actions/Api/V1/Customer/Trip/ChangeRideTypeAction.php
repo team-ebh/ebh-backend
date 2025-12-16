@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\ChangeRideTypeDTO;
+use App\Exceptions\Customer\TripNotBelongToCustomerException;
 use App\Exceptions\Trip\TripNotDraftException;
 use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\BuildRideTypeBreakdownPipe;
 use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\CalculateDistancePipe;
@@ -24,11 +25,18 @@ readonly class ChangeRideTypeAction
     /**
      * Execute the action
      *
+     * @throws TripNotBelongToCustomerException
      * @throws TripNotDraftException
      * @throws \Throwable
      */
     public function __invoke(ChangeRideTypeDTO $dto): array
     {
+        // Validate trip belongs to authenticated customer
+        throw_if(
+            ! $dto->trip->belongsToCustomer($dto->customerId),
+            TripNotBelongToCustomerException::class
+        );
+
         throw_if(! $dto->trip->isDraft(), TripNotDraftException::class);
 
         // Load accessibility requirements for the trip

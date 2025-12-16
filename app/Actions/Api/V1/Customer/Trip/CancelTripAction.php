@@ -6,6 +6,7 @@ namespace App\Actions\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\CancelTripDTO;
 use App\Enums\Trip\TripStatusEnum;
+use App\Exceptions\Customer\TripNotBelongToCustomerException;
 use App\Exceptions\Trip\TripCannotBeCancelledException;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
@@ -27,11 +28,18 @@ readonly class CancelTripAction
     ) {}
 
     /**
+     * @throws TripNotBelongToCustomerException
      * @throws TripCannotBeCancelledException
      * @throws \Throwable
      */
     public function __invoke(CancelTripDTO $dto): void
     {
+        // Validate trip belongs to authenticated customer
+        throw_if(
+            ! $dto->trip->belongsToCustomer($dto->customerId),
+            TripNotBelongToCustomerException::class
+        );
+
         throw_if(
             ! $dto->trip->canCancelTrip(),
             TripCannotBeCancelledException::class
