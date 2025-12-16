@@ -30,7 +30,7 @@ enum PaymentStatusEnum: int implements HasColor, HasIcon, HasLabel
         };
     }
 
-    public function getColor(): string | array | null
+    public function getColor(): string|array|null
     {
         return match ($this) {
             self::PENDING => 'warning',
@@ -57,13 +57,13 @@ enum PaymentStatusEnum: int implements HasColor, HasIcon, HasLabel
      */
     public function getDeeplinkResult(): string
     {
-        return $this === self::PAID ? 'success' : 'error';
+        return $this === self::PAID ? 'success' : 'failed';
     }
 
     /**
      * Build deeplink URL for payment result
      */
-    public function buildDeeplink(string $baseUrl, int $tripId, string | int $paymentNumber): string
+    public function buildDeeplink(string $baseUrl, int $tripId, string|int $paymentNumber): string
     {
         $result = $this->getDeeplinkResult();
 
