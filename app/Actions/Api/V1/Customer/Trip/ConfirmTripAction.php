@@ -63,7 +63,7 @@ readonly class ConfirmTripAction
         // Check if customer has unpaid trips
         $lastTrip = $this->tripRepository->getLastTrip($dto->customerId);
         throw_if(
-            $lastTrip && ! $lastTrip->hasPaidPayment(),
+            $lastTrip && ! $lastTrip->hasCompletedAndPaidPayment(),
             CustomerHasUnpaidTripException::class
         );
 

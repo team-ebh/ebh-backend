@@ -238,4 +238,9 @@ class Trip extends Model
 
         return $this->paidPayment()->exists();
     }
+
+    public function hasCompletedAndPaidPayment(): bool
+    {
+        return $this->isCompleted() && $this->hasPaidPayment();
+    }
 }

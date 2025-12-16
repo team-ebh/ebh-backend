@@ -7,6 +7,7 @@ namespace App\Actions\Api\V1\Customer;
 use App\DTOs\Api\V1\Customer\AppStateDTO;
 use App\Enums\Customer\CustomerAppStateEnum;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\CustomerTripRepositoryInterface;
+use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 
 /**
  * Get App State Action
@@ -16,11 +17,19 @@ use App\Interfaces\Repositories\Api\V1\Customer\Trip\CustomerTripRepositoryInter
 readonly class GetAppStateAction
 {
     public function __construct(
+        private TripRepositoryInterface $tripRepository,
         private CustomerTripRepositoryInterface $customerTripRepository,
     ) {}
 
     public function __invoke(AppStateDTO $dto): CustomerAppStateEnum
     {
+        // Check if customer has unpaid trips
+        $lastTrip = $this->tripRepository->getLastTrip($dto->customerId);
+
+        if ($lastTrip && ! $lastTrip->hasCompletedAndPaidPayment()) {
+            return CustomerAppStateEnum::HAS_PENDING_PAYMENT;
+        }
+
         if (! $this->customerTripRepository->existsActiveTrip($dto->customerId)) {
             return CustomerAppStateEnum::NO_TRIP;
         }

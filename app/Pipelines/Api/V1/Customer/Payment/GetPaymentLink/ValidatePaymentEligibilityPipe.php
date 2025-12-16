@@ -34,7 +34,7 @@ readonly class ValidatePaymentEligibilityPipe
         );
 
         throw_if(
-            ! is_null($context->trip->paidPayment),
+            $context->trip->hasPaidPayment(),
             TripPaymentNotAllowedException::class,
         );
 

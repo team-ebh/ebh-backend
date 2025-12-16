@@ -30,6 +30,6 @@ readonly class CheckPendingPaymentAction
             return false;
         }
 
-        return ! $lastTrip->hasPaidPayment();
+        return ! $lastTrip->hasCompletedAndPaidPayment();
     }
 }
