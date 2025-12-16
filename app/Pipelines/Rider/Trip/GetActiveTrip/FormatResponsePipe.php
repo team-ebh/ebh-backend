@@ -12,8 +12,10 @@ readonly class FormatResponsePipe
 {
     public function __construct(
         private TripDataFormatterService $tripDataFormatter,
-        private TripActionService $tripActionService,
-    ) {}
+        private TripActionService        $tripActionService,
+    )
+    {
+    }
 
     /**
      * Handle the pipeline
@@ -32,7 +34,6 @@ readonly class FormatResponsePipe
         $payload['result'] = array_merge($tripData, [
             'next_action' => $nextAction,
             'trip_completed' => $nextAction === null,
-            'arrived_time' => $payload['arrived_time'] ?? null,
             'customer' => $activeTrip->customer,
         ]);
 
