@@ -213,4 +213,21 @@ class Trip extends Model
     {
         return $this->{self::COLUMN_PAYMENT_METHOD} === PaymentMethodEnum::KNET;
     }
+
+    /**
+     * Check if trip payment method is KNET
+     */
+    public function isCashPayment(): bool
+    {
+        return $this->{self::COLUMN_PAYMENT_METHOD} === PaymentMethodEnum::CASH;
+    }
+
+    public function hasPaidPayment(): bool
+    {
+        if ($this->isCashPayment()) {
+            return true;
+        }
+
+        return $this->paidPayment()->exists();
+    }
 }

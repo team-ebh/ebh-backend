@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Payment\PaymentMethodEnum;
 use App\Enums\Rider\RiderStatusEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
@@ -63,7 +64,7 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
         // Step 3: Customer confirms the trip
         $confirmResponse = postJson(
             route('v1.customers.trips.confirm', ['trip' => $trip->id]),
-            [],
+            ['payment_method' => PaymentMethodEnum::CASH->value],
             $customerHeaders
         );
         expect($confirmResponse->status())->toBe(200);

@@ -23,7 +23,7 @@ class ConfirmTripRequest extends FormRequest
              *
              * @example 1
              */
-            'payment_method' => ['nullable', 'integer', Rule::enum(PaymentMethodEnum::class)],
+            'payment_method' => ['required', 'integer', Rule::enum(PaymentMethodEnum::class)],
         ];
     }
 

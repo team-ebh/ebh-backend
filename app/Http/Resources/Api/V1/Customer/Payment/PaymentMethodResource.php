@@ -48,6 +48,13 @@ class PaymentMethodResource extends JsonResource
             'description' => $this->resource->getDescription(),
 
             /**
+             * @example "http://api.ebhapp.com/images/payment_methods/cash.png"
+             *
+             * @var string
+             */
+            'icon' => $this->resource->getIcon(),
+
+            /**
              * Is default
              *
              * @example false

@@ -16,6 +16,7 @@ use App\Services\Trip\TripRequestService;
  * Confirms the trip and changes status to PENDING_RIDER (searching for rider)
  * Sends trip requests to eligible riders
  * Only DRAFT trips can be confirmed
+ * Customer must have paid for their last trip before confirming a new one
  */
 readonly class ConfirmTripAction
 {
@@ -48,15 +49,10 @@ readonly class ConfirmTripAction
             TripNotPendingException::class
         );
 
-        // Update payment method
-        $this->tripRepository->updatePaymentMethod(
+        // Update payment method and trip status to PENDING_RIDER
+        $this->tripRepository->updatePaymentMethodAndStatus(
             $dto->trip,
-            $dto->paymentMethod
-        );
-
-        // Update trip status to PENDING_RIDER
-        $this->tripRepository->updateStatus(
-            $dto->trip,
+            $dto->paymentMethod,
             TripStatusEnum::PENDING_RIDER
         );
 

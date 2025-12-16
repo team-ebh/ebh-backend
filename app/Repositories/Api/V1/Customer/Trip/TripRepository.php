@@ -136,6 +136,16 @@ class TripRepository implements TripRepositoryInterface
         return $trip->fresh();
     }
 
+    public function updatePaymentMethodAndStatus(Trip $trip, PaymentMethodEnum $paymentMethod, TripStatusEnum $status): Trip
+    {
+        $trip->update([
+            Trip::COLUMN_PAYMENT_METHOD => $paymentMethod,
+            Trip::COLUMN_STATUS => $status,
+        ]);
+
+        return $trip->fresh();
+    }
+
     public function updateTripPrices(Trip $trip, ?float $accessibilityPrice, ?float $waitingPrice, float $totalPrice): Trip
     {
         $trip->update([
