@@ -54,6 +54,23 @@ class Customer extends User
         );
     }
 
+    public function getFullName(): ?string
+    {
+        return $this->full_name;
+    }
+
+    protected function phoneNumberWithPrefix(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): ?string => defaultPrefixPhoneNumber() . $this->{Customer::COLUMN_PHONE_NUMBER},
+        );
+    }
+
+    public function getPhoneNumberWithPrefix(): string
+    {
+        return $this->phone_number_with_prefix;
+    }
+
     public function isOtpValid(): bool
     {
         return $this->{self::COLUMN_OTP} &&

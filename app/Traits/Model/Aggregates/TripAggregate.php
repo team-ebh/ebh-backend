@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Traits\Model\Aggregates;
 
+use App\Enums\Payment\PaymentStatusEnum;
 use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripAccessibility;
@@ -56,5 +58,16 @@ trait TripAggregate
     public function statusLogs(): HasMany
     {
         return $this->hasMany(TripStatusLog::class, TripStatusLog::COLUMN_TRIP_ID);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class, Payment::COLUMN_TRIP_ID);
+    }
+
+    public function paidPayment(): HasOne
+    {
+        return $this->hasOne(Payment::class, Payment::COLUMN_TRIP_ID)
+            ->withAttributes(Payment::COLUMN_STATUS, PaymentStatusEnum::PAID);
     }
 }

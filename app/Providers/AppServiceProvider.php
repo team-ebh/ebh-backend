@@ -12,6 +12,8 @@ use App\Interfaces\Repositories\Api\V1\Customer\Trip\RiderLocationRepositoryInte
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
+use App\Interfaces\Repositories\Payment\PaymentLogRepositoryInterface;
+use App\Interfaces\Repositories\Payment\PaymentRepositoryInterface;
 use App\Interfaces\Repositories\TripRequestRepositoryInterface;
 use App\Models\Admin;
 use App\Repositories\Api\V1\Customer\CustomerRepository;
@@ -20,6 +22,8 @@ use App\Repositories\Api\V1\Customer\Trip\RiderLocationRepository;
 use App\Repositories\Api\V1\Customer\Trip\TripRepository;
 use App\Repositories\Api\V1\Rider\RiderRepository;
 use App\Repositories\Api\V1\Rider\Trip\RiderTripRepository;
+use App\Repositories\Payment\PaymentLogRepository;
+use App\Repositories\Payment\PaymentRepository;
 use App\Repositories\TripRequestRepository;
 use Carbon\CarbonImmutable;
 use Dedoc\Scramble\Scramble;
@@ -68,6 +72,8 @@ class AppServiceProvider extends ServiceProvider
         RiderRepositoryInterface::class => RiderRepository::class,
         RiderTripRepositoryInterface::class => RiderTripRepository::class,
         TripRequestRepositoryInterface::class => TripRequestRepository::class,
+        PaymentRepositoryInterface::class => PaymentRepository::class,
+        PaymentLogRepositoryInterface::class => PaymentLogRepository::class,
     ];
 
     /**

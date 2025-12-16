@@ -6,6 +6,7 @@ namespace App\Repositories\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Payment\PaymentMethodEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
 use App\Enums\Trip\TripStatusEnum;
@@ -99,10 +100,37 @@ class TripRepository implements TripRepositoryInterface
             ->get();
     }
 
+    public function getActiveTrip(int $customerId): ?Trip
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->activeTrips()
+            ->orderByDesc(Trip::COLUMN_ID)
+            ->first();
+    }
+
+    public function getLastTrip(int $customerId): ?Trip
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->excludingDraftAndCancelled()
+            ->orderByDesc(Trip::COLUMN_ID)
+            ->first();
+    }
+
     public function updateStatus(Trip $trip, TripStatusEnum $status): Trip
     {
         $trip->update([
             Trip::COLUMN_STATUS => $status,
+        ]);
+
+        return $trip->fresh();
+    }
+
+    public function updatePaymentMethod(Trip $trip, PaymentMethodEnum $paymentMethod): Trip
+    {
+        $trip->update([
+            Trip::COLUMN_PAYMENT_METHOD => $paymentMethod,
         ]);
 
         return $trip->fresh();

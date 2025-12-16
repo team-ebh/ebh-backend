@@ -99,6 +99,8 @@ return [
             'customer_already_has_active_trip' => 'You already have an active trip. Please complete or cancel your current trip before creating a new one.',
             'rider_location_not_available' => 'Rider location is not available. Location tracking is only available when rider is accepted, arrived, or picked up.',
             'trip_status_cannot_be_checked' => 'Trip status cannot be checked. Status checking is not available for draft, cancelled, or completed trips.',
+            'trip_not_found' => 'No active trip found for payment.',
+            'trip_payment_not_allowed' => 'Payment is not allowed for this trip.',
         ],
     ],
     'not_your_trip' => 'You are not authorized to access this trip.',

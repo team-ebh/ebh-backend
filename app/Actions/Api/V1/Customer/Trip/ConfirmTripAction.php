@@ -48,6 +48,12 @@ readonly class ConfirmTripAction
             TripNotPendingException::class
         );
 
+        // Update payment method
+        $this->tripRepository->updatePaymentMethod(
+            $dto->trip,
+            $dto->paymentMethod
+        );
+
         // Update trip status to PENDING_RIDER
         $this->tripRepository->updateStatus(
             $dto->trip,

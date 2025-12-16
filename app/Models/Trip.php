@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Payment\PaymentMethodEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
@@ -41,6 +42,8 @@ class Trip extends Model
 
     public const string COLUMN_CURRENCY = 'currency';
 
+    public const string COLUMN_PAYMENT_METHOD = 'payment_method';
+
     public const string COLUMN_STATUS = 'status';
 
     public const string COLUMN_DEMAND_TRIP_ID = 'demand_trip_id';
@@ -51,6 +54,7 @@ class Trip extends Model
             self::COLUMN_TRIP_TYPE_ID => TripTypeEnum::class,
             self::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::class,
             self::COLUMN_CURRENCY => CurrencyEnum::class,
+            self::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::class,
             self::COLUMN_STATUS => TripStatusEnum::class,
         ];
     }
@@ -79,6 +83,16 @@ class Trip extends Model
         return $query->whereNotIn(self::COLUMN_STATUS, [
             TripStatusEnum::DRAFT,
             TripStatusEnum::COMPLETED,
+            TripStatusEnum::CANCELED_BY_CUSTOMER,
+            TripStatusEnum::CANCELLED_BY_RIDER,
+        ]);
+    }
+
+    #[Scope]
+    protected function excludingDraftAndCancelled($query)
+    {
+        return $query->whereNotIn(self::COLUMN_STATUS, [
+            TripStatusEnum::DRAFT,
             TripStatusEnum::CANCELED_BY_CUSTOMER,
             TripStatusEnum::CANCELLED_BY_RIDER,
         ]);
@@ -190,5 +204,13 @@ class Trip extends Model
             TripStatusEnum::ON_TRIP,
             TripStatusEnum::COMPLETED,
         ], true);
+    }
+
+    /**
+     * Check if trip payment method is KNET
+     */
+    public function isKnetPayment(): bool
+    {
+        return $this->{self::COLUMN_PAYMENT_METHOD} === PaymentMethodEnum::KNET;
     }
 }

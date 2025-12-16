@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTOs\Api\V1\Customer\Trip;
 
+use App\Enums\Payment\PaymentMethodEnum;
 use App\Interfaces\DTOs\RequestDataTransferObject;
 use App\Models\Trip;
 use Illuminate\Http\Request;
@@ -19,6 +20,8 @@ class ConfirmTripDTO implements RequestDataTransferObject
 
     public Trip $trip;
 
+    public PaymentMethodEnum $paymentMethod;
+
     /**
      * Populate DTO from request data
      */
@@ -26,5 +29,6 @@ class ConfirmTripDTO implements RequestDataTransferObject
     {
         $this->customerId = auth('customer')->id();
         $this->trip = $request->route()->parameter('trip');
+        $this->paymentMethod = $request->enum('payment_method', PaymentMethodEnum::class);
     }
 }

@@ -1265,7 +1265,9 @@ describe('Confirm Trip API', function () {
         ]);
 
         // Confirm the trip
-        postJson(route('v1.customers.trips.confirm', $trip))
+        postJson(route('v1.customers.trips.confirm', $trip), [
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+        ])
             ->assertStatus(200);
 
         // Verify trip status changed to PENDING_RIDER
@@ -1363,7 +1365,9 @@ describe('Confirm Trip API', function () {
         ]);
 
         // Confirm the trip
-        postJson(route('v1.customers.trips.confirm', $trip))
+        postJson(route('v1.customers.trips.confirm', $trip), [
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+        ])
             ->assertStatus(200);
 
         // Verify trip requests were created in database before events were dispatched

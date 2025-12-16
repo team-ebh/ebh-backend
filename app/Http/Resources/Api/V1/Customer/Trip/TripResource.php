@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1\Customer\Trip;
 
+use App\Enums\Payment\PaymentMethodEnum;
 use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
+use App\Http\Resources\Api\V1\Customer\Payment\PaymentMethodResource;
 use App\Models\Trip;
 use App\Models\TripLocation;
 use Illuminate\Http\Request;
@@ -80,6 +82,13 @@ class TripResource extends JsonResource
              * @var AnonymousResourceCollection<RideTypeResource>
              */
             'ride_types' => RideTypeResource::collection(RideTypeEnum::cases()),
+
+            /**
+             * Payment methods information
+             *
+             * @var AnonymousResourceCollection<PaymentMethodResource>
+             */
+            'payment_methods' => PaymentMethodResource::collection(PaymentMethodEnum::cases()),
 
             /**
              * Price Breakdown
