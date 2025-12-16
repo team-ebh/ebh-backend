@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Rider\Trip;
 
 use App\DTOs\Api\V1\Rider\Trip\GetActiveTripDTO;
+use App\Pipelines\Rider\Trip\GetActiveTrip\BuildArrivedTimePipe;
 use App\Pipelines\Rider\Trip\GetActiveTrip\FormatResponsePipe;
 use App\Pipelines\Rider\Trip\GetActiveTrip\LoadActiveTripPipe;
 use Illuminate\Pipeline\Pipeline;
@@ -27,6 +28,7 @@ readonly class GetActiveTripAction
             ->send(['dto' => $dto])
             ->through([
                 LoadActiveTripPipe::class,
+                BuildArrivedTimePipe::class,
                 FormatResponsePipe::class,
             ])
             ->thenReturn();
