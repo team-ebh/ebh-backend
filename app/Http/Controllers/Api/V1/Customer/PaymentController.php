@@ -14,6 +14,7 @@ use App\Http\Requests\Api\V1\Customer\Payment\ProcessPaymentCallbackRequest;
 use App\Http\Requests\Api\V1\Customer\Payment\ProcessPaymentWebhookRequest;
 use App\Http\Resources\Api\V1\Customer\Payment\PaymentLinkResource;
 use App\Http\Resources\Api\V1\Customer\Trip\PendingPaymentResource;
+use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,7 +47,7 @@ class PaymentController extends Controller
     /**
      * Get payment link
      *
-     * Generates payment link for the customer's active trip with KNET payment.
+     * Generates and retry payment link for the customer's active trip with KNET payment.
      * Available only for completed trips that haven't been paid yet.
      *
      * @authenticated
@@ -68,6 +69,7 @@ class PaymentController extends Controller
      *
      * @throws \Throwable
      */
+    #[ExcludeRouteFromDocs]
     public function processCallback(
         ProcessPaymentCallbackRequest $request,
         ProcessPaymentDTO $dto,
@@ -90,6 +92,7 @@ class PaymentController extends Controller
      *
      * @throws \Throwable
      */
+    #[ExcludeRouteFromDocs]
     public function processWebhook(
         ProcessPaymentWebhookRequest $request,
         ProcessPaymentDTO $dto,
