@@ -12,10 +12,8 @@ readonly class FormatResponsePipe
 {
     public function __construct(
         private TripDataFormatterService $tripDataFormatter,
-        private TripActionService        $tripActionService,
-    )
-    {
-    }
+        private TripActionService $tripActionService,
+    ) {}
 
     /**
      * Handle the pipeline
