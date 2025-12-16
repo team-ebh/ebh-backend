@@ -1385,6 +1385,286 @@ describe('Confirm Trip API', function () {
                 && $event->tripData['trip_request']['trip_request_id'] === $tripRequest->id
         );
     });
+
+    it('cannot confirm trip when customer has unpaid trip with non-cash payment', function () {
+        // Create a completed trip with KNET payment that wasn't paid
+        $previousTrip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::COMPLETED->value,
+        ]);
+
+        // Create new draft trip
+        $newTrip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Try to confirm the new trip - should fail
+        $response = postJson(route('v1.customers.trips.confirm', $newTrip), [
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+        ]);
+
+        $response->assertStatus(402)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('trips.api.exceptions.customer_has_unpaid_trip'),
+                ],
+            ]);
+
+        // Verify trip status is still DRAFT
+        $newTrip->refresh();
+        expect($newTrip->status)->toBe(TripStatusEnum::DRAFT);
+    });
+
+    it('can confirm trip when previous trip has cash payment', function () {
+        Event::fake();
+
+        // Create a completed trip with CASH payment (always considered paid)
+        $previousTrip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::COMPLETED->value,
+        ]);
+
+        // Create new draft trip with locations
+        $newTrip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $newTrip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Origin',
+            TripLocation::COLUMN_LATITUDE => 29.37694,
+            TripLocation::COLUMN_LONGITUDE => 47.98306,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_SEQUENCE => 1,
+        ]);
+
+        // Confirm the new trip - should succeed
+        $response = postJson(route('v1.customers.trips.confirm', $newTrip), [
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+        ]);
+
+        $response->assertStatus(200);
+
+        // Verify trip status changed to PENDING_RIDER
+        $newTrip->refresh();
+        expect($newTrip->status)->toBe(TripStatusEnum::PENDING_RIDER);
+    });
+
+    it('can confirm trip when previous trip has been paid online', function () {
+        Event::fake();
+
+        // Create a completed trip with KNET payment that was paid
+        $previousTrip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::COMPLETED->value,
+        ]);
+
+        // Create a payment record for the previous trip
+        \App\Models\Payment::create([
+            'payment_number' => generatePaymentNumber(),
+            'trip_id' => $previousTrip->id,
+            'customer_id' => $this->customer->id,
+            'amount' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'gateway' => \App\Enums\Payment\PaymentGatewayEnum::UPAYMENTS->value,
+            'status' => \App\Enums\Payment\PaymentStatusEnum::PAID->value,
+        ]);
+
+        // Create new draft trip with locations
+        $newTrip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $newTrip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Origin',
+            TripLocation::COLUMN_LATITUDE => 29.37694,
+            TripLocation::COLUMN_LONGITUDE => 47.98306,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_SEQUENCE => 1,
+        ]);
+
+        // Confirm the new trip - should succeed
+        $response = postJson(route('v1.customers.trips.confirm', $newTrip), [
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+        ]);
+
+        $response->assertStatus(200);
+
+        // Verify trip status changed to PENDING_RIDER
+        $newTrip->refresh();
+        expect($newTrip->status)->toBe(TripStatusEnum::PENDING_RIDER);
+    });
+});
+
+describe('Check Pending Payment API', function () {
+    beforeEach(function () {
+        // Authenticate a customer
+        $this->customer = Customer::factory()->create();
+        Sanctum::actingAs($this->customer, ['*'], 'customer');
+    });
+
+    it('returns true when customer has unpaid trip', function () {
+        // Create a completed trip with KNET payment that wasn't paid
+        Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::COMPLETED->value,
+        ]);
+
+        $response = getJson(route('v1.customers.trips.check-pending-payment'));
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'data' => [
+                    'has_pending_payment' => true,
+                ],
+            ]);
+    });
+
+    it('returns false when customer has no trips', function () {
+        $response = getJson(route('v1.customers.trips.check-pending-payment'));
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'data' => [
+                    'has_pending_payment' => false,
+                ],
+            ]);
+    });
+
+    it('returns false when customer last trip has cash payment', function () {
+        // Create a completed trip with CASH payment (always considered paid)
+        Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::COMPLETED->value,
+        ]);
+
+        $response = getJson(route('v1.customers.trips.check-pending-payment'));
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'data' => [
+                    'has_pending_payment' => false,
+                ],
+            ]);
+    });
+
+    it('returns false when customer last trip has been paid online', function () {
+        // Create a completed trip with KNET payment that was paid
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::COMPLETED->value,
+        ]);
+
+        // Create a payment record
+        \App\Models\Payment::create([
+            'payment_number' => generatePaymentNumber(),
+            'trip_id' => $trip->id,
+            'customer_id' => $this->customer->id,
+            'amount' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'gateway' => \App\Enums\Payment\PaymentGatewayEnum::UPAYMENTS->value,
+            'status' => \App\Enums\Payment\PaymentStatusEnum::PAID->value,
+        ]);
+
+        $response = getJson(route('v1.customers.trips.check-pending-payment'));
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'data' => [
+                    'has_pending_payment' => false,
+                ],
+            ]);
+    });
+
+    it('ignores draft and cancelled trips when checking pending payment', function () {
+        // Create a draft trip (should be ignored)
+        Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Create a cancelled trip (should be ignored)
+        Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 2,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::CANCELED_BY_CUSTOMER->value,
+        ]);
+
+        $response = getJson(route('v1.customers.trips.check-pending-payment'));
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'data' => [
+                    'has_pending_payment' => false,
+                ],
+            ]);
+    });
 });
 
 describe('Get Trip Status API', function () {

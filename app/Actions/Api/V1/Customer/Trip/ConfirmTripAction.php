@@ -6,6 +6,7 @@ namespace App\Actions\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\ConfirmTripDTO;
 use App\Enums\Trip\TripStatusEnum;
+use App\Exceptions\Trip\CustomerHasUnpaidTripException;
 use App\Exceptions\Trip\TripNotPendingException;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Services\Trip\TripRequestService;
@@ -27,6 +28,7 @@ readonly class ConfirmTripAction
 
     /**
      * @throws TripNotPendingException
+     * @throws CustomerHasUnpaidTripException
      * @throws \Throwable
      */
     public function __invoke(ConfirmTripDTO $dto): void
@@ -47,6 +49,13 @@ readonly class ConfirmTripAction
         throw_if(
             ! $dto->trip->isDraft(),
             TripNotPendingException::class
+        );
+
+        // Check if customer has unpaid trips
+        $lastTrip = $this->tripRepository->getLastTrip($dto->customerId);
+        throw_if(
+            $lastTrip && ! $lastTrip->hasPaidPayment(),
+            CustomerHasUnpaidTripException::class
         );
 
         // Update payment method and trip status to PENDING_RIDER
