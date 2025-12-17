@@ -8,6 +8,7 @@ return [
             'user_management' => 'User Management',
             'app_management' => 'App Management',
             'fleet_management' => 'Fleet Management',
+            'order_management' => 'Order Management',
             'settings' => 'Settings',
         ],
         'created_at' => 'Created at',

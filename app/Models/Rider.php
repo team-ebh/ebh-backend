@@ -119,4 +119,16 @@ class Rider extends User implements HasMedia
             get: fn ($value) => is_null($value) ? 47.98227 : (float) $value
         );
     }
+
+    protected function phoneNumberWithPrefix(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): ?string => defaultPrefixPhoneNumber() . $this->{Customer::COLUMN_PHONE_NUMBER},
+        );
+    }
+
+    public function getPhoneNumberWithPrefix(): string
+    {
+        return $this->phone_number_with_prefix;
+    }
 }

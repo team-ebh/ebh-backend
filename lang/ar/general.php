@@ -8,6 +8,7 @@ return [
             'user_management' => 'إدارة المستخدمين',
             'app_management' => 'إدارة التطبيق',
             'fleet_management' => 'إدارة الأسطول',
+            'order_management' => 'إدارة الطلبات',
             'settings' => 'الإعدادات',
         ],
         'created_at' => 'تاريخ الإنشاء',

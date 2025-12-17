@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Payment\PaymentGatewayEnum;
 use App\Enums\Payment\PaymentStatusEnum;
 use App\Traits\Model\Aggregates\PaymentAggregate;
@@ -42,6 +43,7 @@ class Payment extends Model
         return [
             self::COLUMN_GATEWAY => PaymentGatewayEnum::class,
             self::COLUMN_STATUS => PaymentStatusEnum::class,
+            self::COLUMN_CURRENCY => CurrencyEnum::class,
             self::COLUMN_EXPIRES_AT => 'datetime',
         ];
     }

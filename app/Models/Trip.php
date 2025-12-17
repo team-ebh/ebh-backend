@@ -98,6 +98,12 @@ class Trip extends Model
         ]);
     }
 
+    #[Scope]
+    protected function withoutDraft($query)
+    {
+        return $query->where(self::COLUMN_STATUS, '<>', TripStatusEnum::DRAFT);
+    }
+
     /**
      * Check if trip is draft
      */
