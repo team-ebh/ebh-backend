@@ -13,7 +13,7 @@ enum TripStatusEnum: int implements HasColor, HasIcon, HasLabel
     case DRAFT = 1;
     case PENDING_RIDER = 2;
     case ACCEPTED_RIDER = 3;
-    case ON_TRIP = 4;
+    case IN_PROGRESS = 4;
     case COMPLETED = 5;
     case CANCELED_BY_CUSTOMER = 6;
     case CANCELLED_BY_RIDER = 7;
@@ -29,7 +29,7 @@ enum TripStatusEnum: int implements HasColor, HasIcon, HasLabel
             self::DRAFT => 'gray',
             self::PENDING_RIDER => 'warning',
             self::ACCEPTED_RIDER => 'info',
-            self::ON_TRIP => 'primary',
+            self::IN_PROGRESS => 'primary',
             self::COMPLETED => 'success',
             self::CANCELED_BY_CUSTOMER, self::CANCELLED_BY_RIDER => 'danger',
         };
@@ -41,7 +41,7 @@ enum TripStatusEnum: int implements HasColor, HasIcon, HasLabel
             self::DRAFT => 'heroicon-o-document-text',
             self::PENDING_RIDER => 'heroicon-o-clock',
             self::ACCEPTED_RIDER => 'heroicon-o-check-circle',
-            self::ON_TRIP => 'heroicon-o-truck',
+            self::IN_PROGRESS => 'heroicon-o-truck',
             self::COMPLETED => 'heroicon-o-flag',
             self::CANCELED_BY_CUSTOMER, self::CANCELLED_BY_RIDER => 'heroicon-o-x-circle',
         };

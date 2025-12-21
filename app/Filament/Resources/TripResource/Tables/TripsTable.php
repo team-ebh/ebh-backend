@@ -79,7 +79,7 @@ class TripsTable
                         TripStatusEnum::DRAFT => 'gray',
                         TripStatusEnum::PENDING_RIDER => 'warning',
                         TripStatusEnum::ACCEPTED_RIDER => 'info',
-                        TripStatusEnum::ON_TRIP => 'primary',
+                        TripStatusEnum::IN_PROGRESS => 'primary',
                         TripStatusEnum::COMPLETED => 'success',
                         TripStatusEnum::CANCELED_BY_CUSTOMER, TripStatusEnum::CANCELLED_BY_RIDER => 'danger',
                     }),
@@ -115,7 +115,7 @@ class TripsTable
                     ->options([
                         TripStatusEnum::PENDING_RIDER->value => TripStatusEnum::PENDING_RIDER->getLabel(),
                         TripStatusEnum::ACCEPTED_RIDER->value => TripStatusEnum::ACCEPTED_RIDER->getLabel(),
-                        TripStatusEnum::ON_TRIP->value => TripStatusEnum::ON_TRIP->getLabel(),
+                        TripStatusEnum::IN_PROGRESS->value => TripStatusEnum::IN_PROGRESS->getLabel(),
                         TripStatusEnum::COMPLETED->value => TripStatusEnum::COMPLETED->getLabel(),
                         TripStatusEnum::CANCELED_BY_CUSTOMER->value => TripStatusEnum::CANCELED_BY_CUSTOMER->getLabel(),
                         TripStatusEnum::CANCELLED_BY_RIDER->value => TripStatusEnum::CANCELLED_BY_RIDER->getLabel(),

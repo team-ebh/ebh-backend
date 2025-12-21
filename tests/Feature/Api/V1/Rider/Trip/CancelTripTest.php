@@ -75,7 +75,7 @@ test('rider can cancel accepted trip successfully', function () {
 
 test('rider cannot cancel trip that is on trip', function () {
     $trip = ($this->createTrip)([
-        'status' => TripStatusEnum::ON_TRIP->value,
+        'status' => TripStatusEnum::IN_PROGRESS->value,
     ]);
 
     $response = actingAs($this->rider, 'rider')
@@ -138,7 +138,7 @@ test('rider cannot cancel trip with invalid status - draft', function () {
 
 test('rider cannot cancel trip with invalid status - on trip', function () {
     $trip = ($this->createTrip)([
-        'status' => TripStatusEnum::ON_TRIP->value,
+        'status' => TripStatusEnum::IN_PROGRESS->value,
     ]);
 
     $response = actingAs($this->rider, 'rider')

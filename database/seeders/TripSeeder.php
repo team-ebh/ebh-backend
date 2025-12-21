@@ -95,7 +95,7 @@ class TripSeeder extends Seeder
         $statuses = [
             TripStatusEnum::PENDING_RIDER,
             TripStatusEnum::ACCEPTED_RIDER,
-            TripStatusEnum::ON_TRIP,
+            TripStatusEnum::IN_PROGRESS,
             TripStatusEnum::COMPLETED,
             TripStatusEnum::CANCELED_BY_CUSTOMER,
             TripStatusEnum::CANCELLED_BY_RIDER,
@@ -136,7 +136,7 @@ class TripSeeder extends Seeder
 
         $needsRider = in_array($status, [
             TripStatusEnum::ACCEPTED_RIDER,
-            TripStatusEnum::ON_TRIP,
+            TripStatusEnum::IN_PROGRESS,
             TripStatusEnum::COMPLETED,
             TripStatusEnum::CANCELLED_BY_RIDER,
         ]);
@@ -201,7 +201,7 @@ class TripSeeder extends Seeder
     private function getLocationStatus(TripStatusEnum $tripStatus, bool $isOrigin): int
     {
         return match ($tripStatus) {
-            TripStatusEnum::ON_TRIP => $isOrigin
+            TripStatusEnum::IN_PROGRESS => $isOrigin
                 ? TripLocationStatusEnum::PICKED_UP->value
                 : TripLocationStatusEnum::PENDING->value,
             TripStatusEnum::COMPLETED => TripLocationStatusEnum::COMPLETED->value,

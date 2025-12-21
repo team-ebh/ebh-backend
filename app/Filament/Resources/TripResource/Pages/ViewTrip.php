@@ -521,8 +521,8 @@ class ViewTrip extends ViewRecord
                                     ->icon(fn ($record) => $record->status->value >= 3 ? 'heroicon-o-check-circle' : 'heroicon-o-user-plus')
                                     ->alignment('center'),
 
-                                TextEntry::make('status_on_trip')
-                                    ->label(trans('trips.api.trip_statuses.ON_TRIP'))
+                                TextEntry::make('status_in_progress')
+                                    ->label(trans('trips.api.trip_statuses.IN_PROGRESS'))
                                     ->state(fn ($record) => $record->status->value >= 4 ? '✓' : '○')
                                     ->badge()
                                     ->color(fn ($record) => $record->status->value >= 4 ? 'success' : 'gray')

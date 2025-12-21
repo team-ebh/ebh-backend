@@ -87,7 +87,7 @@ test('rider can get estimated arrival time to origin location', function () {
 
 test('rider can get estimated arrival time to destination location', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,

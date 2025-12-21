@@ -13,7 +13,7 @@ use Illuminate\Pipeline\Pipeline;
 /**
  * Build Arrived Time Pipe
  *
- * Calculates estimated arrival time if trip is in ACCEPTED_RIDER or ON_TRIP status
+ * Calculates estimated arrival time if trip is in ACCEPTED_RIDER or IN_PROGRESS status
  */
 class BuildArrivedTimePipe
 {
@@ -24,7 +24,7 @@ class BuildArrivedTimePipe
         }
 
         // Only calculate estimated arrival time for trips that are in progress
-        if ($context->trip->isAcceptedByRider() || $context->trip->isOnTrip()) {
+        if ($context->trip->isAcceptedByRider() || $context->trip->isInProgress()) {
             $context->arrivedTime = safeProcess()
                 ->onFailed(fn ($e) => null)  // If calculation fails (no rider location, etc.), return null
                 ->do(function () use ($context) {

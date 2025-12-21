@@ -199,7 +199,7 @@ describe('Estimated Arrival Time Consistency Integration Tests', function () {
     });
 
     test('arrival time to destination is consistent after pickup', function () {
-        // Create trip with ON_TRIP status (already picked up)
+        // Create trip with IN_PROGRESS status (already picked up)
         $trip = Trip::create([
             Trip::COLUMN_CUSTOMER_ID => $this->customer->{Customer::COLUMN_ID},
             Trip::COLUMN_RIDER_ID => $this->rider->{Rider::COLUMN_ID},
@@ -208,7 +208,7 @@ describe('Estimated Arrival Time Consistency Integration Tests', function () {
             Trip::COLUMN_PASSENGER_COUNT => 1,
             Trip::COLUMN_TOTAL_PRICE => 5.000,
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
-            Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value,
+            Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value,
         ]);
 
         // Origin already picked up
@@ -254,7 +254,7 @@ describe('Estimated Arrival Time Consistency Integration Tests', function () {
     });
 
     test('arrival time to destination updates correctly when rider moves during trip', function () {
-        // Create trip ON_TRIP
+        // Create trip IN_PROGRESS
         $trip = Trip::create([
             Trip::COLUMN_CUSTOMER_ID => $this->customer->{Customer::COLUMN_ID},
             Trip::COLUMN_RIDER_ID => $this->rider->{Rider::COLUMN_ID},
@@ -263,7 +263,7 @@ describe('Estimated Arrival Time Consistency Integration Tests', function () {
             Trip::COLUMN_PASSENGER_COUNT => 1,
             Trip::COLUMN_TOTAL_PRICE => 5.000,
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
-            Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value,
+            Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value,
         ]);
 
         TripLocation::create([
@@ -490,7 +490,7 @@ describe('Estimated Arrival Time Consistency Integration Tests', function () {
 
         // Phase 2: Picked up at origin, going to first destination
         $origin->update([TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PICKED_UP->value]);
-        $trip->update([Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value]);
+        $trip->update([Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value]);
 
         ($this->updateRiderLocation)(29.3780, 47.9820);
 

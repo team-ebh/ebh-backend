@@ -47,9 +47,9 @@ readonly class ValidateAndLoadPipe
             InvalidTripActionException::class
         );
 
-        // Validate trip status (must be ACCEPTED_RIDER or ON_TRIP)
+        // Validate trip status (must be ACCEPTED_RIDER or IN_PROGRESS)
         throw_if(
-            ! $trip->isAcceptedByRider() && ! $trip->isOnTrip(),
+            ! $trip->isAcceptedByRider() && ! $trip->isInProgress(),
             InvalidTripActionException::class
         );
 

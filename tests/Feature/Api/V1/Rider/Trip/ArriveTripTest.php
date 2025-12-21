@@ -201,7 +201,7 @@ test('rider cannot mark trip as arrived with invalid status - already arrived', 
 
 test('rider cannot mark trip as arrived with invalid status - picked up', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,

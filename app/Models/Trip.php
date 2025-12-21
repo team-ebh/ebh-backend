@@ -133,11 +133,11 @@ class Trip extends Model
     }
 
     /**
-     * Check if trip is on trip
+     * Check if trip is in progress
      */
-    public function isOnTrip(): bool
+    public function isInProgress(): bool
     {
-        return $this->{self::COLUMN_STATUS} === TripStatusEnum::ON_TRIP;
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::IN_PROGRESS;
     }
 
     /**
@@ -207,7 +207,7 @@ class Trip extends Model
         // Only these statuses allow location tracking
         return in_array($this->{self::COLUMN_STATUS}, [
             TripStatusEnum::ACCEPTED_RIDER,
-            TripStatusEnum::ON_TRIP,
+            TripStatusEnum::IN_PROGRESS,
         ], true);
     }
 
@@ -219,7 +219,7 @@ class Trip extends Model
     {
         return in_array($this->{self::COLUMN_STATUS}, [
             TripStatusEnum::ACCEPTED_RIDER,
-            TripStatusEnum::ON_TRIP,
+            TripStatusEnum::IN_PROGRESS,
             TripStatusEnum::COMPLETED,
         ], true);
     }

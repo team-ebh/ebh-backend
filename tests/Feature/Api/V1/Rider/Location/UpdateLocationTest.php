@@ -129,20 +129,20 @@ test('it broadcasts location update to customer when rider has active trip', fun
     );
 });
 
-test('it broadcasts location update when trip is ON_TRIP status', function () {
+test('it broadcasts location update when trip is IN_PROGRESS status', function () {
     Event::fake([App\Events\Socket\Customer\RiderLocationUpdatedEvent::class]);
 
     // Create a customer
     $customer = \App\Models\Customer::factory()->create();
 
-    // Create a trip with ON_TRIP status
+    // Create a trip with IN_PROGRESS status
     \App\Models\Trip::create([
         \App\Models\Trip::COLUMN_CUSTOMER_ID => $customer->id,
         \App\Models\Trip::COLUMN_RIDER_ID => $this->rider->id,
         \App\Models\Trip::COLUMN_TRIP_TYPE_ID => \App\Enums\Trip\TripTypeEnum::RIDE_NOW,
         \App\Models\Trip::COLUMN_VEHICLE_TYPE_ID => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE,
         \App\Models\Trip::COLUMN_CURRENCY => \App\Enums\Currency\CurrencyEnum::KWD,
-        \App\Models\Trip::COLUMN_STATUS => \App\Enums\Trip\TripStatusEnum::ON_TRIP,
+        \App\Models\Trip::COLUMN_STATUS => \App\Enums\Trip\TripStatusEnum::IN_PROGRESS,
         \App\Models\Trip::COLUMN_PASSENGER_COUNT => 1,
     ]);
 

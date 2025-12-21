@@ -34,9 +34,9 @@ class PendingPaymentResource extends JsonResource
              *
              * @var PriceResource|null
              */
-            'price' => $this->when(! is_null($this->resource['price']), function () {
-                return new PriceResource($this->resource['price']['price'], $this->resource['price']['currency']);
-            }),
+            'price' => ! is_null($this->resource['price'])
+                ? new PriceResource($this->resource['price']['price'], $this->resource['price']['currency'])
+                : null,
         ];
     }
 }

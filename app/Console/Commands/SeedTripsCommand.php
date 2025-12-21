@@ -17,7 +17,7 @@ class SeedTripsCommand extends Command
      * @var string
      */
     protected $signature = 'trips:seed
-                            {--status= : Trip status value (2=PENDING_RIDER, 3=ACCEPTED_RIDER, 4=ON_TRIP, 5=COMPLETED, 6=CANCELED_BY_CUSTOMER, 7=CANCELLED_BY_RIDER)}
+                            {--status= : Trip status value (2=PENDING_RIDER, 3=ACCEPTED_RIDER, 4=IN_PROGRESS, 5=COMPLETED, 6=CANCELED_BY_CUSTOMER, 7=CANCELLED_BY_RIDER)}
                             {--count=3 : Number of trips to create (default: 3)}
                             {--all : Create trips for all statuses}';
 
@@ -52,7 +52,7 @@ class SeedTripsCommand extends Command
             $this->info('Available statuses:');
             $this->info('  2 = PENDING_RIDER');
             $this->info('  3 = ACCEPTED_RIDER');
-            $this->info('  4 = ON_TRIP');
+            $this->info('  4 = IN_PROGRESS');
             $this->info('  5 = COMPLETED');
             $this->info('  6 = CANCELED_BY_CUSTOMER');
             $this->info('  7 = CANCELLED_BY_RIDER');

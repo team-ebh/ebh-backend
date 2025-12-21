@@ -240,7 +240,7 @@ return [
             TripStatusEnum::DRAFT->name => 'مسودة',
             TripStatusEnum::PENDING_RIDER->name => 'في انتظار السائق',
             TripStatusEnum::ACCEPTED_RIDER->name => 'مقبولة من السائق',
-            TripStatusEnum::ON_TRIP->name => 'في الرحلة',
+            TripStatusEnum::IN_PROGRESS->name => 'قيد التنفيذ',
             TripStatusEnum::COMPLETED->name => 'مكتملة',
             TripStatusEnum::CANCELED_BY_CUSTOMER->name => 'ملغاة من قبل العميل',
             TripStatusEnum::CANCELLED_BY_RIDER->name => 'ملغاة من قبل السائق',

@@ -849,7 +849,7 @@ describe('Cancel Trip API', function () {
             'waiting_price' => null,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
-            'status' => TripStatusEnum::ON_TRIP->value,
+            'status' => TripStatusEnum::IN_PROGRESS->value,
         ]);
 
         postJson(route('v1.customers.trips.cancel', $trip))
@@ -857,7 +857,7 @@ describe('Cancel Trip API', function () {
 
         // Verify trip status was NOT updated
         $trip->refresh();
-        expect($trip->status)->toBe(TripStatusEnum::ON_TRIP);
+        expect($trip->status)->toBe(TripStatusEnum::IN_PROGRESS);
     });
 
     it('cannot cancel a completed trip', function () {
@@ -1660,7 +1660,7 @@ describe('Check Pending Payment API', function () {
                 'data' => [
                     'has_pending_payment' => true,
                     'price' => [
-                        'total_price' => 5.0,
+                        'price' => 5.0,
                         'currency' => 'KWD',
                     ],
                 ],

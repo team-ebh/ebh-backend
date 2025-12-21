@@ -194,7 +194,7 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
         expect($pickupLocation->status)->toBe(TripLocationStatusEnum::PICKED_UP);
 
         $trip->refresh();
-        expect($trip->status)->toBe(TripStatusEnum::ON_TRIP);
+        expect($trip->status)->toBe(TripStatusEnum::IN_PROGRESS);
 
         // Verify TripPickedUpEvent would be dispatched
         Event::assertDispatched(
@@ -418,7 +418,7 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
         )->assertOk();
 
         $trip->refresh();
-        expect($trip->status)->toBe(TripStatusEnum::ON_TRIP);
+        expect($trip->status)->toBe(TripStatusEnum::IN_PROGRESS);
 
         // Complete each destination one by one
         foreach ($destinations as $index => $destination) {
@@ -453,9 +453,9 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
                 // Intermediate destinations should be DROPPED_OFF
                 expect($destination->status)->toBe(TripLocationStatusEnum::DROPPED_OFF);
 
-                // Not last destination - trip should still be ON_TRIP
+                // Not last destination - trip should still be IN_PROGRESS
                 $trip->refresh();
-                expect($trip->status)->toBe(TripStatusEnum::ON_TRIP);
+                expect($trip->status)->toBe(TripStatusEnum::IN_PROGRESS);
 
                 // TripCompletedEvent should NOT be dispatched yet
                 Event::assertDispatchedTimes(TripCompletedEvent::class, 0);
