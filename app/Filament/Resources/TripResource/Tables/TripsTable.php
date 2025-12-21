@@ -10,6 +10,7 @@ use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
 use App\Filament\Resources\TripResource;
 use App\Models\Trip;
+use App\Models\TripLocation;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -19,6 +20,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class TripsTable
 {
@@ -28,7 +30,7 @@ class TripsTable
             ->modifyQueryUsing(
                 fn ($query) => $query
                     ->where(Trip::COLUMN_STATUS, '!=', TripStatusEnum::DRAFT)
-                    ->with(['customer', 'rider'])
+                    ->with(['customer', 'rider', 'firstOriginLocation', 'firstDestinationLocation'])
             )
             ->columns([
                 TextColumn::make('id')
@@ -56,6 +58,20 @@ class TripsTable
                     ->default(trans('trips.admin.fields.not_assigned'))
                     ->color(fn ($record) => $record->rider ? 'success' : 'gray'),
 
+                TextColumn::make('firstOriginLocation.location_title')
+                    ->label(trans('trips.admin.fields.origin_location'))
+                    ->description(function ($record) {
+                        return Str::words($record->firstOriginLocation?->{TripLocation::COLUMN_LOCATION_SUB_TITLE}, 8) ?? '-';
+                    })
+                    ->wrap(),
+
+                TextColumn::make('firstDestinationLocation.location_title')
+                    ->label(trans('trips.admin.fields.destination_location'))
+                    ->description(function ($record) {
+                        return Str::words($record->firstDestinationLocation?->{TripLocation::COLUMN_LOCATION_SUB_TITLE}, 8) ?? '-';
+                    })
+                    ->wrap(),
+
                 TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn ($state) => $state->getLabel())
@@ -77,6 +93,7 @@ class TripsTable
                 TextColumn::make('vehicle_type_id')
                     ->label(trans('trips.admin.fields.vehicle_type'))
                     ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(fn ($state) => $state->getLabel())
                     ->color('primary'),
 
@@ -92,12 +109,6 @@ class TripsTable
                     ->dateTime('Y-m-d H:i')
                     ->sortable()
                     ->toggleable(),
-
-                TextColumn::make('updated_at')
-                    ->label(trans('trips.admin.fields.updated'))
-                    ->dateTime('Y-m-d H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('status')

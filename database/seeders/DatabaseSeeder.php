@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             $this->call([
                 VehicleSettingSeeder::class,
                 TestDataSeeder::class,
+                TripSeeder::class,
             ]);
         }
     }

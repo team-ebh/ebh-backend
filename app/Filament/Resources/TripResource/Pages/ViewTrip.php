@@ -12,6 +12,7 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -28,7 +29,7 @@ class ViewTrip extends ViewRecord
 
         $this->record->load([
             'customer:id,first_name,last_name,phone_number,email',
-            'rider:id,full_name,phone_number,email',
+            'rider:id,full_name,phone_number,email,latitude,longitude,last_location_update',
             'rider.vehicle:id,rider_id,car_type_id,car_make_id,car_model_id,plate_number',
             'rider.vehicle.carType:id,name',
             'rider.vehicle.carMake:id,name',
@@ -54,7 +55,7 @@ class ViewTrip extends ViewRecord
                     ->color('info')
                     ->slideOver()
                     ->modalHeading(trans('trips.admin.sections.customer_information'))
-                    ->infolist([
+                    ->schema([
                         Section::make()
                             ->schema([
                                 Grid::make(2)
@@ -96,9 +97,12 @@ class ViewTrip extends ViewRecord
                     ->modalFooterActions([
                         Action::make('viewCustomerProfile')
                             ->label(trans('trips.admin.actions.view_customer_profile'))
-                            ->url(fn ($record) => $record->customer
+                            ->url(
+                                fn ($record) => $record->customer
                                 ? CustomerResource::getUrl('view', ['record' => $record->customer->id])
-                                : null)
+                                : null,
+                                true
+                            )
                             ->icon('heroicon-o-arrow-top-right-on-square')
                             ->color('primary')
                             ->visible(fn ($record) => (bool) $record->customer),
@@ -111,7 +115,7 @@ class ViewTrip extends ViewRecord
                     ->color('success')
                     ->slideOver()
                     ->modalHeading(trans('trips.admin.sections.rider_information'))
-                    ->infolist([
+                    ->schema([
                         Section::make(trans('trips.admin.fields.rider'))
                             ->schema([
                                 Grid::make(2)
@@ -189,9 +193,12 @@ class ViewTrip extends ViewRecord
                     ->modalFooterActions([
                         Action::make('viewRiderProfile')
                             ->label(trans('trips.admin.actions.view_rider_profile'))
-                            ->url(fn ($record) => $record->rider
+                            ->url(
+                                fn ($record) => $record->rider
                                 ? RiderResource::getUrl('view', ['record' => $record->rider->id])
-                                : null)
+                                : null,
+                                true
+                            )
                             ->icon('heroicon-o-arrow-top-right-on-square')
                             ->color('primary')
                             ->visible(fn ($record) => (bool) $record->rider),
@@ -634,6 +641,20 @@ class ViewTrip extends ViewRecord
                             ])
                             ->contained(false),
                     ])
+                    ->collapsed(false)
+                    ->columnSpanFull(),
+
+                // Trip Map
+                Section::make(trans('trips.admin.sections.trip_map'))
+                    ->description(trans('trips.admin.sections.trip_map_description'))
+                    ->schema([
+                        ViewEntry::make('trip_map')
+                            ->view('filament.infolists.components.trip-map')
+                            ->state([
+                                'trip' => $this->record,
+                            ]),
+                    ])
+                    ->collapsible()
                     ->collapsed(false)
                     ->columnSpanFull(),
             ]);

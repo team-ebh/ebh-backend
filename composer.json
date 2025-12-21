@@ -12,6 +12,7 @@
         "php": "^8.4",
         "ext-bcmath": "*",
         "dedoc/scramble": "^0.12.30",
+        "dotswan/filament-map-picker": "^2.1",
         "filament/filament": "^4.0.3",
         "filament/spatie-laravel-media-library-plugin": "*",
         "laravel/framework": "^12.25.0",

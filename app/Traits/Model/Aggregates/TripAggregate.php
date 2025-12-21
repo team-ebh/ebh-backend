@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Traits\Model\Aggregates;
 
 use App\Enums\Payment\PaymentStatusEnum;
+use App\Enums\Trip\TripLocationTypeEnum;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Rider;
@@ -42,6 +43,34 @@ trait TripAggregate
     public function locations(): HasMany
     {
         return $this->hasMany(TripLocation::class, TripLocation::COLUMN_TRIP_ID)
+            ->orderBy(TripLocation::COLUMN_SEQUENCE);
+    }
+
+    public function originLocations(): HasMany
+    {
+        return $this->hasMany(TripLocation::class, TripLocation::COLUMN_TRIP_ID)
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::ORIGIN)
+            ->orderBy(TripLocation::COLUMN_SEQUENCE);
+    }
+
+    public function firstOriginLocation(): HasOne
+    {
+        return $this->hasOne(TripLocation::class, TripLocation::COLUMN_TRIP_ID)
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::ORIGIN)
+            ->orderBy(TripLocation::COLUMN_SEQUENCE);
+    }
+
+    public function destinationLocations(): HasMany
+    {
+        return $this->hasMany(TripLocation::class, TripLocation::COLUMN_TRIP_ID)
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)
+            ->orderBy(TripLocation::COLUMN_SEQUENCE);
+    }
+
+    public function firstDestinationLocation(): HasOne
+    {
+        return $this->hasOne(TripLocation::class, TripLocation::COLUMN_TRIP_ID)
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)
             ->orderBy(TripLocation::COLUMN_SEQUENCE);
     }
 
