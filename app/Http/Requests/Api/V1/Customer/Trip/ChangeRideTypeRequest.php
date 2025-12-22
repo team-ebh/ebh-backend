@@ -55,10 +55,10 @@ class ChangeRideTypeRequest extends FormRequest
                 'max:180',
             ],
 
-            // Return time - required only for ROUND_TRIP, nullable for others
+            // Return time - required only for ROUND_TRIP_WAIT, nullable for others
             // Unix timestamp
             'return_time' => [
-                $isRoundTrip ? 'required' : 'nullable',
+                $isRoundTripWait ? 'required' : 'nullable',
                 'integer',
                 'min:' . now()->timestamp, // Must be in the future
             ],

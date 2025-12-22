@@ -17,7 +17,7 @@ class ViewTrip extends ViewRecord
 {
     protected static string $resource = TripResource::class;
 
-    public function mount(int|string $record): void
+    public function mount(int | string $record): void
     {
         parent::mount($record);
 
@@ -30,11 +30,11 @@ class ViewTrip extends ViewRecord
             'rider.vehicle.carModel:id,name',
             'rider.vehicle.carColor:id,name',
             'accessibility',
-            'statusLogs' => fn($query) => $query->orderBy('id', 'desc'),
+            'statusLogs' => fn ($query) => $query->orderBy('id', 'desc'),
             'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence,status',
-            'locations.statusLogs' => fn($query) => $query->orderBy('id', 'desc'),
-            'payments' => fn($query) => $query->orderBy('id', 'desc'),
-            'payments.logs' => fn($query) => $query->orderBy('id', 'asc'),
+            'locations.statusLogs' => fn ($query) => $query->orderBy('id', 'desc'),
+            'payments' => fn ($query) => $query->orderBy('id', 'desc'),
+            'payments.logs' => fn ($query) => $query->orderBy('id', 'asc'),
             'lastPayment:id,trip_id,status',
         ]);
     }
