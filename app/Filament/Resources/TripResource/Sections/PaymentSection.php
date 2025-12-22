@@ -8,6 +8,7 @@ use App\Enums\Payment\PaymentMethodEnum;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Support\Enums\FontWeight;
@@ -59,7 +60,7 @@ class PaymentSection
                         TextEntry::make('accessibility_price')
                             ->label(trans('trips.admin.fields.accessibility_fee'))
                             ->formatStateUsing(function ($record) {
-                                if (! $record->accessibility_price || (float) $record->accessibility_price === 0.0) {
+                                if (is_null($record->accessibility_price)) {
                                     return '-';
                                 }
 
@@ -71,7 +72,7 @@ class PaymentSection
                         TextEntry::make('waiting_price')
                             ->label(trans('trips.admin.fields.waiting_fee'))
                             ->formatStateUsing(function ($record) {
-                                if (! $record->waiting_price || (float) $record->waiting_price === 0.0) {
+                                if (is_null($record->waiting_price)) {
                                     return '-';
                                 }
 
@@ -85,7 +86,7 @@ class PaymentSection
                 Section::make(trans('trips.admin.sections.payments_list'))
                     ->schema([
                         RepeatableEntry::make('payments')
-                            ->label('')
+                            ->hiddenLabel()
                             ->schema([
                                 Grid::make([
                                     'default' => 1,
@@ -100,20 +101,12 @@ class PaymentSection
 
                                         TextEntry::make('amount')
                                             ->label(trans('trips.admin.payment_logs.amount'))
-                                            ->money(fn ($record) => $record->currency->value)
+                                            ->money(fn ($record) => $record->currency->getLabel())
                                             ->weight(FontWeight::Bold)
                                             ->color('success'),
 
                                         TextEntry::make('status')
-                                            ->badge()
-                                            ->formatStateUsing(fn ($state) => $state->getLabel())
-                                            ->color(fn ($state) => match ($state->value) {
-                                                'pending' => 'warning',
-                                                'paid' => 'success',
-                                                'failed' => 'danger',
-                                                'refunded' => 'info',
-                                                default => 'gray',
-                                            }),
+                                            ->badge(),
 
                                         TextEntry::make('gateway')
                                             ->badge()
@@ -131,143 +124,142 @@ class PaymentSection
                                             ->dateTime('M d, Y H:i')
                                             ->icon('heroicon-o-clock'),
 
-                                        TextEntry::make('actions')
-                                            ->label('')
-                                            ->state('')
-                                            ->suffixAction(
-                                                Action::make('viewLogs')
-                                                    ->label(trans('trips.admin.payment_logs.view_logs'))
-                                                    ->icon('heroicon-o-document-text')
-                                                    ->color('info')
-                                                    ->slideOver()
-                                                    ->modalWidth('7xl')
-                                                    ->modalHeading(fn ($record) => trans('trips.admin.payment_logs.title') . ' - #' . $record->payment_number)
-                                                    ->infolist([
-                                                        // Payment Summary
-                                                        Section::make(trans('trips.admin.payment_logs.payment_summary'))
-                                                            ->schema([
-                                                                Grid::make(4)
-                                                                    ->schema([
-                                                                        TextEntry::make('payment_number')
-                                                                            ->label(trans('trips.admin.payment_logs.payment_number_full'))
-                                                                            ->weight(FontWeight::Bold)
-                                                                            ->copyable(),
+                                        Actions::make([
+                                            Action::make('viewLogs')
+                                                ->label(trans('trips.admin.payment_logs.view_logs'))
+                                                ->icon('heroicon-o-document-text')
+                                                ->color('info')
+                                                ->slideOver()
+                                                ->modalWidth('7xl')
+                                                ->modalHeading(fn ($record) => trans('trips.admin.payment_logs.title') . ' - #' . $record->payment_number)
+                                                ->modalSubmitAction(false)
+                                                ->modalCancelAction(false)
+                                                ->schema([
+                                                    // Payment Summary
+                                                    Section::make(trans('trips.admin.payment_logs.payment_summary'))
+                                                        ->schema([
+                                                            Grid::make(4)
+                                                                ->schema([
+                                                                    TextEntry::make('payment_number')
+                                                                        ->label(trans('trips.admin.payment_logs.payment_number_full'))
+                                                                        ->weight(FontWeight::Bold)
+                                                                        ->copyable(),
 
-                                                                        TextEntry::make('amount')
-                                                                            ->label(trans('trips.admin.payment_logs.amount'))
-                                                                            ->money(fn ($record) => $record->currency->value)
-                                                                            ->weight(FontWeight::Bold)
-                                                                            ->color('success'),
+                                                                    TextEntry::make('amount')
+                                                                        ->label(trans('trips.admin.payment_logs.amount'))
+                                                                        ->money(fn ($record) => $record->currency->value)
+                                                                        ->weight(FontWeight::Bold)
+                                                                        ->color('success'),
 
-                                                                        TextEntry::make('status')
-                                                                            ->badge()
-                                                                            ->formatStateUsing(fn ($state) => $state->getLabel())
-                                                                            ->color(fn ($state) => match ($state->value) {
-                                                                                'pending' => 'warning',
-                                                                                'paid' => 'success',
-                                                                                'failed' => 'danger',
-                                                                                'refunded' => 'info',
-                                                                                default => 'gray',
-                                                                            }),
+                                                                    TextEntry::make('status')
+                                                                        ->badge()
+                                                                        ->formatStateUsing(fn ($state) => $state->getLabel())
+                                                                        ->color(fn ($state) => match ($state->value) {
+                                                                            'pending' => 'warning',
+                                                                            'paid' => 'success',
+                                                                            'failed' => 'danger',
+                                                                            'refunded' => 'info',
+                                                                            default => 'gray',
+                                                                        }),
 
-                                                                        TextEntry::make('gateway')
-                                                                            ->badge()
-                                                                            ->formatStateUsing(fn ($state) => $state->getLabel())
-                                                                            ->color('primary'),
-                                                                    ]),
+                                                                    TextEntry::make('gateway')
+                                                                        ->badge()
+                                                                        ->formatStateUsing(fn ($state) => $state->getLabel())
+                                                                        ->color('primary'),
+                                                                ]),
 
-                                                                TextEntry::make('gateway_reference_id')
-                                                                    ->label(trans('trips.admin.payment_logs.gateway_reference_id'))
-                                                                    ->default(trans('trips.admin.fields.na'))
-                                                                    ->copyable()
-                                                                    ->visible(fn ($record) => filled($record->gateway_reference_id)),
-                                                            ])
-                                                            ->collapsible()
-                                                            ->collapsed(false),
+                                                            TextEntry::make('gateway_reference_id')
+                                                                ->label(trans('trips.admin.payment_logs.gateway_reference_id'))
+                                                                ->default(trans('trips.admin.fields.na'))
+                                                                ->copyable()
+                                                                ->visible(fn ($record) => filled($record->gateway_reference_id)),
+                                                        ])
+                                                        ->collapsible()
+                                                        ->collapsed(false),
 
-                                                        // HTTP Logs
-                                                        Section::make(trans('trips.admin.payment_logs.http_logs'))
-                                                            ->schema([
-                                                                RepeatableEntry::make('logs')
-                                                                    ->label('')
-                                                                    ->schema([
-                                                                        Grid::make(5)
-                                                                            ->schema([
-                                                                                TextEntry::make('type')
-                                                                                    ->label(trans('trips.admin.payment_logs.type'))
-                                                                                    ->badge()
-                                                                                    ->formatStateUsing(fn ($state) => $state->getLabel())
-                                                                                    ->color(fn ($record) => $record->type->value === 'generate_link' ? 'info' : 'warning'),
+                                                    // HTTP Logs
+                                                    Section::make(trans('trips.admin.payment_logs.http_logs'))
+                                                        ->schema([
+                                                            RepeatableEntry::make('logs')
+                                                                ->hiddenLabel()
+                                                                ->contained(false)
+                                                                ->schema([
+                                                                    Grid::make(5)
+                                                                        ->schema([
+                                                                            TextEntry::make('type')
+                                                                                ->label(trans('trips.admin.payment_logs.type'))
+                                                                                ->badge()
+                                                                                ->formatStateUsing(fn ($state) => $state->getLabel())
+                                                                                ->color(fn ($record) => $record->type->value === 'generate_link' ? 'info' : 'warning'),
 
-                                                                                TextEntry::make('method')
-                                                                                    ->label(trans('trips.admin.payment_logs.method'))
-                                                                                    ->badge()
-                                                                                    ->formatStateUsing(fn ($state) => strtoupper($state))
-                                                                                    ->color('gray'),
+                                                                            TextEntry::make('method')
+                                                                                ->label(trans('trips.admin.payment_logs.method'))
+                                                                                ->badge()
+                                                                                ->formatStateUsing(fn ($state) => strtoupper($state))
+                                                                                ->color('gray'),
 
-                                                                                TextEntry::make('status_code')
-                                                                                    ->label(trans('trips.admin.payment_logs.status_code'))
-                                                                                    ->badge()
-                                                                                    ->default(trans('trips.admin.fields.na'))
-                                                                                    ->color(fn ($state) => match (true) {
-                                                                                        $state >= 200 && $state < 300 => 'success',
-                                                                                        $state >= 400 => 'danger',
-                                                                                        default => 'warning',
-                                                                                    }),
+                                                                            TextEntry::make('status_code')
+                                                                                ->label(trans('trips.admin.payment_logs.status_code'))
+                                                                                ->badge()
+                                                                                ->default(trans('trips.admin.fields.na'))
+                                                                                ->color(fn ($state) => match (true) {
+                                                                                    $state >= 200 && $state < 300 => 'success',
+                                                                                    $state >= 400 => 'danger',
+                                                                                    default => 'warning',
+                                                                                }),
 
-                                                                                TextEntry::make('response_time')
-                                                                                    ->label(trans('trips.admin.payment_logs.response_time'))
-                                                                                    ->suffix('ms')
-                                                                                    ->default(trans('trips.admin.fields.na'))
-                                                                                    ->icon('heroicon-o-bolt'),
+                                                                            TextEntry::make('response_time')
+                                                                                ->label(trans('trips.admin.payment_logs.response_time'))
+                                                                                ->suffix('ms')
+                                                                                ->default(trans('trips.admin.fields.na'))
+                                                                                ->icon('heroicon-o-bolt'),
 
-                                                                                TextEntry::make('created_at')
-                                                                                    ->label(trans('trips.admin.payment_logs.timestamp'))
-                                                                                    ->dateTime('M d, Y H:i:s')
-                                                                                    ->size('sm'),
-                                                                            ]),
+                                                                            TextEntry::make('created_at')
+                                                                                ->label(trans('trips.admin.payment_logs.timestamp'))
+                                                                                ->dateTime('M d, Y H:i:s')
+                                                                                ->size('sm'),
+                                                                        ]),
 
-                                                                        TextEntry::make('url')
-                                                                            ->label(trans('trips.admin.payment_logs.url'))
-                                                                            ->copyable()
-                                                                            ->limit(100)
-                                                                            ->visible(fn ($record) => filled($record->url)),
+                                                                    TextEntry::make('url')
+                                                                        ->label(trans('trips.admin.payment_logs.url'))
+                                                                        ->copyable()
+                                                                        ->limit(100)
+                                                                        ->visible(fn ($record) => filled($record->url)),
 
-                                                                        TextEntry::make('request_body')
-                                                                            ->label(trans('trips.admin.payment_logs.request_body'))
-                                                                            ->formatStateUsing(fn ($state) => json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
-                                                                            ->copyable()
-                                                                            ->extraAttributes(['class' => 'font-mono text-xs'])
-                                                                            ->visible(fn ($record) => filled($record->request_body)),
+                                                                    TextEntry::make('request_body')
+                                                                        ->label(trans('trips.admin.payment_logs.request_body'))
+                                                                        ->formatStateUsing(fn ($state) => json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
+                                                                        ->copyable()
+                                                                        ->extraAttributes(['class' => 'font-mono text-xs'])
+                                                                        ->visible(fn ($record) => filled($record->request_body)),
 
-                                                                        TextEntry::make('response_body')
-                                                                            ->label(trans('trips.admin.payment_logs.response_body'))
-                                                                            ->formatStateUsing(fn ($state) => json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
-                                                                            ->copyable()
-                                                                            ->extraAttributes(['class' => 'font-mono text-xs'])
-                                                                            ->visible(fn ($record) => filled($record->response_body)),
+                                                                    TextEntry::make('response_body')
+                                                                        ->label(trans('trips.admin.payment_logs.response_body'))
+                                                                        ->formatStateUsing(fn ($state) => json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
+                                                                        ->copyable()
+                                                                        ->extraAttributes(['class' => 'font-mono text-xs'])
+                                                                        ->visible(fn ($record) => filled($record->response_body)),
 
-                                                                        TextEntry::make('error')
-                                                                            ->label(trans('trips.admin.payment_logs.error'))
-                                                                            ->color('danger')
-                                                                            ->icon('heroicon-o-x-circle')
-                                                                            ->visible(fn ($record) => filled($record->error)),
-                                                                    ])
-                                                                    ->getStateUsing(fn ($record) => $record->logs()->orderBy('created_at', 'desc')->get())
-                                                                    ->contained(false)
-                                                                    ->visible(fn ($record) => $record->logs && $record->logs->isNotEmpty()),
+                                                                    TextEntry::make('error')
+                                                                        ->label(trans('trips.admin.payment_logs.error'))
+                                                                        ->color('danger')
+                                                                        ->icon('heroicon-o-x-circle')
+                                                                        ->visible(fn ($record) => filled($record->error)),
+                                                                ])
+                                                                ->getStateUsing(fn ($record) => $record->logs()->orderBy('created_at', 'desc')->get())
+                                                                ->contained(false)
+                                                                ->visible(fn ($record) => $record->logs && $record->logs->isNotEmpty()),
 
-                                                                TextEntry::make('no_logs')
-                                                                    ->label('')
-                                                                    ->state(trans('trips.admin.payment_logs.no_logs'))
-                                                                    ->visible(fn ($record) => ! $record->logs || $record->logs->isEmpty())
-                                                                    ->extraAttributes(['class' => 'text-center text-gray-500']),
-                                                            ])
-                                                            ->collapsible()
-                                                            ->collapsed(false),
-                                                    ])
-                                                    ->visible(fn ($record) => $record->logs && $record->logs->isNotEmpty())
-                                            ),
+                                                            TextEntry::make('no_logs')
+                                                                ->label('')
+                                                                ->state(trans('trips.admin.payment_logs.no_logs'))
+                                                                ->visible(fn ($record) => ! $record->logs || $record->logs->isEmpty())
+                                                                ->extraAttributes(['class' => 'text-center text-gray-500']),
+                                                        ])
+                                                        ->collapsible()
+                                                        ->collapsed(false),
+                                                ]),
+                                        ]),
                                     ]),
                             ])
                             ->getStateUsing(fn ($record) => $record->payments()->orderBy('created_at', 'desc')->get())
@@ -277,7 +269,6 @@ class PaymentSection
                     ->collapsible()
                     ->collapsed(false)
                     ->visible(fn ($record) => $record->payment_method === PaymentMethodEnum::KNET
-                        && $record->hasPaidPayment()
                         && $record->payments->isNotEmpty()),
             ])
             ->columnSpanFull()
