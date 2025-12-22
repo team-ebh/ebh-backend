@@ -170,6 +170,7 @@ return [
             'route_details' => 'تفاصيل المسار',
             'pickup_location' => 'موقع الاستلام',
             'destination' => 'الوجهة',
+            'arrives_at' => 'يصل في',
         ],
         'tracking' => [
             'title' => 'تتبع الرحلة #:id',

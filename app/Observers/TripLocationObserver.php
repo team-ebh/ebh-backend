@@ -11,6 +11,14 @@ use Illuminate\Support\Facades\Log;
 class TripLocationObserver
 {
     /**
+     * Handle the TripLocation "created" event.
+     */
+    public function created(TripLocation $tripLocation): void
+    {
+        $this->logStatusChange($tripLocation);
+    }
+
+    /**
      * Handle the TripLocation "updated" event.
      */
     public function updated(TripLocation $tripLocation): void

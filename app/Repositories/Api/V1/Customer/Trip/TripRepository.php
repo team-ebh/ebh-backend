@@ -33,8 +33,6 @@ class TripRepository implements TripRepositoryInterface
             Trip::COLUMN_STATUS => TripStatusEnum::DRAFT,
         ]);
 
-        // Bulk insert trip locations
-        $now = now();
         $locations = [
             [
                 TripLocation::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
@@ -45,8 +43,6 @@ class TripRepository implements TripRepositoryInterface
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
                 TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
                 TripLocation::COLUMN_SEQUENCE => 1,
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 TripLocation::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
@@ -57,12 +53,12 @@ class TripRepository implements TripRepositoryInterface
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
                 TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
                 TripLocation::COLUMN_SEQUENCE => 2,
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
         ];
 
-        TripLocation::query()->insert($locations);
+        foreach ($locations as $location) {
+            TripLocation::query()->create($location);
+        }
 
         return $trip->fresh(['locations']);
     }

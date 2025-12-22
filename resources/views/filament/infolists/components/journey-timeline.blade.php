@@ -91,6 +91,32 @@
         return $hours . 'h ' . $mins . 'm';
     };
 
+    // Calculate arrival time from ETA string
+    $calculateArrivalTime = function($etaString, $baseTime = null) {
+        if (!$etaString) return null;
+
+        $baseTime = $baseTime ?? now();
+        $minutes = 0;
+
+        // Parse "Xh Ym" format
+        if (preg_match('/(\d+)h/', $etaString, $hours)) {
+            $minutes += (int)$hours[1] * 60;
+        }
+        if (preg_match('/(\d+)\s*m/', $etaString, $mins)) {
+            $minutes += (int)$mins[1];
+        }
+        // Parse "X min" format
+        if (preg_match('/^(\d+)\s*min$/', $etaString, $mins)) {
+            $minutes += (int)$mins[1];
+        }
+
+        if ($minutes > 0) {
+            return $baseTime->copy()->addMinutes($minutes);
+        }
+
+        return null;
+    };
+
     $isCancelled = in_array($tripStatus, [TripStatusEnum::CANCELED_BY_CUSTOMER, TripStatusEnum::CANCELLED_BY_RIDER], true);
 
     $steps = [];
@@ -128,6 +154,7 @@
         ];
         if ($eta) {
             $step['eta'] = $eta;
+            $step['arrivalTime'] = $calculateArrivalTime($eta, $step['timestamp']);
         }
         $steps[] = $step;
     } else {
@@ -192,6 +219,7 @@
             ];
             if ($eta) {
                 $step['eta'] = $eta;
+                $step['arrivalTime'] = $calculateArrivalTime($eta, $step['timestamp']);
             }
             $steps[] = $step;
         } else {
@@ -230,6 +258,7 @@
             ];
             if ($eta) {
                 $step['eta'] = $eta;
+                $step['arrivalTime'] = $calculateArrivalTime($eta, $step['timestamp']);
             }
             $steps[] = $step;
         } else {
@@ -288,6 +317,7 @@
             ];
             if ($eta) {
                 $step['eta'] = $eta;
+                $step['arrivalTime'] = $calculateArrivalTime($eta, $step['timestamp']);
             }
             $steps[] = $step;
         } else {
@@ -395,6 +425,13 @@
                             @if (isset($step['timestamp']))
                                 <div class="mt-2 text-center text-xs font-bold text-gray-700 dark:text-gray-300">
                                     {{ $step['timestamp']->format('g:i A') }} <span class="text-gray-500">{{ $step['timestamp']->format('M d, Y') }}</span>
+                                </div>
+                            @endif
+
+                            {{-- Arrival Time --}}
+                            @if (isset($step['arrivalTime']))
+                                <div class="mt-1 text-center text-xs text-blue-600 dark:text-blue-400">
+                                    {{ trans('trips.admin.timeline.arrives_at') }}: {{ $step['arrivalTime']->format('g:i A') }}
                                 </div>
                             @endif
 

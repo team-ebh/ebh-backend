@@ -170,6 +170,7 @@ return [
             'route_details' => 'Route Details',
             'pickup_location' => 'Pickup Location',
             'destination' => 'Destination',
+            'arrives_at' => 'Arrives at',
         ],
         'tracking' => [
             'title' => 'Trip Tracking #:id',
