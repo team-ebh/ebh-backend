@@ -11,11 +11,22 @@
         return;
     }
 
-    $trip->load([
-        'statusLogs' => fn($query) => $query->orderBy('id', 'desc'),
-        'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence,status',
-        'locations.statusLogs' => fn($query) => $query->orderBy('id', 'desc'),
-    ]);
+    // Ensure relationships are loaded (they should already be loaded from ViewTrip.php)
+    if (!$trip->relationLoaded('statusLogs')) {
+        $trip->load(['statusLogs' => fn($query) => $query->orderBy('id', 'desc')]);
+    }
+    if (!$trip->relationLoaded('locations')) {
+        $trip->load(['locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence,status']);
+    }
+    if (!$trip->relationLoaded('rider')) {
+        $trip->load(['rider:id,full_name,latitude,longitude']);
+    }
+    // Load location status logs separately if not already loaded
+    foreach ($trip->locations as $location) {
+        if (!$location->relationLoaded('statusLogs')) {
+            $location->load(['statusLogs' => fn($query) => $query->orderBy('id', 'desc')]);
+        }
+    }
 
     $tripStatus = $trip->status;
     $rideType = $trip->ride_type;
@@ -106,16 +117,19 @@
         ];
     } elseif ($acceptedLog || $inProgressLog) {
         $eta = null;
-        if ($trip->rider && $originLocation) {
+        if ($trip->rider && $originLocation && $trip->rider->latitude && $trip->rider->longitude && $originLocation->latitude && $originLocation->longitude) {
             $eta = $calculateETA($trip->rider->latitude, $trip->rider->longitude, $originLocation->latitude, $originLocation->longitude);
         }
-        $steps[] = [
+        $step = [
             'title' => trans('trips.admin.timeline.en_route_to_pickup'),
             'icon' => '🚗',
             'timestamp' => $inProgressLog?->created_at ?? $acceptedLog?->created_at,
             'status' => 'active',
-            'eta' => $eta ?: trans('trips.admin.timeline.eta_calculating'),
         ];
+        if ($eta) {
+            $step['eta'] = $eta;
+        }
+        $steps[] = $step;
     } else {
         $steps[] = [
             'title' => trans('trips.admin.timeline.waiting_for_rider'),
@@ -167,16 +181,19 @@
             ];
         } elseif ($pickedUp) {
             $eta = null;
-            if ($trip->rider && $finalDestination) {
+            if ($trip->rider && $finalDestination && $trip->rider->latitude && $trip->rider->longitude && $finalDestination->latitude && $finalDestination->longitude) {
                 $eta = $calculateETA($trip->rider->latitude, $trip->rider->longitude, $finalDestination->latitude, $finalDestination->longitude);
             }
-            $steps[] = [
+            $step = [
                 'title' => trans('trips.admin.timeline.en_route_to_destination'),
                 'icon' => '👤',
                 'timestamp' => $pickedUp->created_at,
                 'status' => 'active',
-                'eta' => $eta ?: trans('trips.admin.timeline.eta_calculating'),
             ];
+            if ($eta) {
+                $step['eta'] = $eta;
+            }
+            $steps[] = $step;
         } else {
             $steps[] = [
                 'title' => trans('trips.admin.timeline.passenger_pickup'),
@@ -201,14 +218,20 @@
                 'duration' => $travelTime,
             ];
         } elseif ($pickedUp) {
-            $eta = ($trip->rider && $firstDestination) ? $calculateETA($trip->rider->latitude, $trip->rider->longitude, $firstDestination->latitude, $firstDestination->longitude) : null;
-            $steps[] = [
+            $eta = null;
+            if ($trip->rider && $firstDestination && $trip->rider->latitude && $trip->rider->longitude && $firstDestination->latitude && $firstDestination->longitude) {
+                $eta = $calculateETA($trip->rider->latitude, $trip->rider->longitude, $firstDestination->latitude, $firstDestination->longitude);
+            }
+            $step = [
                 'title' => trans('trips.admin.timeline.en_route_to_first_destination'),
                 'icon' => '👤',
                 'timestamp' => $pickedUp->created_at,
                 'status' => 'active',
-                'eta' => $eta ?: trans('trips.admin.timeline.eta_calculating'),
             ];
+            if ($eta) {
+                $step['eta'] = $eta;
+            }
+            $steps[] = $step;
         } else {
             $steps[] = [
                 'title' => trans('trips.admin.timeline.passenger_pickup'),
@@ -253,14 +276,20 @@
                 'duration' => $travelTime,
             ];
         } elseif ($secondPickup) {
-            $eta = ($trip->rider && $finalDestination) ? $calculateETA($trip->rider->latitude, $trip->rider->longitude, $finalDestination->latitude, $finalDestination->longitude) : null;
-            $steps[] = [
+            $eta = null;
+            if ($trip->rider && $finalDestination && $trip->rider->latitude && $trip->rider->longitude && $finalDestination->latitude && $finalDestination->longitude) {
+                $eta = $calculateETA($trip->rider->latitude, $trip->rider->longitude, $finalDestination->latitude, $finalDestination->longitude);
+            }
+            $step = [
                 'title' => trans('trips.admin.timeline.en_route_to_final_destination'),
                 'icon' => '🔄',
                 'timestamp' => $secondPickup->created_at,
                 'status' => 'active',
-                'eta' => $eta ?: trans('trips.admin.timeline.eta_calculating'),
             ];
+            if ($eta) {
+                $step['eta'] = $eta;
+            }
+            $steps[] = $step;
         } else {
             $steps[] = [
                 'title' => trans('trips.admin.timeline.second_pickup'),
