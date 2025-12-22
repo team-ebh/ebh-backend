@@ -11,6 +11,13 @@
         return;
     }
 
+    // Reload relationships as Filament ViewEntry state doesn't preserve eager loading
+    $trip->load([
+        'statusLogs' => fn($query) => $query->orderBy('id', 'desc'),
+        'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence,status',
+        'locations.statusLogs' => fn($query) => $query->orderBy('id', 'desc'),
+    ]);
+
     // Current trip status
     $tripStatus = $trip->status;
     $isActiveTrip = in_array($tripStatus, [
