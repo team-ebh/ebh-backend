@@ -110,7 +110,7 @@ return [
             'status_history' => 'Status History',
             'status_history_description' => 'Complete history of all status changes',
             'trip_information' => 'Trip Information',
-            'trip_information_description' => 'Complete overview of trip details, pricing, and participants',
+            'trip_information_description' => 'Complete overview of trip details, pricing',
             'trip_basic_info' => 'Trip Basic Information',
             'participants' => 'Participants',
             'participants_description' => 'Customer and rider information for this trip',
@@ -133,6 +133,11 @@ return [
             'rider_vehicle_information' => 'Rider Vehicle Information',
             'trip_map' => 'Trip Map',
             'trip_map_description' => 'Visual representation of trip locations and rider position',
+        ],
+        'tabs' => [
+            'overview' => 'Overview',
+            'journey' => 'Journey',
+            'participants' => 'Participants',
         ],
         'tracking' => [
             'title' => 'Trip Tracking #:id',

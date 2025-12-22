@@ -110,7 +110,7 @@ return [
             'status_history' => 'سجل الحالة',
             'status_history_description' => 'السجل الكامل لجميع تغييرات الحالة',
             'trip_information' => 'معلومات الرحلة',
-            'trip_information_description' => 'نظرة عامة كاملة على تفاصيل الرحلة والتسعير والمشاركين',
+            'trip_information_description' => 'نظرة عامة كاملة على تفاصيل الرحلة والتسعير',
             'trip_basic_info' => 'معلومات الرحلة الأساسية',
             'participants' => 'المشاركون',
             'participants_description' => 'معلومات العميل والسائق لهذه الرحلة',
@@ -133,6 +133,11 @@ return [
             'rider_vehicle_information' => 'معلومات مركبة السائق',
             'trip_map' => 'خريطة الرحلة',
             'trip_map_description' => 'عرض مرئي لمواقع الرحلة وموقع السائق',
+        ],
+        'tabs' => [
+            'overview' => 'نظرة عامة',
+            'journey' => 'الرحلة',
+            'participants' => 'المشاركون',
         ],
         'tracking' => [
             'title' => 'تتبع الرحلة #:id',

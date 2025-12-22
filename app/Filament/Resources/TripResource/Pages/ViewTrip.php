@@ -4,25 +4,20 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\TripResource\Pages;
 
-use App\Enums\Payment\PaymentMethodEnum;
-use App\Filament\Resources\Customers\CustomerResource;
-use App\Filament\Resources\Riders\RiderResource;
 use App\Filament\Resources\TripResource;
-use Filament\Actions\Action;
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\ViewEntry;
+use App\Filament\Resources\TripResource\Sections\JourneySection;
+use App\Filament\Resources\TripResource\Sections\ParticipantsSection;
+use App\Filament\Resources\TripResource\Sections\PaymentSection;
+use App\Filament\Resources\TripResource\Sections\TripDetailsSection;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
-use Filament\Support\Enums\FontWeight;
 
 class ViewTrip extends ViewRecord
 {
     protected static string $resource = TripResource::class;
 
-    public function mount(int | string $record): void
+    public function mount(int|string $record): void
     {
         parent::mount($record);
 
@@ -35,11 +30,11 @@ class ViewTrip extends ViewRecord
             'rider.vehicle.carModel:id,name',
             'rider.vehicle.carColor:id,name',
             'accessibility',
-            'statusLogs' => fn ($query) => $query->orderBy('id', 'desc'),
+            'statusLogs' => fn($query) => $query->orderBy('id', 'desc'),
             'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence,status',
-            'locations.statusLogs' => fn ($query) => $query->orderBy('id', 'desc'),
-            'payments' => fn ($query) => $query->orderBy('id', 'desc'),
-            'payments.logs' => fn ($query) => $query->orderBy('id', 'asc'),
+            'locations.statusLogs' => fn($query) => $query->orderBy('id', 'desc'),
+            'payments' => fn($query) => $query->orderBy('id', 'desc'),
+            'payments.logs' => fn($query) => $query->orderBy('id', 'asc'),
             'lastPayment:id,trip_id,status',
         ]);
     }
@@ -48,471 +43,32 @@ class ViewTrip extends ViewRecord
     {
         return $schema
             ->components([
-                // Trip Information
-                Section::make(trans('trips.admin.sections.trip_information'))
-                    ->description(trans('trips.admin.sections.trip_information_description'))
-                    ->schema([
-                        // Trip Details Section
-                        Section::make(trans('trips.admin.sections.trip_details'))
-                            ->schema([
-                                Grid::make(5)
-                                    ->schema([
-                                        TextEntry::make('id')
-                                            ->label(trans('trips.admin.fields.trip_id'))
-                                            ->formatStateUsing(fn ($record) => tripNumberFormat($record))
-                                            ->badge()
-                                            ->color('primary')
-                                            ->size('lg')
-                                            ->weight(FontWeight::Bold)
-                                            ->icon('heroicon-o-hashtag')
-                                            ->copyable(),
-
-                                        TextEntry::make('status')
-                                            ->label(trans('trips.admin.fields.status'))
-                                            ->badge()
-                                            ->size('lg')
-                                            ->weight(FontWeight::Bold),
-
-                                        TextEntry::make('created_at')
-                                            ->label(trans('trips.admin.fields.created_at'))
-                                            ->dateTime('M d, Y H:i')
-                                            ->icon('heroicon-o-calendar')
-                                            ->color('gray'),
-
-                                        TextEntry::make('trip_type_id')
-                                            ->label(trans('trips.admin.fields.trip_type'))
-                                            ->badge()
-                                            ->formatStateUsing(fn ($state) => $state->getLabel())
-                                            ->color('info')
-                                            ->icon('heroicon-o-map'),
-
-                                        TextEntry::make('ride_type')
-                                            ->label(trans('trips.admin.fields.ride_type'))
-                                            ->badge()
-                                            ->formatStateUsing(fn ($state) => $state->getLabel())
-                                            ->color('cyan')
-                                            ->icon('heroicon-o-arrow-path-rounded-square'),
-                                    ]),
-
-                                Grid::make(4)
-                                    ->schema([
-                                        TextEntry::make('vehicle_type_id')
-                                            ->label(trans('trips.admin.fields.vehicle_type'))
-                                            ->badge()
-                                            ->formatStateUsing(fn ($state) => $state->getLabel())
-                                            ->color('warning'),
-
-                                        TextEntry::make('passenger_count')
-                                            ->label(trans('trips.admin.fields.passengers'))
-                                            ->badge()
-                                            ->color('gray')
-                                            ->icon('heroicon-o-users'),
-
-                                        TextEntry::make('accessibility.accessibility_requirement')
-                                            ->label(trans('trips.admin.fields.accessibility'))
-                                            ->listWithLineBreaks()
-                                            ->icon('heroicon-o-heart')
-                                            ->color('purple')
-                                            ->columnSpan(2),
-                                    ]),
-                            ])
-                            ->columnSpanFull()
-                            ->compact(),
-                    ])
-                    ->collapsed(false)
+                Tabs::make('TripTabs')
                     ->columnSpanFull()
-                    ->compact(),
-
-                // Main Content: Journey Timeline + Map (Side by Side)
-                Grid::make(2)
-                    ->schema([
-                        // Left Column: Journey Timeline
-                        Section::make(trans('trips.admin.sections.trip_map'))
-                            ->description(trans('trips.admin.sections.trip_map_description'))
+                    ->persistTabInQueryString()
+                    ->tabs([
+                        // Tab 1: Overview
+                        Tabs\Tab::make(trans('trips.admin.tabs.overview'))
+                            ->icon('heroicon-o-information-circle')
                             ->schema([
-                                ViewEntry::make('trip_map')
-                                    ->view('filament.infolists.components.trip-map')
-                                    ->state([
-                                        'trip' => $this->record,
-                                    ]),
-                            ])
-                            ->collapsible()
-                            ->collapsed(false),
-
-                        // Right Column: Map
-                        Section::make(trans('trips.admin.sections.journey_timeline'))
-                            ->description(trans('trips.admin.sections.journey_timeline_description'))
-                            ->schema([
-                                ViewEntry::make('journey_timeline')
-                                    ->view('filament.infolists.components.journey-timeline')
-                                    ->state([
-                                        'trip' => $this->record,
-                                    ]),
-                            ])
-                            ->collapsible()
-                            ->collapsed(false),
-                    ])
-                    ->columnSpanFull(),
-
-                // Participants Section
-                Section::make(trans('trips.admin.sections.participants'))
-                    ->description(trans('trips.admin.sections.participants_description'))
-                    ->schema([
-                        Grid::make(3)
-                            ->schema([
-                                // Customer Information
-                                Section::make(trans('trips.admin.sections.customer_information'))
-                                    ->icon('heroicon-o-user-circle')
-                                    ->headerActions([
-                                        Action::make('viewCustomer')
-                                            ->label(trans('trips.admin.actions.view'))
-                                            ->icon('heroicon-o-arrow-top-right-on-square')
-                                            ->color('primary')
-                                            ->url(fn ($record) => $record->customer
-                                                ? CustomerResource::getUrl('view', ['record' => $record->customer->id])
-                                                : null, shouldOpenInNewTab: true)
-                                            ->visible(fn ($record) => (bool) $record->customer),
-                                    ])
-                                    ->schema([
-                                        Grid::make(2)
-                                            ->schema([
-                                                TextEntry::make('customer.full_name')
-                                                    ->label(trans('trips.admin.fields.full_name'))
-                                                    ->formatStateUsing(fn ($record) => $record->customer
-                                                        ? "{$record->customer->first_name} {$record->customer->last_name}"
-                                                        : trans('trips.admin.fields.na'))
-                                                    ->icon('heroicon-o-user')
-                                                    ->weight(FontWeight::Bold),
-
-                                                TextEntry::make('customer.phone_number')
-                                                    ->label(trans('trips.admin.fields.phone'))
-                                                    ->formatStateUsing(function ($record) {
-                                                        if (! $record->customer) {
-                                                            return trans('trips.admin.fields.na');
-                                                        }
-
-                                                        $phone = $record->customer->phone_number;
-                                                        if (! str_starts_with($phone, '+')) {
-                                                            $phone = defaultPrefixPhoneNumber() . $phone;
-                                                        }
-
-                                                        return $phone;
-                                                    })
-                                                    ->icon('heroicon-o-phone')
-                                                    ->copyable(),
-
-                                                TextEntry::make('customer.email')
-                                                    ->label(trans('trips.admin.fields.email'))
-                                                    ->formatStateUsing(fn ($record) => $record->customer?->email ?: trans('trips.admin.fields.na'))
-                                                    ->icon('heroicon-o-envelope')
-                                                    ->copyable()
-                                                    ->columnSpan(2),
-                                            ]),
-                                    ])
-                                    ->compact()
-                                    ->visible(fn ($record) => (bool) $record->customer),
-
-                                // Rider Information
-                                Section::make(trans('trips.admin.sections.rider_information'))
-                                    ->icon('heroicon-o-truck')
-                                    ->headerActions([
-                                        Action::make('viewRider')
-                                            ->label(trans('trips.admin.actions.view'))
-                                            ->icon('heroicon-o-arrow-top-right-on-square')
-                                            ->color('success')
-                                            ->url(fn ($record) => $record->rider
-                                                ? RiderResource::getUrl('view', ['record' => $record->rider->id])
-                                                : null, shouldOpenInNewTab: true)
-                                            ->visible(fn ($record) => (bool) $record->rider),
-                                    ])
-                                    ->schema([
-                                        Grid::make(2)
-                                            ->schema([
-                                                TextEntry::make('rider.full_name')
-                                                    ->label(trans('trips.admin.fields.full_name'))
-                                                    ->formatStateUsing(fn ($record) => $record->rider?->full_name ?: trans('trips.admin.fields.not_assigned'))
-                                                    ->icon('heroicon-o-user')
-                                                    ->weight(FontWeight::Bold),
-
-                                                TextEntry::make('rider.phone_number')
-                                                    ->label(trans('trips.admin.fields.phone'))
-                                                    ->formatStateUsing(function ($record) {
-                                                        if (! $record->rider) {
-                                                            return trans('trips.admin.fields.na');
-                                                        }
-
-                                                        $phone = $record->rider->phone_number;
-                                                        if (! str_starts_with($phone, '+')) {
-                                                            $phone = defaultPrefixPhoneNumber() . $phone;
-                                                        }
-
-                                                        return $phone;
-                                                    })
-                                                    ->icon('heroicon-o-phone')
-                                                    ->copyable(),
-
-                                                TextEntry::make('rider.email')
-                                                    ->label(trans('trips.admin.fields.email'))
-                                                    ->formatStateUsing(fn ($record) => $record->rider?->email ?: trans('trips.admin.fields.na'))
-                                                    ->icon('heroicon-o-envelope')
-                                                    ->copyable(),
-                                            ]),
-                                    ])
-                                    ->compact()
-                                    ->visible(fn ($record) => (bool) $record->rider),
-
-                                // Rider Vehicle Information
-                                Section::make(trans('trips.admin.sections.rider_vehicle_information'))
-                                    ->icon('heroicon-o-truck')
-                                    ->schema([
-                                        // Vehicle Information
-                                        Grid::make(3)
-                                            ->schema([
-                                                TextEntry::make('rider.vehicle.carType.name')
-                                                    ->label(trans('trips.admin.fields.car_type'))
-                                                    ->formatStateUsing(fn ($record) => $record->rider?->vehicle?->carType?->name ?: trans('trips.admin.fields.na'))
-                                                    ->icon('heroicon-o-truck'),
-
-                                                TextEntry::make('rider.vehicle.carMake.name')
-                                                    ->label(trans('trips.admin.fields.car_make'))
-                                                    ->formatStateUsing(fn ($record) => $record->rider?->vehicle?->carMake?->name ?: trans('trips.admin.fields.na'))
-                                                    ->icon('heroicon-o-wrench'),
-
-                                                TextEntry::make('rider.vehicle.carModel.name')
-                                                    ->label(trans('trips.admin.fields.car_model'))
-                                                    ->formatStateUsing(fn ($record) => $record->rider?->vehicle?->carModel?->name ?: trans('trips.admin.fields.na'))
-                                                    ->icon('heroicon-o-cog'),
-
-                                                TextEntry::make('rider.vehicle.carColor.name')
-                                                    ->label(trans('trips.admin.fields.color'))
-                                                    ->formatStateUsing(fn ($record) => $record->rider?->vehicle?->carColor?->name ?: trans('trips.admin.fields.na'))
-                                                    ->icon('heroicon-o-swatch'),
-
-                                                TextEntry::make('rider.vehicle.plate_number')
-                                                    ->label(trans('trips.admin.fields.plate_number'))
-                                                    ->formatStateUsing(fn ($record) => $record->rider?->vehicle?->plate_number ?: trans('trips.admin.fields.na'))
-                                                    ->icon('heroicon-o-identification')
-                                                    ->badge()
-                                                    ->color('gray'),
-                                            ])
-                                            ->visible(fn ($record) => (bool) $record->rider?->vehicle),
-                                    ])
-                                    ->compact()
-                                    ->visible(fn ($record) => (bool) $record->rider),
-                            ]),
-                    ])
-                    ->collapsed(false)
-                    ->columnSpanFull()
-                    ->compact(),
-
-                // Payment Information Section
-                Section::make(trans('trips.admin.sections.payment_info'))
-                    ->headerActions([
-                        Action::make('viewPaymentLogs')
-                            ->label(trans('trips.admin.payment_logs.view_logs'))
-                            ->icon('heroicon-o-document-text')
-                            ->color('info')
-                            ->slideOver()
-                            ->modalWidth('7xl')
-                            ->modalHeading(trans('trips.admin.payment_logs.title'))
-                            ->schema([
-                                RepeatableEntry::make('payments')
-                                    ->label('')
-                                    ->schema([
-                                        Section::make(fn ($record) => trans('trips.admin.payment_logs.payment_logs_heading', [
-                                            'number' => $record->payment_number,
-                                        ]))
-                                            ->schema([
-                                                // Payment Summary
-                                                Section::make(trans('trips.admin.payment_logs.payment_summary'))
-                                                    ->schema([
-                                                        Grid::make(4)
-                                                            ->schema([
-                                                                TextEntry::make('payment_number')
-                                                                    ->label(trans('trips.admin.payment_logs.payment_number_full'))
-                                                                    ->weight(FontWeight::Bold)
-                                                                    ->copyable(),
-
-                                                                TextEntry::make('amount')
-                                                                    ->label(trans('trips.admin.payment_logs.amount'))
-                                                                    ->money(fn ($record) => $record->currency->value)
-                                                                    ->weight(FontWeight::Bold)
-                                                                    ->color('success'),
-
-                                                                TextEntry::make('status')
-                                                                    ->badge()
-                                                                    ->formatStateUsing(fn ($state) => $state->getLabel())
-                                                                    ->color(fn ($state) => match ($state->value) {
-                                                                        'pending' => 'warning',
-                                                                        'paid' => 'success',
-                                                                        'failed' => 'danger',
-                                                                        'refunded' => 'info',
-                                                                        default => 'gray',
-                                                                    }),
-
-                                                                TextEntry::make('gateway')
-                                                                    ->badge()
-                                                                    ->formatStateUsing(fn ($state) => $state->getLabel())
-                                                                    ->color('primary'),
-                                                            ]),
-
-                                                        TextEntry::make('gateway_reference_id')
-                                                            ->label(trans('trips.admin.payment_logs.gateway_reference_id'))
-                                                            ->default(trans('trips.admin.fields.na'))
-                                                            ->copyable()
-                                                            ->visible(fn ($record) => filled($record->gateway_reference_id)),
-                                                    ])
-                                                    ->collapsible()
-                                                    ->collapsed(false),
-
-                                                // HTTP Logs
-                                                Section::make(trans('trips.admin.payment_logs.http_logs'))
-                                                    ->schema([
-                                                        RepeatableEntry::make('logs')
-                                                            ->label('')
-                                                            ->schema([
-                                                                Grid::make(5)
-                                                                    ->schema([
-                                                                        TextEntry::make('type')
-                                                                            ->label(trans('trips.admin.payment_logs.type'))
-                                                                            ->badge()
-                                                                            ->formatStateUsing(fn ($state) => $state->getLabel())
-                                                                            ->color(fn ($record) => $record->type->value === 'generate_link' ? 'info' : 'warning'),
-
-                                                                        TextEntry::make('method')
-                                                                            ->label(trans('trips.admin.payment_logs.method'))
-                                                                            ->badge()
-                                                                            ->formatStateUsing(fn ($state) => strtoupper($state))
-                                                                            ->color('gray'),
-
-                                                                        TextEntry::make('status_code')
-                                                                            ->label(trans('trips.admin.payment_logs.status_code'))
-                                                                            ->badge()
-                                                                            ->default(trans('trips.admin.fields.na'))
-                                                                            ->color(fn ($state) => match (true) {
-                                                                                $state >= 200 && $state < 300 => 'success',
-                                                                                $state >= 400 => 'danger',
-                                                                                default => 'warning',
-                                                                            }),
-
-                                                                        TextEntry::make('response_time')
-                                                                            ->label(trans('trips.admin.payment_logs.response_time'))
-                                                                            ->suffix('ms')
-                                                                            ->default(trans('trips.admin.fields.na'))
-                                                                            ->icon('heroicon-o-bolt'),
-
-                                                                        TextEntry::make('created_at')
-                                                                            ->label(trans('trips.admin.payment_logs.timestamp'))
-                                                                            ->dateTime('M d, Y H:i:s')
-                                                                            ->size('sm'),
-                                                                    ]),
-
-                                                                TextEntry::make('url')
-                                                                    ->label(trans('trips.admin.payment_logs.url'))
-                                                                    ->copyable()
-                                                                    ->limit(100)
-                                                                    ->visible(fn ($record) => filled($record->url)),
-
-                                                                TextEntry::make('request_body')
-                                                                    ->label(trans('trips.admin.payment_logs.request_body'))
-                                                                    ->formatStateUsing(fn ($state) => json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
-                                                                    ->copyable()
-                                                                    ->extraAttributes(['class' => 'font-mono text-xs'])
-                                                                    ->visible(fn ($record) => filled($record->request_body)),
-
-                                                                TextEntry::make('response_body')
-                                                                    ->label(trans('trips.admin.payment_logs.response_body'))
-                                                                    ->formatStateUsing(fn ($state) => json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))
-                                                                    ->copyable()
-                                                                    ->extraAttributes(['class' => 'font-mono text-xs'])
-                                                                    ->visible(fn ($record) => filled($record->response_body)),
-
-                                                                TextEntry::make('error')
-                                                                    ->label(trans('trips.admin.payment_logs.error'))
-                                                                    ->color('danger')
-                                                                    ->icon('heroicon-o-x-circle')
-                                                                    ->visible(fn ($record) => filled($record->error)),
-                                                            ])
-                                                            ->getStateUsing(fn ($record) => $record->logs()->orderBy('created_at', 'desc')->get())
-                                                            ->contained(false),
-                                                    ])
-                                                    ->collapsible()
-                                                    ->collapsed(false),
-                                            ])
-                                            ->collapsible()
-                                            ->collapsed(false),
-                                    ])
-                                    ->contained(false),
-                            ])
-                            ->visible(fn ($record) => $record->payment_method === PaymentMethodEnum::KNET
-                                && $record->hasPaidPayment()
-                                && $record->payments->isNotEmpty()),
-                    ])
-                    ->schema([
-                        Grid::make(3)
-                            ->schema([
-                                TextEntry::make('payment_method')
-                                    ->badge()
-                                    ->size('lg')
-                                    ->icon('heroicon-o-credit-card'),
-
-                                TextEntry::make('total_price')
-                                    ->label(trans('trips.admin.fields.total_price'))
-                                    ->suffix(fn ($record) => $record->currency->getLabel())
-                                    ->size('lg')
-                                    ->weight(FontWeight::Bold)
-                                    ->color('success')
-                                    ->icon('heroicon-o-banknotes'),
-
-                                TextEntry::make('lastPayment.status')
-                                    ->label(trans('trips.admin.fields.payment_status'))
-                                    ->badge()
-                                    ->size('lg')
-                                    ->weight(FontWeight::Bold),
+                                TripDetailsSection::make(),
+                                PaymentSection::make(),
                             ]),
 
-                        Grid::make(3)
+                        // Tab 2: Journey
+                        Tabs\Tab::make(trans('trips.admin.tabs.journey'))
+                            ->icon('heroicon-o-map')
                             ->schema([
-                                TextEntry::make('base_fare')
-                                    ->label(trans('trips.admin.fields.base_fare'))
-                                    ->state(function ($record) {
-                                        $baseFare = (float) $record->total_price
-                                            - (float) ($record->accessibility_price ?? 0)
-                                            - (float) ($record->waiting_price ?? 0);
-
-                                        return priceFormat($baseFare) . ' ' . $record->currency->value;
-                                    })
-                                    ->icon('heroicon-o-calculator')
-                                    ->color('primary')
-                                    ->weight(FontWeight::Bold),
-
-                                TextEntry::make('accessibility_price')
-                                    ->label(trans('trips.admin.fields.accessibility_fee'))
-                                    ->formatStateUsing(function ($record) {
-                                        if (! $record->accessibility_price || (float) $record->accessibility_price === 0.0) {
-                                            return '-';
-                                        }
-
-                                        return priceFormat($record->accessibility_price) . ' ' . $record->currency->value;
-                                    })
-                                    ->icon('heroicon-o-heart')
-                                    ->color('pink'),
-
-                                TextEntry::make('waiting_price')
-                                    ->label(trans('trips.admin.fields.waiting_fee'))
-                                    ->formatStateUsing(function ($record) {
-                                        if (! $record->waiting_price || (float) $record->waiting_price === 0.0) {
-                                            return '-';
-                                        }
-
-                                        return priceFormat($record->waiting_price) . ' ' . $record->currency->value;
-                                    })
-                                    ->icon('heroicon-o-clock')
-                                    ->color('orange'),
+                                JourneySection::make($this->record),
                             ]),
-                    ])
-                    ->columnSpanFull()
-                    ->compact(),
+
+                        // Tab 3: Participants
+                        Tabs\Tab::make(trans('trips.admin.tabs.participants'))
+                            ->icon('heroicon-o-users')
+                            ->schema([
+                                ParticipantsSection::make(),
+                            ]),
+                    ]),
             ]);
     }
 }

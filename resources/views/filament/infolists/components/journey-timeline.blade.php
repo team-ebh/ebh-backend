@@ -334,15 +334,15 @@
                     $isWait = $step['isWait'] ?? false;
                 @endphp
 
-                <div class="relative flex items-center gap-4 rounded-xl border p-4 transition-all
+                <div class="relative flex items-start gap-4 rounded-xl border p-4 transition-all
                     {{ $isCurrent ? 'border-blue-400 bg-blue-50/50 shadow-md dark:border-blue-600 dark:bg-blue-900/20' :
                        ($isCompleted ? 'border-green-200 bg-white dark:border-green-800 dark:bg-gray-800/50' :
                        ($isCancelled ? 'border-red-200 bg-red-50/30 dark:border-red-800 dark:bg-red-900/10' :
                        'border-gray-200 bg-gray-50/30 dark:border-gray-700 dark:bg-gray-800/30')) }}">
 
-                    {{-- Connecting Line (positioned absolutely to connect to next item) --}}
+                    {{-- Connecting Line --}}
                     @if (!$isLast)
-                        <div class="absolute left-[2.125rem] top-[4rem] h-[calc(100%+0.75rem)] w-0.5
+                        <div class="absolute left-[2.125rem] top-[4.5rem] h-[calc(100%+0.75rem)] w-0.5
                             {{ $isCompleted ? 'bg-green-400 dark:bg-green-600' : 'bg-gray-300 dark:bg-gray-600' }}">
                         </div>
                     @endif
@@ -358,53 +358,61 @@
                         </div>
                     </div>
 
-                    {{-- Step Content - All in one horizontal line --}}
-                    <div class="flex flex-1 items-center justify-between gap-4">
-                        {{-- Left: Title, Badges, and Location (all inline) --}}
-                        <div class="flex items-center gap-2 flex-wrap flex-1">
-                            <h4 class="text-base font-bold leading-tight whitespace-nowrap
-                                {{ $isCurrent ? 'text-blue-900 dark:text-blue-100' :
-                                   ($isCompleted ? 'text-gray-900 dark:text-gray-100' :
-                                   ($isCancelled ? 'text-red-900 dark:text-red-100' :
-                                   'text-gray-600 dark:text-gray-400')) }}">
-                                {{ $step['title'] }}
-                            </h4>
+                    {{-- Step Content --}}
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-4">
+                            {{-- Left: Title and Badges --}}
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <h4 class="text-base font-bold
+                                        {{ $isCurrent ? 'text-blue-900 dark:text-blue-100' :
+                                           ($isCompleted ? 'text-gray-900 dark:text-gray-100' :
+                                           ($isCancelled ? 'text-red-900 dark:text-red-100' :
+                                           'text-gray-600 dark:text-gray-400')) }}">
+                                        {{ $step['title'] }}
+                                    </h4>
 
-                            @if ($isCurrent)
-                                <span class="inline-flex items-center gap-1 rounded-full bg-blue-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm animate-pulse">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-white"></span>
-                                    {{ trans('trips.admin.fields.now') }}
-                                </span>
-                            @endif
+                                    @if ($isCurrent)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm animate-pulse">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-white"></span>
+                                            {{ trans('trips.admin.fields.now') }}
+                                        </span>
+                                    @endif
 
-                            @if ($isWait)
-                                <span class="inline-flex items-center gap-1 rounded-full bg-orange-500 px-2.5 py-0.5 text-xs font-bold text-white">
-                                    ⏱️ {{ trans('trips.admin.fields.waiting') }}
-                                </span>
-                            @endif
-
-                            @if (isset($step['location']) && $step['location']->location_sub_title)
-                                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                    📍 {{ $step['location']->location_sub_title }}
-                                </span>
-                            @endif
-                        </div>
-
-                        {{-- Right: Timestamp (without background box) --}}
-                        <div class="flex-shrink-0 text-right">
-                            @if ($step['timestamp'])
-                                <div class="text-sm font-bold
-                                    {{ $isCurrent ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-gray-100' }}">
-                                    {{ $step['timestamp']->diffForHumans() }}
+                                    @if ($isWait)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-orange-500 px-2.5 py-0.5 text-xs font-bold text-white">
+                                            ⏱️ {{ trans('trips.admin.fields.waiting') }}
+                                        </span>
+                                    @endif
                                 </div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">
-                                    {{ $step['timestamp']->format('M d, Y H:i') }}
-                                </div>
-                            @elseif ($isPending)
-                                <span class="text-sm font-semibold italic text-gray-500 dark:text-gray-400">
-                                    {{ trans('trips.admin.fields.pending') }}
-                                </span>
-                            @endif
+
+                                {{-- Location subtitle on separate line --}}
+                                @if (isset($step['location']) && $step['location']->location_sub_title)
+                                    <div class="flex items-start gap-1.5 mt-1">
+                                        <span class="text-gray-400 dark:text-gray-500 flex-shrink-0">📍</span>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                                            {{ $step['location']->location_sub_title }}
+                                        </p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Right: Timestamp --}}
+                            <div class="flex-shrink-0 text-right">
+                                @if ($step['timestamp'])
+                                    <div class="text-sm font-semibold
+                                        {{ $isCurrent ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-gray-100' }}">
+                                        {{ $step['timestamp']->format('H:i') }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        {{ $step['timestamp']->format('M d') }}
+                                    </div>
+                                @elseif ($isPending)
+                                    <span class="text-xs font-medium text-gray-400 dark:text-gray-500">
+                                        {{ trans('trips.admin.fields.pending') }}
+                                    </span>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
