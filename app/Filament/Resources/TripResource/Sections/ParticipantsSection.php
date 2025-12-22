@@ -79,9 +79,9 @@ class ParticipantsSection
                                     ->icon('heroicon-o-user')
                                     ->weight(FontWeight::Bold),
 
-                                TextEntry::make('rider.phone_number')
+                                TextEntry::make('rider_phone_number')
                                     ->label(trans('trips.admin.fields.phone'))
-                                    ->formatStateUsing(function ($record) {
+                                    ->state(function ($record) {
                                         if (! $record->rider || ! $record->rider->phone_number) {
                                             return trans('trips.admin.fields.na');
                                         }
@@ -96,9 +96,9 @@ class ParticipantsSection
                                     ->icon('heroicon-o-phone')
                                     ->copyable(),
 
-                                TextEntry::make('rider.email')
+                                TextEntry::make('rider_email')
                                     ->label(trans('trips.admin.fields.email'))
-                                    ->formatStateUsing(fn ($record) => $record->rider?->email ?: trans('trips.admin.fields.na'))
+                                    ->state(fn ($record) => $record->rider?->email ?: trans('trips.admin.fields.na'))
                                     ->icon('heroicon-o-envelope')
                                     ->copyable(),
                             ])

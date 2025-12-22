@@ -1,6 +1,7 @@
 @php
     use App\Enums\Trip\TripStatusEnum;
     use App\Enums\Trip\TripLocationStatusEnum;
+    use App\Enums\Trip\TripLocationTypeEnum;
     use App\Enums\Trip\RideTypeEnum;
     use Carbon\Carbon;
 
@@ -16,27 +17,23 @@
         $trip->load(['statusLogs' => fn($query) => $query->orderBy('id', 'desc')]);
     }
     if (!$trip->relationLoaded('locations')) {
-        $trip->load(['locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence,status']);
+        $trip->load([
+            'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence,status',
+            'locations.statusLogs' => fn($query) => $query->orderBy('id', 'desc'),
+        ]);
     }
     if (!$trip->relationLoaded('rider')) {
-        $trip->load(['rider:id,full_name,latitude,longitude']);
-    }
-    // Load location status logs separately if not already loaded
-    foreach ($trip->locations as $location) {
-        if (!$location->relationLoaded('statusLogs')) {
-            $location->load(['statusLogs' => fn($query) => $query->orderBy('id', 'desc')]);
-        }
+        $trip->load(['rider:id,full_name,phone_number,email,latitude,longitude,last_location_update']);
     }
 
     $tripStatus = $trip->status;
     $rideType = $trip->ride_type;
     $isOneWay = in_array($rideType, [RideTypeEnum::ONE_WAY, RideTypeEnum::ROUND_TRIP], true);
     $isRoundTripWithWait = $rideType === RideTypeEnum::ROUND_TRIP_WAIT;
-    $isDemandTrip = $rideType === RideTypeEnum::ROUND_TRIP && $trip->demand_trip_id;
 
     $locations = $trip->locations->sortBy('sequence');
-    $originLocation = $locations->firstWhere('type', 'origin');
-    $destinationLocations = $locations->where('type', 'destination');
+    $originLocation = $locations->where('type', TripLocationTypeEnum::ORIGIN)->first();
+    $destinationLocations = $locations->where('type', TripLocationTypeEnum::DESTINATION);
     $firstDestination = $destinationLocations->first();
     $finalDestination = $destinationLocations->last();
 
@@ -53,8 +50,9 @@
         if (!$startTime) return null;
         $end = $endTime ?? now();
         $diffInMinutes = $startTime->diffInMinutes($end);
+        $diffInMinutes = round($diffInMinutes ?: 0);
 
-        if ($diffInMinutes < 1) return '< 1 min';
+        if ($diffInMinutes < 1) return null;
         if ($diffInMinutes < 60) return $diffInMinutes . ' min';
 
         $hours = floor($diffInMinutes / 60);
@@ -91,21 +89,18 @@
         return $hours . 'h ' . $mins . 'm';
     };
 
-    // Calculate arrival time from ETA string
     $calculateArrivalTime = function($etaString, $baseTime = null) {
         if (!$etaString) return null;
 
         $baseTime = $baseTime ?? now();
         $minutes = 0;
 
-        // Parse "Xh Ym" format
         if (preg_match('/(\d+)h/', $etaString, $hours)) {
             $minutes += (int)$hours[1] * 60;
         }
         if (preg_match('/(\d+)\s*m/', $etaString, $mins)) {
             $minutes += (int)$mins[1];
         }
-        // Parse "X min" format
         if (preg_match('/^(\d+)\s*min$/', $etaString, $mins)) {
             $minutes += (int)$mins[1];
         }
@@ -121,6 +116,7 @@
 
     $steps = [];
 
+    // Step 1: Trip Created
     $steps[] = [
         'title' => trans('trips.admin.timeline.trip_created'),
         'icon' => '📝',
@@ -128,20 +124,25 @@
         'status' => 'completed',
     ];
 
+    // Get all status logs we need
     $acceptedLog = $findTripStatusLog(TripStatusEnum::ACCEPTED_RIDER);
     $inProgressLog = $findTripStatusLog(TripStatusEnum::IN_PROGRESS);
-    $arrivedAtPickup = $findLocationStatusLog($originLocation, TripLocationStatusEnum::ARRIVED);
+    $arrivedAtOrigin = $findLocationStatusLog($originLocation, TripLocationStatusEnum::ARRIVED);
+    $pickedUpAtOrigin = $findLocationStatusLog($originLocation, TripLocationStatusEnum::PICKED_UP);
 
-    if ($arrivedAtPickup) {
-        $travelTime = ($inProgressLog && $arrivedAtPickup) ? $calculateWaitTime($inProgressLog->created_at, $arrivedAtPickup->created_at) : null;
+    // Step 2: Accepted & En Route to Pickup
+    if ($arrivedAtOrigin) {
+        // Completed - show duration
+        $travelTime = $inProgressLog ? $calculateWaitTime($inProgressLog->created_at, $arrivedAtOrigin->created_at) : null;
         $steps[] = [
             'title' => trans('trips.admin.timeline.en_route_to_pickup'),
             'icon' => '🚗',
-            'timestamp' => $inProgressLog?->created_at,
+            'timestamp' => $acceptedLog?->created_at,
             'status' => 'completed',
             'duration' => $travelTime,
         ];
     } elseif ($acceptedLog || $inProgressLog) {
+        // Active - show ETA
         $eta = null;
         if ($trip->rider && $originLocation && $trip->rider->latitude && $trip->rider->longitude && $originLocation->latitude && $originLocation->longitude) {
             $eta = $calculateETA($trip->rider->latitude, $trip->rider->longitude, $originLocation->latitude, $originLocation->longitude);
@@ -149,15 +150,16 @@
         $step = [
             'title' => trans('trips.admin.timeline.en_route_to_pickup'),
             'icon' => '🚗',
-            'timestamp' => $inProgressLog?->created_at ?? $acceptedLog?->created_at,
+            'timestamp' => $acceptedLog?->created_at,
             'status' => 'active',
         ];
         if ($eta) {
             $step['eta'] = $eta;
-            $step['arrivalTime'] = $calculateArrivalTime($eta, $step['timestamp']);
+            $step['arrivalTime'] = $calculateArrivalTime($eta, $acceptedLog?->created_at);
         }
         $steps[] = $step;
     } else {
+        // Pending
         $steps[] = [
             'title' => trans('trips.admin.timeline.waiting_for_rider'),
             'icon' => '⏳',
@@ -165,27 +167,30 @@
         ];
     }
 
-    $pickedUp = $findLocationStatusLog($originLocation, TripLocationStatusEnum::PICKED_UP);
-
-    if ($pickedUp) {
-        $waitTime = ($arrivedAtPickup && $pickedUp) ? $calculateWaitTime($arrivedAtPickup->created_at, $pickedUp->created_at) : null;
+    // Step 3: Arrived & Waiting for Passenger
+    if ($pickedUpAtOrigin) {
+        // Completed - show wait time
+        $waitTime = $arrivedAtOrigin ? $calculateWaitTime($arrivedAtOrigin->created_at, $pickedUpAtOrigin->created_at) : null;
         $steps[] = [
             'title' => trans('trips.admin.timeline.rider_arrived'),
             'icon' => '📍',
-            'timestamp' => $arrivedAtPickup?->created_at,
+            'timestamp' => $arrivedAtOrigin?->created_at,
             'status' => 'completed',
             'waitTime' => $waitTime,
         ];
-    } elseif ($arrivedAtPickup) {
+    } elseif ($arrivedAtOrigin) {
+        // Active - show live wait time
+        $waitTime = $calculateWaitTime($arrivedAtOrigin->created_at);
         $steps[] = [
             'title' => trans('trips.admin.timeline.rider_arrived'),
             'icon' => '📍',
-            'timestamp' => $arrivedAtPickup->created_at,
+            'timestamp' => $arrivedAtOrigin->created_at,
             'status' => 'active',
-            'waitTime' => $calculateWaitTime($arrivedAtPickup->created_at),
+            'waitTime' => $waitTime,
             'isLive' => true,
         ];
     } else {
+        // Pending
         $steps[] = [
             'title' => trans('trips.admin.timeline.rider_arrived'),
             'icon' => '📍',
@@ -193,20 +198,23 @@
         ];
     }
 
+    // For One-Way & Round Trip (without wait)
     if ($isOneWay) {
-        $droppedOff = $findLocationStatusLog($finalDestination, TripLocationStatusEnum::DROPPED_OFF);
-        $arrivedAtDestination = $findLocationStatusLog($finalDestination, TripLocationStatusEnum::ARRIVED);
+        $droppedAtDestination = $findLocationStatusLog($finalDestination, TripLocationStatusEnum::DROPPED_OFF);
 
-        if ($droppedOff) {
-            $travelTime = ($pickedUp && $arrivedAtDestination) ? $calculateWaitTime($pickedUp->created_at, $arrivedAtDestination->created_at) : null;
+        // Step 4: Picked Up & En Route to Destination
+        if ($droppedAtDestination) {
+            // Completed - show duration
+            $travelTime = $pickedUpAtOrigin ? $calculateWaitTime($pickedUpAtOrigin->created_at, $droppedAtDestination->created_at) : null;
             $steps[] = [
                 'title' => trans('trips.admin.timeline.en_route_to_destination'),
                 'icon' => '👤',
-                'timestamp' => $pickedUp?->created_at,
+                'timestamp' => $pickedUpAtOrigin?->created_at,
                 'status' => 'completed',
                 'duration' => $travelTime,
             ];
-        } elseif ($pickedUp) {
+        } elseif ($pickedUpAtOrigin) {
+            // Active - show ETA
             $eta = null;
             if ($trip->rider && $finalDestination && $trip->rider->latitude && $trip->rider->longitude && $finalDestination->latitude && $finalDestination->longitude) {
                 $eta = $calculateETA($trip->rider->latitude, $trip->rider->longitude, $finalDestination->latitude, $finalDestination->longitude);
@@ -214,38 +222,58 @@
             $step = [
                 'title' => trans('trips.admin.timeline.en_route_to_destination'),
                 'icon' => '👤',
-                'timestamp' => $pickedUp->created_at,
+                'timestamp' => $pickedUpAtOrigin->created_at,
                 'status' => 'active',
             ];
             if ($eta) {
                 $step['eta'] = $eta;
-                $step['arrivalTime'] = $calculateArrivalTime($eta, $step['timestamp']);
+                $step['arrivalTime'] = $calculateArrivalTime($eta, $pickedUpAtOrigin->created_at);
             }
             $steps[] = $step;
         } else {
+            // Pending
             $steps[] = [
                 'title' => trans('trips.admin.timeline.passenger_pickup'),
                 'icon' => '👤',
                 'status' => 'pending',
             ];
         }
-    } elseif ($isRoundTripWithWait) {
-        $firstDroppedOff = $findLocationStatusLog($firstDestination, TripLocationStatusEnum::DROPPED_OFF);
-        $firstArrived = $findLocationStatusLog($firstDestination, TripLocationStatusEnum::ARRIVED);
-        $secondPickup = $findLocationStatusLog($firstDestination, TripLocationStatusEnum::PICKED_UP);
-        $finalDroppedOff = $findLocationStatusLog($finalDestination, TripLocationStatusEnum::DROPPED_OFF);
-        $finalArrived = $findLocationStatusLog($finalDestination, TripLocationStatusEnum::ARRIVED);
 
-        if ($firstDroppedOff || $firstArrived) {
-            $travelTime = ($pickedUp && $firstArrived) ? $calculateWaitTime($pickedUp->created_at, $firstArrived->created_at) : null;
+        // Step 5: Complete
+        if ($tripStatus === TripStatusEnum::COMPLETED) {
+            $completedLog = $findTripStatusLog(TripStatusEnum::COMPLETED);
+            $steps[] = [
+                'title' => trans('trips.admin.timeline.trip_completed'),
+                'icon' => '✅',
+                'timestamp' => $completedLog?->created_at,
+                'status' => 'completed',
+            ];
+        } else {
+            $steps[] = [
+                'title' => trans('trips.admin.timeline.trip_completed'),
+                'icon' => '✅',
+                'status' => 'pending',
+            ];
+        }
+    }
+
+    // For Round Trip with Wait
+    if ($isRoundTripWithWait) {
+        $droppedAtFirst = $findLocationStatusLog($firstDestination, TripLocationStatusEnum::DROPPED_OFF);
+        $pickedUpAtFirst = $findLocationStatusLog($firstDestination, TripLocationStatusEnum::PICKED_UP);
+        $droppedAtFinal = $findLocationStatusLog($finalDestination, TripLocationStatusEnum::DROPPED_OFF);
+
+        // Step 4: Picked Up & En Route to First Destination
+        if ($droppedAtFirst) {
+            $travelTime = $pickedUpAtOrigin ? $calculateWaitTime($pickedUpAtOrigin->created_at, $droppedAtFirst->created_at) : null;
             $steps[] = [
                 'title' => trans('trips.admin.timeline.en_route_to_first_destination'),
                 'icon' => '👤',
-                'timestamp' => $pickedUp?->created_at,
+                'timestamp' => $pickedUpAtOrigin?->created_at,
                 'status' => 'completed',
                 'duration' => $travelTime,
             ];
-        } elseif ($pickedUp) {
+        } elseif ($pickedUpAtOrigin) {
             $eta = null;
             if ($trip->rider && $firstDestination && $trip->rider->latitude && $trip->rider->longitude && $firstDestination->latitude && $firstDestination->longitude) {
                 $eta = $calculateETA($trip->rider->latitude, $trip->rider->longitude, $firstDestination->latitude, $firstDestination->longitude);
@@ -253,12 +281,12 @@
             $step = [
                 'title' => trans('trips.admin.timeline.en_route_to_first_destination'),
                 'icon' => '👤',
-                'timestamp' => $pickedUp->created_at,
+                'timestamp' => $pickedUpAtOrigin->created_at,
                 'status' => 'active',
             ];
             if ($eta) {
                 $step['eta'] = $eta;
-                $step['arrivalTime'] = $calculateArrivalTime($eta, $step['timestamp']);
+                $step['arrivalTime'] = $calculateArrivalTime($eta, $pickedUpAtOrigin->created_at);
             }
             $steps[] = $step;
         } else {
@@ -269,22 +297,24 @@
             ];
         }
 
-        if ($secondPickup) {
-            $waitTime = ($firstDroppedOff && $secondPickup) ? $calculateWaitTime($firstDroppedOff->created_at, $secondPickup->created_at) : null;
+        // Step 5: Dropped & Waiting for Pickup Again
+        if ($pickedUpAtFirst) {
+            $waitTime = $droppedAtFirst ? $calculateWaitTime($droppedAtFirst->created_at, $pickedUpAtFirst->created_at) : null;
             $steps[] = [
-                'title' => trans('trips.admin.timeline.waiting_for_pickup_again'),
+                'title' => trans('trips.admin.timeline.passenger_dropped_off'),
                 'icon' => '⏱️',
-                'timestamp' => $firstDroppedOff?->created_at,
+                'timestamp' => $droppedAtFirst?->created_at,
                 'status' => 'completed',
                 'waitTime' => $waitTime,
             ];
-        } elseif ($firstDroppedOff) {
+        } elseif ($droppedAtFirst) {
+            $waitTime = $calculateWaitTime($droppedAtFirst->created_at);
             $steps[] = [
-                'title' => trans('trips.admin.timeline.waiting_for_pickup_again'),
+                'title' => trans('trips.admin.timeline.passenger_dropped_off'),
                 'icon' => '⏱️',
-                'timestamp' => $firstDroppedOff->created_at,
+                'timestamp' => $droppedAtFirst->created_at,
                 'status' => 'active',
-                'waitTime' => $calculateWaitTime($firstDroppedOff->created_at),
+                'waitTime' => $waitTime,
                 'isLive' => true,
             ];
         } else {
@@ -295,16 +325,17 @@
             ];
         }
 
-        if ($finalDroppedOff || $finalArrived) {
-            $travelTime = ($secondPickup && $finalArrived) ? $calculateWaitTime($secondPickup->created_at, $finalArrived->created_at) : null;
+        // Step 6: Picked Up Again & En Route to Final Destination
+        if ($droppedAtFinal) {
+            $travelTime = $pickedUpAtFirst ? $calculateWaitTime($pickedUpAtFirst->created_at, $droppedAtFinal->created_at) : null;
             $steps[] = [
                 'title' => trans('trips.admin.timeline.en_route_to_final_destination'),
                 'icon' => '🔄',
-                'timestamp' => $secondPickup?->created_at,
+                'timestamp' => $pickedUpAtFirst?->created_at,
                 'status' => 'completed',
                 'duration' => $travelTime,
             ];
-        } elseif ($secondPickup) {
+        } elseif ($pickedUpAtFirst) {
             $eta = null;
             if ($trip->rider && $finalDestination && $trip->rider->latitude && $trip->rider->longitude && $finalDestination->latitude && $finalDestination->longitude) {
                 $eta = $calculateETA($trip->rider->latitude, $trip->rider->longitude, $finalDestination->latitude, $finalDestination->longitude);
@@ -312,12 +343,12 @@
             $step = [
                 'title' => trans('trips.admin.timeline.en_route_to_final_destination'),
                 'icon' => '🔄',
-                'timestamp' => $secondPickup->created_at,
+                'timestamp' => $pickedUpAtFirst->created_at,
                 'status' => 'active',
             ];
             if ($eta) {
                 $step['eta'] = $eta;
-                $step['arrivalTime'] = $calculateArrivalTime($eta, $step['timestamp']);
+                $step['arrivalTime'] = $calculateArrivalTime($eta, $pickedUpAtFirst->created_at);
             }
             $steps[] = $step;
         } else {
@@ -327,182 +358,97 @@
                 'status' => 'pending',
             ];
         }
+
+        // Step 7: Complete
+        if ($tripStatus === TripStatusEnum::COMPLETED) {
+            $completedLog = $findTripStatusLog(TripStatusEnum::COMPLETED);
+            $steps[] = [
+                'title' => trans('trips.admin.timeline.trip_completed'),
+                'icon' => '✅',
+                'timestamp' => $completedLog?->created_at,
+                'status' => 'completed',
+            ];
+        } else {
+            $steps[] = [
+                'title' => trans('trips.admin.timeline.trip_completed'),
+                'icon' => '✅',
+                'status' => 'pending',
+            ];
+        }
     }
 
-    $completedLog = $findTripStatusLog(TripStatusEnum::COMPLETED);
-
+    // If cancelled, add cancellation step
     if ($isCancelled) {
-        $cancelLog = $findTripStatusLog($tripStatus);
+        $cancelledLog = $findTripStatusLog($tripStatus);
         $steps[] = [
             'title' => trans('trips.admin.timeline.trip_cancelled'),
             'icon' => '❌',
-            'timestamp' => $cancelLog?->created_at,
+            'timestamp' => $cancelledLog?->created_at,
             'status' => 'cancelled',
-        ];
-    } elseif ($completedLog) {
-        $steps[] = [
-            'title' => trans('trips.admin.timeline.trip_completed'),
-            'icon' => '🏁',
-            'timestamp' => $completedLog->created_at,
-            'status' => 'completed',
-        ];
-    } else {
-        $steps[] = [
-            'title' => trans('trips.admin.timeline.trip_completed'),
-            'icon' => '🏁',
-            'status' => 'pending',
         ];
     }
 @endphp
 
-<div class="space-y-6">
-    @if ($isDemandTrip)
-        <div class="rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-700 dark:bg-purple-900/20">
-            <div class="flex items-start gap-3">
-                <div class="text-2xl">🔗</div>
-                <div class="flex-1">
-                    <h4 class="text-sm font-semibold text-purple-900 dark:text-purple-100">
-                        {{ trans('trips.admin.fields.demand_trip') }}
-                    </h4>
-                    <p class="mt-1 text-xs text-purple-700 dark:text-purple-300">
-                        {{ trans('trips.admin.fields.linked_to_trip') }}:
-                        <a href="{{ route('filament.admin.resources.trips.view', $trip->demand_trip_id) }}"
-                           class="font-semibold underline hover:no-underline" target="_blank">
-                            #{{ $trip->demand_trip_id }}
-                        </a>
-                    </p>
-                </div>
-            </div>
-        </div>
-    @endif
+{{-- HORIZONTAL TIMELINE --}}
+<div class="overflow-x-auto rounded-lg bg-white p-8 dark:bg-gray-800" style="line-height: 1.8;">
+    <table class="w-full" style="table-layout: fixed;">
+        <tr>
+            @foreach ($steps as $index => $step)
+                @php
+                    $isCompleted = $step['status'] === 'completed';
+                    $isActive = $step['status'] === 'active';
+                    $isPending = $step['status'] === 'pending';
+                    $isCancelled = $step['status'] === 'cancelled';
+                    $isLast = $index === count($steps) - 1;
+                    $isLive = $step['isLive'] ?? false;
+                @endphp
 
-    {{-- SIMPLE HORIZONTAL TIMELINE --}}
-    <div class="overflow-x-auto rounded-lg bg-white p-8 dark:bg-gray-800" style="line-height: 1.8;">
-        <table class="w-full" style="table-layout: fixed;">
-            <tr>
-                @foreach ($steps as $index => $step)
-                    @php
-                        $isCompleted = $step['status'] === 'completed';
-                        $isActive = $step['status'] === 'active';
-                        $isPending = $step['status'] === 'pending';
-                        $isCancelled = $step['status'] === 'cancelled';
-                        $isLive = $step['isLive'] ?? false;
-                        $isLast = $loop->last;
-                    @endphp
-                    <td class="relative align-top" style="width: {{ 100 / count($steps) }}%;">
-                        <div class="flex flex-col items-center px-2">
-                            {{-- Icon --}}
-                            <div class="relative z-10 mb-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-lg
-                                {{ $isCompleted ? 'bg-gradient-to-br from-green-500 to-green-600' : '' }}
-                                {{ $isActive ? 'bg-gradient-to-br from-blue-500 to-blue-600 animate-pulse' : '' }}
-                                {{ $isPending ? 'bg-gray-300 dark:bg-gray-600' : '' }}
-                                {{ $isCancelled ? 'bg-gradient-to-br from-red-500 to-red-600' : '' }}">
-                                <span class="text-lg">{{ $step['icon'] }}</span>
-                            </div>
-
-                            {{-- Title --}}
-                            <h4 class="mb-1 text-center text-xs font-bold
-                                {{ $isActive ? 'text-blue-900 dark:text-blue-100' : '' }}
-                                {{ $isCompleted ? 'text-gray-900 dark:text-gray-100' : '' }}
-                                {{ $isPending ? 'text-gray-500 dark:text-gray-400' : '' }}
-                                {{ $isCancelled ? 'text-red-900 dark:text-red-100' : '' }}">
-                                {{ $step['title'] }}
-                            </h4>
-
-                            {{-- Horizontal Line --}}
-                            @if (!$isLast)
-                                <div class="absolute left-1/2 top-5 h-0.5 w-full bg-gray-300 dark:bg-gray-600"
-                                     style="z-index: 1;">
-                                    @if ($isCompleted)
-                                        <div class="h-full w-full bg-green-500"></div>
-                                    @elseif ($isActive)
-                                        <div class="h-full w-1/2 animate-pulse bg-blue-500"></div>
-                                    @endif
-                                </div>
-                            @endif
-
-                            {{-- Time --}}
-                            @if (isset($step['timestamp']))
-                                <div class="mt-2 text-center text-xs font-bold text-gray-700 dark:text-gray-300">
-                                    {{ $step['timestamp']->format('g:i A') }} <span class="text-gray-500">{{ $step['timestamp']->format('M d, Y') }}</span>
-                                </div>
-                            @endif
-
-                            {{-- Arrival Time --}}
-                            @if (isset($step['arrivalTime']))
-                                <div class="mt-1 text-center text-xs text-blue-600 dark:text-blue-400">
-                                    {{ trans('trips.admin.timeline.arrives_at') }}: {{ $step['arrivalTime']->format('g:i A') }}
-                                </div>
-                            @endif
-
-                            {{-- ETA --}}
-                            @if (isset($step['eta']))
-                                <div class="mt-2 rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
-                                    ⏱️ {{ $step['eta'] }}
-                                </div>
-                            @endif
-
-                            {{-- Duration --}}
-                            @if (isset($step['duration']))
-                                <div class="mt-2 rounded bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
-                                    ✓ {{ $step['duration'] }}
-                                </div>
-                            @endif
-
-                            {{-- Wait --}}
-                            @if (isset($step['waitTime']))
-                                <div class="mt-2 rounded bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700 {{ $isLive ? 'animate-pulse' : '' }}">
-                                    ⏱️ {{ $step['waitTime'] }}
-                                </div>
-                            @endif
-
-                            @if ($isPending && !isset($step['timestamp']))
-                                <div class="mt-2 text-xs italic text-gray-400">Pending</div>
-                            @endif
+                <td class="relative align-top" style="width: {{ 100 / count($steps) }}%;">
+                    <div class="flex flex-col items-center px-2">
+                        {{-- Icon --}}
+                        <div class="relative z-10 mb-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-lg
+                            {{ $isCompleted ? 'bg-gradient-to-br from-green-500 to-green-600' : '' }}
+                            {{ $isActive ? 'bg-gradient-to-br from-blue-500 to-blue-600 animate-pulse' : '' }}
+                            {{ $isPending ? 'bg-gray-300 dark:bg-gray-600' : '' }}
+                            {{ $isCancelled ? 'bg-gradient-to-br from-red-500 to-red-600' : '' }}">
+                            <span class="text-lg">{{ $step['icon'] }}</span>
                         </div>
-                    </td>
-                @endforeach
-            </tr>
-        </table>
-    </div>
 
-    {{-- Locations --}}
-    @if ($originLocation || $destinationLocations->isNotEmpty())
-        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
-            <h4 class="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">
-                {{ trans('trips.admin.timeline.route_details') }}
-            </h4>
-            <div class="space-y-2">
-                @if ($originLocation)
-                    <div class="flex items-start gap-2">
-                        <span class="text-green-500">📍</span>
-                        <div class="flex-1">
-                            <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                {{ trans('trips.admin.timeline.pickup_location') }}
+                        {{-- Horizontal Line --}}
+                        @if (!$isLast)
+                            <div class="absolute left-1/2 top-5 h-0.5 w-full bg-gray-300 dark:bg-gray-600"
+                                 style="z-index: 1;">
+                                @if ($isCompleted)
+                                    <div class="h-full w-full bg-green-500"></div>
+                                @elseif ($isActive)
+                                    <div class="h-full w-1/2 animate-pulse bg-blue-500"></div>
+                                @endif
                             </div>
-                            <div class="text-xs text-gray-600 dark:text-gray-400">
-                                {{ $originLocation->location_sub_title ?: $originLocation->location_title }}
+                        @endif
+
+                        {{-- Title --}}
+                        <h4 class="mb-1 text-center text-xs font-bold
+                            {{ $isActive ? 'text-blue-900 dark:text-blue-100' : '' }}
+                            {{ $isCompleted ? 'text-gray-900 dark:text-gray-100' : '' }}
+                            {{ $isPending ? 'text-gray-500 dark:text-gray-400' : '' }}
+                            {{ $isCancelled ? 'text-red-900 dark:text-red-100' : '' }}">
+                            {{ $step['title'] }}
+                        </h4>
+
+                        {{-- Time or Pending --}}
+                        @if (isset($step['timestamp']))
+                            <div class="mt-2 text-center text-xs font-bold text-gray-700 dark:text-gray-300">
+                                {{ $step['timestamp']->format('g:i A') }} <span
+                                    class="text-gray-500">{{ $step['timestamp']->format('M d, Y') }}</span>
                             </div>
-                        </div>
+                        @else
+                            <div class="mt-2 text-center text-xs font-semibold text-gray-400 dark:text-gray-500">
+                                Pending
+                            </div>
+                        @endif
                     </div>
-                @endif
-
-                @foreach ($destinationLocations as $index => $destination)
-                    <div class="flex items-start gap-2">
-                        <span class="text-red-500">📍</span>
-                        <div class="flex-1">
-                            <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                {{ $destinationLocations->count() > 1
-                                    ? trans('trips.admin.timeline.destination') . ' ' . ($index + 1)
-                                    : trans('trips.admin.timeline.destination') }}
-                            </div>
-                            <div class="text-xs text-gray-600 dark:text-gray-400">
-                                {{ $destination->location_sub_title ?: $destination->location_title }}
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    @endif
+                </td>
+            @endforeach
+        </tr>
+    </table>
 </div>
