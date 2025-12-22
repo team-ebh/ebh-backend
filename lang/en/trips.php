@@ -147,7 +147,7 @@ return [
             'rider_arrived' => 'Rider Arrived and Waiting for Passenger',
             'waiting_for_passenger' => 'Waiting for Passenger',
             'passenger_picked_up' => 'Passenger Picked Up',
-            'passenger_pickup' => 'Passenger Pickup',
+            'passenger_pickup' => 'Passenger Picked Up and En Route to Destination',
             'en_route_to_destination' => 'Picked Up and En Route to Destination',
             'to_destination' => 'To Destination',
             'en_route_to_first_destination' => 'En Route to First Destination',

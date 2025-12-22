@@ -347,7 +347,7 @@
     @endif
 
     {{-- SIMPLE HORIZONTAL TIMELINE --}}
-    <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white p-8 dark:border-gray-700 dark:bg-gray-800">
+    <div class="overflow-x-auto rounded-lg bg-white p-8 dark:bg-gray-800" style="line-height: 1.8;">
         <table class="w-full" style="table-layout: fixed;">
             <tr>
                 @foreach ($steps as $index => $step)

@@ -147,7 +147,7 @@ return [
             'rider_arrived' => 'وصول السائق وبانتظار الراكب',
             'waiting_for_passenger' => 'بانتظار الراكب',
             'passenger_picked_up' => 'تم استلام الراكب',
-            'passenger_pickup' => 'استلام الراكب',
+            'passenger_pickup' => 'تم استلام الراكب وفي الطريق إلى الوجهة',
             'en_route_to_destination' => 'تم الاستلام وفي الطريق إلى الوجهة',
             'to_destination' => 'إلى الوجهة',
             'en_route_to_first_destination' => 'في الطريق إلى الوجهة الأولى',

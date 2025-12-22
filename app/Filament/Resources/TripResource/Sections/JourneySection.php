@@ -24,6 +24,7 @@ class JourneySection
                                 'trip' => $record,
                             ]),
                     ])
+                    ->extraAttributes(['class' => 'border-0'])
                     ->collapsible()
                     ->collapsed(false),
 
@@ -36,6 +37,7 @@ class JourneySection
                                 'trip' => $record,
                             ]),
                     ])
+                    ->extraAttributes(['class' => 'border-0'])
                     ->collapsible()
                     ->collapsed(false),
             ])
