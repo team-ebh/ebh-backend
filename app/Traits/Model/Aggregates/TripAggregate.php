@@ -99,4 +99,10 @@ trait TripAggregate
         return $this->hasOne(Payment::class, Payment::COLUMN_TRIP_ID)
             ->withAttributes(Payment::COLUMN_STATUS, PaymentStatusEnum::PAID);
     }
+
+    public function lastPayment(): HasOne
+    {
+        return $this->hasOne(Payment::class, Payment::COLUMN_TRIP_ID)
+            ->latest('id');
+    }
 }

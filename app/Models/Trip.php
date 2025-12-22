@@ -33,6 +33,8 @@ class Trip extends Model
 
     public const string COLUMN_RIDE_TYPE_ID = 'ride_type_id';
 
+    public const string COLUMN_RIDE_TYPE = 'ride_type';
+
     public const string COLUMN_VEHICLE_TYPE_ID = 'vehicle_type_id';
 
     public const string COLUMN_PASSENGER_COUNT = 'passenger_count';
@@ -56,6 +58,7 @@ class Trip extends Model
         return [
             self::COLUMN_TRIP_TYPE_ID => TripTypeEnum::class,
             self::COLUMN_RIDE_TYPE_ID => RideTypeEnum::class,
+            self::COLUMN_RIDE_TYPE => RideTypeEnum::class,
             self::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::class,
             self::COLUMN_CURRENCY => CurrencyEnum::class,
             self::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::class,

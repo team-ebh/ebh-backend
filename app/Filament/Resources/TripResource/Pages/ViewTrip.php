@@ -42,6 +42,7 @@ class ViewTrip extends ViewRecord
             'payments' => fn ($query) => $query->with([
                 'logs' => fn ($q) => $q->orderBy('created_at', 'asc'),
             ])->orderBy('created_at', 'desc'),
+            'lastPayment:id,trip_id,status',
         ]);
     }
 
@@ -223,7 +224,7 @@ class ViewTrip extends ViewRecord
                         // Trip Details Section
                         Section::make(trans('trips.admin.sections.trip_details'))
                             ->schema([
-                                Grid::make(4)
+                                Grid::make(5)
                                     ->schema([
                                         TextEntry::make('id')
                                             ->label(trans('trips.admin.fields.trip_id'))
@@ -253,6 +254,13 @@ class ViewTrip extends ViewRecord
                                             ->formatStateUsing(fn ($state) => $state->getLabel())
                                             ->color('info')
                                             ->icon('heroicon-o-map'),
+
+                                        TextEntry::make('ride_type')
+                                            ->label(trans('trips.admin.fields.ride_type'))
+                                            ->badge()
+                                            ->formatStateUsing(fn ($state) => $state->getLabel())
+                                            ->color('cyan')
+                                            ->icon('heroicon-o-arrow-path-rounded-square'),
                                     ]),
 
                                 Grid::make(4)
@@ -449,16 +457,27 @@ class ViewTrip extends ViewRecord
                                             ->color('success')
                                             ->icon('heroicon-o-banknotes'),
 
-                                        TextEntry::make('has_payment')
+                                        TextEntry::make('lastPayment.status')
                                             ->label(trans('trips.admin.fields.payment_status'))
-                                            ->formatStateUsing(fn ($record) => $record->hasPaidPayment()
-                                                ? trans('trips.admin.fields.paid')
-                                                : trans('trips.admin.fields.unpaid'))
+                                            ->formatStateUsing(fn ($state) => $state?->getLabel() ?: trans('trips.admin.fields.no_payment'))
                                             ->badge()
                                             ->size('lg')
                                             ->weight(FontWeight::Bold)
-                                            ->color(fn ($record) => $record->hasPaidPayment() ? 'success' : 'danger')
-                                            ->icon(fn ($record) => $record->hasPaidPayment() ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
+                                            ->color(fn ($state) => match ($state?->value) {
+                                                'pending' => 'warning',
+                                                'paid' => 'success',
+                                                'failed' => 'danger',
+                                                'refunded' => 'info',
+                                                default => 'gray',
+                                            })
+                                            ->icon(fn ($state) => match ($state?->value) {
+                                                'paid' => 'heroicon-o-check-circle',
+                                                'failed' => 'heroicon-o-x-circle',
+                                                'pending' => 'heroicon-o-clock',
+                                                'refunded' => 'heroicon-o-arrow-uturn-left',
+                                                default => 'heroicon-o-question-mark-circle',
+                                            })
+                                            ->visible(fn ($record) => $record->payment_method !== PaymentMethodEnum::CASH),
                                     ]),
 
                                 Grid::make(3)
@@ -495,167 +514,35 @@ class ViewTrip extends ViewRecord
                     ->columnSpanFull()
                     ->compact(),
 
-                // Trip Status Tracker - Horizontal Timeline
-                Section::make(trans('trips.admin.sections.trip_status_tracker'))
-                    ->description(trans('trips.admin.sections.trip_status_tracker_description'))
+                // Main Content: Journey Timeline + Map (Side by Side)
+                Grid::make(2)
                     ->schema([
-                        Grid::make(6)
+                        // Left Column: Journey Timeline
+                        Section::make(trans('trips.admin.sections.journey_timeline'))
+                            ->description(trans('trips.admin.sections.journey_timeline_description'))
                             ->schema([
-                                TextEntry::make('status_pending')
-                                    ->label(trans('trips.api.trip_statuses.PENDING_RIDER'))
-                                    ->state(fn ($record) => $record->status->value >= 2 ? '✓' : '○')
-                                    ->badge()
-                                    ->color(fn ($record) => $record->status->value >= 2 ? 'success' : 'gray')
-                                    ->size('lg')
-                                    ->weight(FontWeight::Bold)
-                                    ->icon(fn ($record) => $record->status->value >= 2 ? 'heroicon-o-check-circle' : 'heroicon-o-clock')
-                                    ->alignment('center'),
-
-                                TextEntry::make('status_accepted')
-                                    ->label(trans('trips.api.trip_statuses.ACCEPTED_RIDER'))
-                                    ->state(fn ($record) => $record->status->value >= 3 ? '✓' : '○')
-                                    ->badge()
-                                    ->color(fn ($record) => $record->status->value >= 3 ? 'success' : 'gray')
-                                    ->size('lg')
-                                    ->weight(FontWeight::Bold)
-                                    ->icon(fn ($record) => $record->status->value >= 3 ? 'heroicon-o-check-circle' : 'heroicon-o-user-plus')
-                                    ->alignment('center'),
-
-                                TextEntry::make('status_in_progress')
-                                    ->label(trans('trips.api.trip_statuses.IN_PROGRESS'))
-                                    ->state(fn ($record) => $record->status->value >= 4 ? '✓' : '○')
-                                    ->badge()
-                                    ->color(fn ($record) => $record->status->value >= 4 ? 'success' : 'gray')
-                                    ->size('lg')
-                                    ->weight(FontWeight::Bold)
-                                    ->icon(fn ($record) => $record->status->value >= 4 ? 'heroicon-o-check-circle' : 'heroicon-o-truck')
-                                    ->alignment('center'),
-
-                                TextEntry::make('status_completed')
-                                    ->label(trans('trips.api.trip_statuses.COMPLETED'))
-                                    ->state(fn ($record) => $record->status->value === 5 ? '✓' : '○')
-                                    ->badge()
-                                    ->color(fn ($record) => $record->status->value === 5 ? 'success' : 'gray')
-                                    ->size('lg')
-                                    ->weight(FontWeight::Bold)
-                                    ->icon(fn ($record) => $record->status->value === 5 ? 'heroicon-o-check-circle' : 'heroicon-o-flag')
-                                    ->alignment('center'),
-
-                                TextEntry::make('status_cancelled_customer')
-                                    ->label(trans('trips.api.trip_statuses.CANCELED_BY_CUSTOMER'))
-                                    ->state(fn ($record) => $record->status->value === 6 ? '✗' : '○')
-                                    ->badge()
-                                    ->color(fn ($record) => $record->status->value === 6 ? 'danger' : 'gray')
-                                    ->size('lg')
-                                    ->weight(FontWeight::Bold)
-                                    ->icon(fn ($record) => $record->status->value === 6 ? 'heroicon-o-x-circle' : 'heroicon-o-no-symbol')
-                                    ->alignment('center'),
-
-                                TextEntry::make('status_cancelled_rider')
-                                    ->label(trans('trips.api.trip_statuses.CANCELLED_BY_RIDER'))
-                                    ->state(fn ($record) => $record->status->value === 7 ? '✗' : '○')
-                                    ->badge()
-                                    ->color(fn ($record) => $record->status->value === 7 ? 'danger' : 'gray')
-                                    ->size('lg')
-                                    ->weight(FontWeight::Bold)
-                                    ->icon(fn ($record) => $record->status->value === 7 ? 'heroicon-o-x-circle' : 'heroicon-o-no-symbol')
-                                    ->alignment('center'),
-                            ]),
-                    ])
-                    ->collapsed(false)
-                    ->columnSpanFull(),
-
-                // Locations Status Tracker - Horizontal Timeline per Location
-                Section::make(trans('trips.admin.sections.locations_status_tracker'))
-                    ->description(trans('trips.admin.sections.locations_status_tracker_description'))
-                    ->schema([
-                        RepeatableEntry::make('locations')
-                            ->label('')
-                            ->schema([
-                                Section::make(fn ($record) => trans('trips.admin.fields.location_header', [
-                                    'sequence' => $record->sequence,
-                                    'type' => $record->type->getLabel(),
-                                ]))
-                                    ->description(fn ($record) => $record->location_title ?: trans('trips.admin.fields.na'))
-                                    ->icon('heroicon-o-map-pin')
-                                    ->iconColor('primary')
-                                    ->schema([
-                                        Grid::make(5)
-                                            ->schema([
-                                                TextEntry::make('status_pending')
-                                                    ->label(trans('trips.api.trip_location_statuses.PENDING'))
-                                                    ->state(fn ($record) => $record->status->value >= 1 ? '✓' : '○')
-                                                    ->badge()
-                                                    ->color(fn ($record) => $record->status->value >= 1 ? 'success' : 'gray')
-                                                    ->size('lg')
-                                                    ->weight(FontWeight::Bold)
-                                                    ->icon(fn ($record) => $record->status->value >= 1 ? 'heroicon-o-check-circle' : 'heroicon-o-clock')
-                                                    ->alignment('center'),
-
-                                                TextEntry::make('status_arrived')
-                                                    ->label(trans('trips.api.trip_location_statuses.ARRIVED'))
-                                                    ->state(fn ($record) => $record->status->value >= 2 ? '✓' : '○')
-                                                    ->badge()
-                                                    ->color(fn ($record) => $record->status->value >= 2 ? 'success' : 'gray')
-                                                    ->size('lg')
-                                                    ->weight(FontWeight::Bold)
-                                                    ->icon(fn ($record) => $record->status->value >= 2 ? 'heroicon-o-check-circle' : 'heroicon-o-map-pin')
-                                                    ->alignment('center'),
-
-                                                TextEntry::make('status_picked_up')
-                                                    ->label(trans('trips.api.trip_location_statuses.PICKED_UP'))
-                                                    ->state(fn ($record) => $record->status->value >= 3 ? '✓' : '○')
-                                                    ->badge()
-                                                    ->color(fn ($record) => $record->status->value >= 3 ? 'success' : 'gray')
-                                                    ->size('lg')
-                                                    ->weight(FontWeight::Bold)
-                                                    ->icon(fn ($record) => $record->status->value >= 3 ? 'heroicon-o-check-circle' : 'heroicon-o-arrow-up-on-square')
-                                                    ->alignment('center')
-                                                    ->visible(fn ($record) => $record->isOrigin()),
-
-                                                TextEntry::make('status_dropped_off')
-                                                    ->label(trans('trips.api.trip_location_statuses.DROPPED_OFF'))
-                                                    ->state(fn ($record) => $record->status->value >= 4 ? '✓' : '○')
-                                                    ->badge()
-                                                    ->color(fn ($record) => $record->status->value >= 4 ? 'success' : 'gray')
-                                                    ->size('lg')
-                                                    ->weight(FontWeight::Bold)
-                                                    ->icon(fn ($record) => $record->status->value >= 4 ? 'heroicon-o-check-circle' : 'heroicon-o-arrow-down-on-square')
-                                                    ->alignment('center')
-                                                    ->visible(fn ($record) => $record->isDestination()),
-
-                                                TextEntry::make('status_completed')
-                                                    ->label(trans('trips.api.trip_location_statuses.COMPLETED'))
-                                                    ->state(fn ($record) => $record->status->value >= 5 ? '✓' : '○')
-                                                    ->badge()
-                                                    ->color(fn ($record) => $record->status->value >= 5 ? 'success' : 'gray')
-                                                    ->size('lg')
-                                                    ->weight(FontWeight::Bold)
-                                                    ->icon(fn ($record) => $record->status->value >= 5 ? 'heroicon-o-check-circle' : 'heroicon-o-flag')
-                                                    ->alignment('center'),
-                                            ]),
-                                    ])
-                                    ->compact()
-                                    ->collapsible()
-                                    ->collapsed(false),
+                                ViewEntry::make('journey_timeline')
+                                    ->view('filament.infolists.components.journey-timeline')
+                                    ->state([
+                                        'trip' => $this->record,
+                                    ]),
                             ])
-                            ->contained(false),
-                    ])
-                    ->collapsed(false)
-                    ->columnSpanFull(),
+                            ->collapsible()
+                            ->collapsed(false),
 
-                // Trip Map
-                Section::make(trans('trips.admin.sections.trip_map'))
-                    ->description(trans('trips.admin.sections.trip_map_description'))
-                    ->schema([
-                        ViewEntry::make('trip_map')
-                            ->view('filament.infolists.components.trip-map')
-                            ->state([
-                                'trip' => $this->record,
-                            ]),
+                        // Right Column: Map
+                        Section::make(trans('trips.admin.sections.trip_map'))
+                            ->description(trans('trips.admin.sections.trip_map_description'))
+                            ->schema([
+                                ViewEntry::make('trip_map')
+                                    ->view('filament.infolists.components.trip-map')
+                                    ->state([
+                                        'trip' => $this->record,
+                                    ]),
+                            ])
+                            ->collapsible()
+                            ->collapsed(false),
                     ])
-                    ->collapsible()
-                    ->collapsed(false)
                     ->columnSpanFull(),
             ]);
     }
