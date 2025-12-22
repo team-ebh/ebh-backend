@@ -361,26 +361,23 @@
                     @endphp
                     <td class="relative align-top" style="width: {{ 100 / count($steps) }}%;">
                         <div class="flex flex-col items-center px-2">
-                            {{-- Icon and Title Side by Side --}}
-                            <div class="relative z-10 mb-3 flex items-center gap-2">
-                                {{-- Icon --}}
-                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-lg
-                                    {{ $isCompleted ? 'bg-gradient-to-br from-green-500 to-green-600' : '' }}
-                                    {{ $isActive ? 'bg-gradient-to-br from-blue-500 to-blue-600 animate-pulse' : '' }}
-                                    {{ $isPending ? 'bg-gray-300 dark:bg-gray-600' : '' }}
-                                    {{ $isCancelled ? 'bg-gradient-to-br from-red-500 to-red-600' : '' }}">
-                                    <span class="text-lg">{{ $step['icon'] }}</span>
-                                </div>
-
-                                {{-- Title --}}
-                                <h4 class="text-left text-xs font-bold
-                                    {{ $isActive ? 'text-blue-900 dark:text-blue-100' : '' }}
-                                    {{ $isCompleted ? 'text-gray-900 dark:text-gray-100' : '' }}
-                                    {{ $isPending ? 'text-gray-500 dark:text-gray-400' : '' }}
-                                    {{ $isCancelled ? 'text-red-900 dark:text-red-100' : '' }}">
-                                    {{ $step['title'] }}
-                                </h4>
+                            {{-- Icon --}}
+                            <div class="relative z-10 mb-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-lg
+                                {{ $isCompleted ? 'bg-gradient-to-br from-green-500 to-green-600' : '' }}
+                                {{ $isActive ? 'bg-gradient-to-br from-blue-500 to-blue-600 animate-pulse' : '' }}
+                                {{ $isPending ? 'bg-gray-300 dark:bg-gray-600' : '' }}
+                                {{ $isCancelled ? 'bg-gradient-to-br from-red-500 to-red-600' : '' }}">
+                                <span class="text-lg">{{ $step['icon'] }}</span>
                             </div>
+
+                            {{-- Title --}}
+                            <h4 class="mb-1 text-center text-xs font-bold
+                                {{ $isActive ? 'text-blue-900 dark:text-blue-100' : '' }}
+                                {{ $isCompleted ? 'text-gray-900 dark:text-gray-100' : '' }}
+                                {{ $isPending ? 'text-gray-500 dark:text-gray-400' : '' }}
+                                {{ $isCancelled ? 'text-red-900 dark:text-red-100' : '' }}">
+                                {{ $step['title'] }}
+                            </h4>
 
                             {{-- Horizontal Line --}}
                             @if (!$isLast)
@@ -394,18 +391,10 @@
                                 </div>
                             @endif
 
-                            {{-- Badge --}}
-                            @if ($isActive)
-                                <span class="mt-2 inline-flex items-center gap-1 rounded-full bg-blue-500 px-2 py-0.5 text-xs font-bold text-white">
-                                    <span class="h-1 w-1 animate-pulse rounded-full bg-white"></span>
-                                    Active
-                                </span>
-                            @endif
-
                             {{-- Time --}}
                             @if (isset($step['timestamp']))
                                 <div class="mt-2 text-center text-xs font-bold text-gray-700 dark:text-gray-300">
-                                    {{ $step['timestamp']->format('H:i') }} <span class="text-gray-500">{{ $step['timestamp']->format('M d') }}</span>
+                                    {{ $step['timestamp']->format('g:i A') }} <span class="text-gray-500">{{ $step['timestamp']->format('M d, Y') }}</span>
                                 </div>
                             @endif
 
