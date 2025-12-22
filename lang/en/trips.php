@@ -133,6 +133,7 @@ return [
             'rider_vehicle_information' => 'Rider Vehicle Information',
             'trip_map' => 'Trip Map',
             'trip_map_description' => 'Visual representation of trip locations and rider position',
+            'payments_list' => 'Payments',
         ],
         'tabs' => [
             'overview' => 'Overview',
@@ -251,6 +252,7 @@ return [
             'request_body' => 'Request Body',
             'response_body' => 'Response Body',
             'error' => 'Error',
+            'no_logs' => 'No logs available',
         ],
         'filters' => [
             'status' => 'Status',

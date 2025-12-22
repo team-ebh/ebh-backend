@@ -133,6 +133,7 @@ return [
             'rider_vehicle_information' => 'معلومات مركبة السائق',
             'trip_map' => 'خريطة الرحلة',
             'trip_map_description' => 'عرض مرئي لمواقع الرحلة وموقع السائق',
+            'payments_list' => 'المدفوعات',
         ],
         'tabs' => [
             'overview' => 'نظرة عامة',
@@ -251,6 +252,7 @@ return [
             'request_body' => 'محتوى الطلب',
             'response_body' => 'محتوى الاستجابة',
             'error' => 'خطأ',
+            'no_logs' => 'لا توجد سجلات متاحة',
         ],
         'filters' => [
             'status' => 'الحالة',

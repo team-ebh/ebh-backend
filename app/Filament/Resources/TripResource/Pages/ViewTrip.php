@@ -46,6 +46,7 @@ class ViewTrip extends ViewRecord
                 Tabs::make('TripTabs')
                     ->columnSpanFull()
                     ->persistTabInQueryString()
+                    ->vertical()
                     ->tabs([
                         // Tab 1: Overview
                         Tabs\Tab::make(trans('trips.admin.tabs.overview'))
