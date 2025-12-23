@@ -39,7 +39,7 @@ enum PaymentStatusEnum: int implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::PENDING => 'warning',
             self::PAID => 'success',
-            self::FAILED => 'danger',
+            self::FAILED, self::LOCKED => 'danger',
             self::EXPIRED => 'gray',
         };
     }
@@ -49,7 +49,7 @@ enum PaymentStatusEnum: int implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::PENDING => 'heroicon-o-clock',
             self::PAID => 'heroicon-o-check-circle',
-            self::FAILED => 'heroicon-o-x-circle',
+            self::FAILED, self::LOCKED => 'heroicon-o-x-circle',
             self::EXPIRED => 'heroicon-o-calendar',
         };
     }
