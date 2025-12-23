@@ -246,14 +246,19 @@ class PaymentSection
                                                                         ->icon('heroicon-o-x-circle')
                                                                         ->visible(fn ($record) => filled($record->error)),
                                                                 ])
-                                                                ->getStateUsing(fn ($record) => $record->logs()->orderBy('created_at', 'desc')->get())
+                                                                ->getStateUsing(function ($record) {
+                                                                    $logs = $record->logs()->orderBy('created_at', 'desc')->get();
+
+                                                                    return $logs->isNotEmpty() ? $logs : null;
+                                                                })
                                                                 ->contained(false)
-                                                                ->visible(fn ($record) => $record->logs && $record->logs->isNotEmpty()),
+                                                                ->visible(fn ($state) => filled($state)),
 
                                                             TextEntry::make('no_logs')
                                                                 ->label('')
                                                                 ->state(trans('trips.admin.payment_logs.no_logs'))
-                                                                ->visible(fn ($record) => ! $record->logs || $record->logs->isEmpty())
+                                                                ->getStateUsing(fn ($record) => $record->logs()->exists() ? trans('trips.admin.payment_logs.no_logs') : null)
+                                                                ->visible(fn ($state) => filled($state))
                                                                 ->extraAttributes(['class' => 'text-center text-gray-500']),
                                                         ])
                                                         ->collapsible()

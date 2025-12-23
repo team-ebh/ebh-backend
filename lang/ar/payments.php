@@ -11,12 +11,16 @@ return [
         PaymentStatusEnum::PAID->name => 'مدفوع',
         PaymentStatusEnum::FAILED->name => 'فشل',
         PaymentStatusEnum::EXPIRED->name => 'منتهي الصلاحية',
+        PaymentStatusEnum::LOCKED->name => 'مقفل',
+        PaymentStatusEnum::LOCKED_PAID->name => 'مقفل (مدفوع)',
     ],
     'frontend_statuses' => [
         PaymentStatusEnum::PENDING->name => 'قيد الانتظار',
         PaymentStatusEnum::PAID->name => 'نجح',
         PaymentStatusEnum::FAILED->name => 'فشل',
         PaymentStatusEnum::EXPIRED->name => 'منتهي الصلاحية',
+        PaymentStatusEnum::LOCKED->name => 'مقفل',
+        PaymentStatusEnum::LOCKED_PAID->name => 'مقفل (مدفوع)',
     ],
     'api' => [
         'payment_methods' => [

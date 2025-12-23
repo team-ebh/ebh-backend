@@ -20,6 +20,7 @@ enum PaymentStatusEnum: int implements HasColor, HasIcon, HasLabel
     case FAILED = 3;
     case EXPIRED = 4;
     case LOCKED = 5;
+    case LOCKED_PAID = 6;
 
     public function getLabel(): ?string
     {
@@ -37,7 +38,7 @@ enum PaymentStatusEnum: int implements HasColor, HasIcon, HasLabel
     public function getColor(): string | array | null
     {
         return match ($this) {
-            self::PENDING => 'warning',
+            self::PENDING, self::LOCKED_PAID => 'warning',
             self::PAID => 'success',
             self::FAILED, self::LOCKED => 'danger',
             self::EXPIRED => 'gray',
@@ -49,7 +50,7 @@ enum PaymentStatusEnum: int implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::PENDING => 'heroicon-o-clock',
             self::PAID => 'heroicon-o-check-circle',
-            self::FAILED, self::LOCKED => 'heroicon-o-x-circle',
+            self::FAILED, self::LOCKED, self::LOCKED_PAID => 'heroicon-o-x-circle',
             self::EXPIRED => 'heroicon-o-calendar',
         };
     }

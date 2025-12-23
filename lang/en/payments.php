@@ -11,12 +11,16 @@ return [
         PaymentStatusEnum::PAID->name => 'Paid',
         PaymentStatusEnum::FAILED->name => 'Failed',
         PaymentStatusEnum::EXPIRED->name => 'Expired',
+        PaymentStatusEnum::LOCKED->name => 'Locked',
+        PaymentStatusEnum::LOCKED_PAID->name => 'Locked (Paid)',
     ],
     'frontend_statuses' => [
         PaymentStatusEnum::PENDING->name => 'Pending',
         PaymentStatusEnum::PAID->name => 'Success',
         PaymentStatusEnum::FAILED->name => 'Failure',
         PaymentStatusEnum::EXPIRED->name => 'Expired',
+        PaymentStatusEnum::LOCKED->name => 'Locked',
+        PaymentStatusEnum::LOCKED_PAID->name => 'Locked (Paid)',
     ],
     'api' => [
         'payment_methods' => [
