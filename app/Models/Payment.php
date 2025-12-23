@@ -81,19 +81,38 @@ class Payment extends Model
     }
 
     /**
-     * Check if payment has been processed (not pending)
+     * Check if payment is locked
      */
-    public function isProcessed(): bool
+    public function isLocked(): bool
     {
-        return $this->{self::COLUMN_STATUS} !== PaymentStatusEnum::PENDING;
+        return $this->{self::COLUMN_STATUS} === PaymentStatusEnum::LOCKED;
     }
 
     /**
-     * Check if payment can be processed (is pending)
+     * Check if payment is locked paid
+     */
+    public function isLockedPaid(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === PaymentStatusEnum::LOCKED_PAID;
+    }
+
+    /**
+     * Check if payment has been processed (not pending or locked)
+     */
+    public function isProcessed(): bool
+    {
+        return ! in_array($this->{self::COLUMN_STATUS}, [
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::LOCKED,
+        ], true);
+    }
+
+    /**
+     * Check if payment can be processed (is pending or locked)
      */
     public function canBeProcessed(): bool
     {
-        return $this->isPending();
+        return $this->isPending() || $this->isLocked();
     }
 
     public function isForCustomer(int $customerId): bool

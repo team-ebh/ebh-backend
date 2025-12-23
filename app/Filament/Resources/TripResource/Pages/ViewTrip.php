@@ -36,6 +36,7 @@ class ViewTrip extends ViewRecord
             'payments' => fn ($query) => $query->orderBy('id', 'desc'),
             'payments.logs' => fn ($query) => $query->orderBy('id', 'asc'),
             'lastPayment:id,trip_id,status',
+            'paidPayment:id,trip_id,status',
         ]);
     }
 

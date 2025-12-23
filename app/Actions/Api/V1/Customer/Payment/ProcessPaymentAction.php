@@ -7,6 +7,7 @@ namespace App\Actions\Api\V1\Customer\Payment;
 use App\DTOs\Api\V1\Customer\Payment\ProcessPaymentDTO;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\CheckPaymentStatusPipe;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\GenerateDeeplinkPipe;
+use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\LockPendingPaymentsBeforeUpdatePipe;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\PaymentProcessContext;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\UpdatePaymentStatusPipe;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\ValidatePendingPaymentPipe;
@@ -16,7 +17,7 @@ use Illuminate\Pipeline\Pipeline;
  * Process Payment Action
  *
  * Processes payment callback/webhook with clean pipeline pattern
- * Flow: Validate → Check Status → Update → Generate Deeplink (callback only)
+ * Flow: Validate → Check Status → Lock Pending → Update → Generate Deeplink (callback only)
  */
 readonly class ProcessPaymentAction
 {
@@ -48,6 +49,7 @@ readonly class ProcessPaymentAction
             ->through([
                 ValidatePendingPaymentPipe::class,
                 CheckPaymentStatusPipe::class,
+                LockPendingPaymentsBeforeUpdatePipe::class,
                 UpdatePaymentStatusPipe::class,
                 GenerateDeeplinkPipe::class,
             ])

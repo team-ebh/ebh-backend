@@ -14,8 +14,8 @@ use Closure;
  * Check Existing Pending Payment Pipe
  *
  * Checks if there's an existing pending payment for the trip.
- * If found, updates its status to expired to ensure a fresh payment is created.
- * This prevents multiple pending payments for the same trip.
+ * If found, updates its status to locked to allow processing if customer pays through old link.
+ * This prevents multiple pending payments for the same trip while allowing locked payments to be processed.
  */
 readonly class CheckExistingPendingPaymentPipe
 {
@@ -28,16 +28,18 @@ readonly class CheckExistingPendingPaymentPipe
         $existingPayment = $this->paymentRepository->findPendingPaymentForTrip($context->trip->{Trip::COLUMN_ID});
 
         if ($existingPayment) {
-            $this->lockedExistingPendingPayment($existingPayment);
+            $this->lockExistingPendingPayment($existingPayment);
         }
 
         return $next($context);
     }
 
     /**
-     * Expire existing pending payment
+     * Lock existing pending payment
+     *
+     * Locks the payment so it can still be processed if customer pays through old link
      */
-    private function lockedExistingPendingPayment(Payment $payment): void
+    private function lockExistingPendingPayment(Payment $payment): void
     {
         $this->paymentRepository->update($payment, [
             Payment::COLUMN_STATUS => PaymentStatusEnum::LOCKED,

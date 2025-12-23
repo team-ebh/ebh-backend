@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\TripResource\Sections;
 
 use App\Enums\Payment\PaymentMethodEnum;
+use App\Models\Payment;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
