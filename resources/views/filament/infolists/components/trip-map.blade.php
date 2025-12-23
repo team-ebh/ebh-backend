@@ -1,5 +1,5 @@
 @php
-    use App\Enums\Trip\TripStatusEnum;
+    use App\Enums\Trip\TripLocationTypeEnum;use App\Enums\Trip\TripStatusEnum;
     use App\Enums\Trip\TripLocationStatusEnum;
 
     $trip = $getState()['trip'] ?? null;
@@ -63,8 +63,10 @@
         <div class="space-y-3">
             @foreach($trip->locations->sortBy('sequence') as $location)
                 <div class="text-sm text-gray-900 dark:text-white">
-                    <span class="text-base">{{ $location->type->value === 'origin' ? '🟢' : '🔵' }}</span>
-                    <span class="font-semibold text-gray-700 dark:text-gray-300">{{ $location->type->getLabel() }}</span>
+                    <span
+                        class="text-base">{{ $location->type->value === TripLocationTypeEnum::ORIGIN->value ? '🟢' : '🔵' }}</span>
+                    <span
+                        class="font-semibold text-gray-700 dark:text-gray-300">{{ $location->type->getLabel() }}</span>
                     <span class="mx-2">•</span>
                     <span class="text-base">📍</span>
                     <span class="font-semibold">{{ $location->location_title }}</span>
@@ -99,21 +101,33 @@
 
                 console.log('Map: ' + locations.length + ' locations' + (riderLocation ? ' + rider' : ''));
 
-                // Add location markers
+                // Add location markers with different colors
                 locations.forEach(function (location) {
-                    var marker = L.marker([location.lat, location.lng]).addTo(map);
+                    console.log(location)
+                    var isOrigin = location.type === {{ TripLocationTypeEnum::ORIGIN->value }};
+                    var color = isOrigin ? '#10B981' : '#3B82F6'; // Green for origin, Blue for destination
+
+                    var marker = L.circleMarker([location.lat, location.lng], {
+                        radius: 12,
+                        fillColor: color,
+                        color: '#fff',
+                        weight: 3,
+                        opacity: 1,
+                        fillOpacity: 0.7
+                    }).addTo(map);
+
                     marker.bindPopup('<b>' + location.label + '</b><br>' + location.title);
                 });
 
-                // Add rider marker if available
+                // Add rider marker if available (Red)
                 if (riderLocation) {
                     var riderMarker = L.circleMarker([riderLocation.lat, riderLocation.lng], {
-                        radius: 10,
+                        radius: 15,
                         fillColor: '#EF4444',
                         color: '#fff',
-                        weight: 2,
+                        weight: 3,
                         opacity: 1,
-                        fillOpacity: 0.8
+                        fillOpacity: 0.9
                     }).addTo(map);
 
                     riderMarker.bindPopup('<b>Rider: ' + riderLocation.name + '</b><br>Current Location');
@@ -134,7 +148,7 @@
                     routePoints.push(riderLocation.lng + ',' + riderLocation.lat);
 
                     // Find next incomplete location (not finished)
-                    var incompleteLocations = sortedLocations.filter(function(loc) {
+                    var incompleteLocations = sortedLocations.filter(function (loc) {
                         return !loc.isFinished;
                     });
 
@@ -188,7 +202,7 @@
                         linePoints.push([riderLocation.lat, riderLocation.lng]);
 
                         // Add only incomplete locations (not finished)
-                        var incompleteLocations = sortedLocations.filter(function(loc) {
+                        var incompleteLocations = sortedLocations.filter(function (loc) {
                             return !loc.isFinished;
                         });
                         incompleteLocations.forEach(function (loc) {
