@@ -30,6 +30,15 @@ class CheckPaymentStatusResource extends JsonResource
              *
              * @var int
              */
+            'trip_id' => $this->resource->{Payment::COLUMN_TRIP_ID},
+
+            /**
+             * Order ID
+             *
+             * @example "TRP-123"
+             *
+             * @var string
+             */
             'order_id' => tripNumberFormat($this->resource->trip),
 
             /**

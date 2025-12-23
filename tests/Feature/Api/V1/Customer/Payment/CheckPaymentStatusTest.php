@@ -64,6 +64,7 @@ test('customer can check their own payment status', function () {
         ])
         ->assertJsonStructure([
             'data' => [
+                'trip_id',
                 'order_id',
                 'date_time',
                 'payment_method',
