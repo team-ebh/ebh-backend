@@ -103,7 +103,6 @@
 
                 // Add location markers with different colors
                 locations.forEach(function (location) {
-                    console.log(location)
                     var isOrigin = location.type === {{ TripLocationTypeEnum::ORIGIN->value }};
                     var color = isOrigin ? '#10B981' : '#3B82F6'; // Green for origin, Blue for destination
 
