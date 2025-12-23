@@ -19,6 +19,7 @@ enum PaymentStatusEnum: int implements HasColor, HasIcon, HasLabel
     case PAID = 2;
     case FAILED = 3;
     case EXPIRED = 4;
+    case LOCKED = 5;
 
     public function getLabel(): ?string
     {
