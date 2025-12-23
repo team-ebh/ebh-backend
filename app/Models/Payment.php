@@ -7,10 +7,13 @@ namespace App\Models;
 use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Payment\PaymentGatewayEnum;
 use App\Enums\Payment\PaymentStatusEnum;
+use App\Observers\PaymentObserver;
 use App\Traits\Model\Aggregates\PaymentAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 
+#[ObservedBy(PaymentObserver::class)]
 class Payment extends Model
 {
     use HasDefaultColumnModelTrait;

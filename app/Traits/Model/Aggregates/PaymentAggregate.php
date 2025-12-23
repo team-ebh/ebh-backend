@@ -7,6 +7,7 @@ namespace App\Traits\Model\Aggregates;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PaymentLog;
+use App\Models\PaymentStatusLog;
 use App\Models\Trip;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -31,5 +32,10 @@ trait PaymentAggregate
     public function logs(): HasMany
     {
         return $this->hasMany(PaymentLog::class, PaymentLog::COLUMN_PAYMENT_ID);
+    }
+
+    public function statusLogs(): HasMany
+    {
+        return $this->hasMany(PaymentStatusLog::class, PaymentStatusLog::COLUMN_PAYMENT_ID);
     }
 }

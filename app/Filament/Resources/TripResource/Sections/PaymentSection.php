@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace App\Filament\Resources\TripResource\Sections;
 
 use App\Enums\Payment\PaymentMethodEnum;
+use App\Filament\Resources\Admins\AdminResource;
+use App\Filament\Resources\Customers\CustomerResource;
+use App\Models\Admin;
+use App\Models\Customer;
 use App\Models\Payment;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -126,9 +130,92 @@ class PaymentSection
                                             ->icon('heroicon-o-clock'),
 
                                         Actions::make([
+                                            Action::make('checkStatus')
+                                                ->icon('heroicon-o-clipboard-document-list')
+                                                ->iconButton()
+                                                ->tooltip(trans('trips.admin.payment_logs.check_status'))
+                                                ->color('warning')
+                                                ->slideOver()
+                                                ->modalWidth('5xl')
+                                                ->modalHeading(fn ($record) => trans('trips.admin.payment_logs.status_history') . ' - #' . $record->payment_number)
+                                                ->modalSubmitAction(false)
+                                                ->modalCancelAction(false)
+                                                ->schema([
+                                                    Section::make(trans('trips.admin.payment_logs.status_history'))
+                                                        ->schema([
+                                                            RepeatableEntry::make('statusLogs')
+                                                                ->hiddenLabel()
+                                                                ->contained(false)
+                                                                ->schema([
+                                                                    Grid::make(3)
+                                                                        ->schema([
+                                                                            TextEntry::make('status')
+                                                                                ->label(trans('trips.admin.payment_logs.status'))
+                                                                                ->badge()
+                                                                                ->size('lg'),
+
+                                                                            TextEntry::make('changedBy')
+                                                                                ->label(trans('trips.admin.payment_logs.changed_by'))
+                                                                                ->default(trans('trips.admin.fields.system'))
+                                                                                ->formatStateUsing(function ($record) {
+                                                                                    if (! $record->changedBy) {
+                                                                                        return trans('trips.admin.fields.system');
+                                                                                    }
+
+                                                                                    $changedBy = $record->changedBy;
+
+                                                                                    return match (get_class($changedBy)) {
+                                                                                        Customer::class => $changedBy->getFullName() . ' (' . trans('trips.admin.fields.customer') . ')',
+                                                                                        Admin::class => $changedBy->name . ' (' . trans('trips.admin.fields.admin') . ')',
+                                                                                        default => class_basename(get_class($changedBy)),
+                                                                                    };
+                                                                                })
+                                                                                ->url(function ($record) {
+                                                                                    if (! $record->changedBy) {
+                                                                                        return null;
+                                                                                    }
+
+                                                                                    $changedBy = $record->changedBy;
+
+                                                                                    return match (get_class($changedBy)) {
+                                                                                        Customer::class => CustomerResource::getUrl('view', ['record' => $changedBy->id]),
+                                                                                        Admin::class => AdminResource::getUrl('edit', ['record' => $changedBy->id]),
+                                                                                        default => null,
+                                                                                    };
+                                                                                })
+                                                                                ->openUrlInNewTab(),
+
+                                                                            TextEntry::make('created_at')
+                                                                                ->label(trans('trips.admin.payment_logs.timestamp'))
+                                                                                ->dateTime('M d, Y H:i:s')
+                                                                                ->size('sm'),
+                                                                        ]),
+                                                                ])
+                                                                ->getStateUsing(function ($record) {
+                                                                    $logs = $record->statusLogs()
+                                                                        ->with('changedBy')
+                                                                        ->orderBy('created_at', 'desc')
+                                                                        ->get();
+
+                                                                    return $logs->isNotEmpty() ? $logs : null;
+                                                                })
+                                                                ->visible(fn ($state) => filled($state)),
+
+                                                            TextEntry::make('no_status_logs')
+                                                                ->label('')
+                                                                ->state(trans('trips.admin.payment_logs.no_status_logs'))
+                                                                ->getStateUsing(fn ($record) => $record->statusLogs()->exists() ? null : trans('trips.admin.payment_logs.no_status_logs'))
+                                                                ->visible(fn ($state) => filled($state))
+                                                                ->extraAttributes(['class' => 'text-center text-gray-500']),
+                                                        ])
+                                                        ->collapsible()
+                                                        ->collapsed(false),
+                                                ]),
+
                                             Action::make('viewLogs')
-                                                ->label(trans('trips.admin.payment_logs.view_logs'))
                                                 ->icon('heroicon-o-document-text')
+                                                ->iconButton()
+                                                ->tooltip(trans('trips.admin.payment_logs.view_logs'))
                                                 ->color('info')
                                                 ->slideOver()
                                                 ->modalWidth('7xl')
@@ -258,7 +345,7 @@ class PaymentSection
                                                             TextEntry::make('no_logs')
                                                                 ->label('')
                                                                 ->state(trans('trips.admin.payment_logs.no_logs'))
-                                                                ->getStateUsing(fn ($record) => $record->logs()->exists() ? trans('trips.admin.payment_logs.no_logs') : null)
+                                                                ->getStateUsing(fn ($record) => ! $record->logs()->exists() ? trans('trips.admin.payment_logs.no_logs') : null)
                                                                 ->visible(fn ($state) => filled($state))
                                                                 ->extraAttributes(['class' => 'text-center text-gray-500']),
                                                         ])
