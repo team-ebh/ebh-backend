@@ -95,4 +95,9 @@ class Payment extends Model
     {
         return $this->isPending();
     }
+
+    public function isForCustomer(int $customerId): bool
+    {
+        return $this->{Payment::COLUMN_CUSTOMER_ID} === $customerId;
+    }
 }

@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Customer;
 
+use App\Actions\Api\V1\Customer\Payment\CheckPaymentStatusAction;
 use App\Actions\Api\V1\Customer\Payment\GetPaymentLinkAction;
 use App\Actions\Api\V1\Customer\Payment\ProcessPaymentAction;
 use App\Actions\Api\V1\Customer\Trip\CheckPendingPaymentAction;
+use App\DTOs\Api\V1\Customer\Payment\CheckPaymentStatusDTO;
 use App\DTOs\Api\V1\Customer\Payment\ProcessPaymentDTO;
 use App\DTOs\Api\V1\Customer\Trip\CheckPendingPaymentDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Customer\Payment\ProcessPaymentCallbackRequest;
 use App\Http\Requests\Api\V1\Customer\Payment\ProcessPaymentWebhookRequest;
+use App\Http\Resources\Api\V1\Customer\Payment\CheckPaymentStatusResource;
 use App\Http\Resources\Api\V1\Customer\Payment\PaymentLinkResource;
 use App\Http\Resources\Api\V1\Customer\Trip\PendingPaymentResource;
+use App\Models\Payment;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -57,6 +61,27 @@ class PaymentController extends Controller
     public function getLink(GetPaymentLinkAction $action): PaymentLinkResource
     {
         return new PaymentLinkResource($action());
+    }
+
+    /**
+     * Check payment status
+     *
+     * Retrieves payment status and details for a specific payment number.
+     * Returns trip information, payment method, status, and amount.
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function checkPaymentStatus(
+        Payment $payment,
+        Request $request,
+        CheckPaymentStatusDTO $dto,
+        CheckPaymentStatusAction $action
+    ): CheckPaymentStatusResource {
+        $dto->getDataFromRequest($request);
+
+        return new CheckPaymentStatusResource($action($dto));
     }
 
     /**

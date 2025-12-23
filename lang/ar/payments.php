@@ -3,13 +3,20 @@
 declare(strict_types=1);
 
 use App\Enums\Payment\PaymentMethodEnum;
+use App\Enums\Payment\PaymentStatusEnum;
 
 return [
     'statuses' => [
-        'pending' => 'قيد الانتظار',
-        'paid' => 'مدفوع',
-        'failed' => 'فشل',
-        'expired' => 'منتهي الصلاحية',
+        PaymentStatusEnum::PENDING->name => 'قيد الانتظار',
+        PaymentStatusEnum::PAID->name => 'مدفوع',
+        PaymentStatusEnum::FAILED->name => 'فشل',
+        PaymentStatusEnum::EXPIRED->name => 'منتهي الصلاحية',
+    ],
+    'frontend_statuses' => [
+        PaymentStatusEnum::PENDING->name => 'قيد الانتظار',
+        PaymentStatusEnum::PAID->name => 'نجح',
+        PaymentStatusEnum::FAILED->name => 'فشل',
+        PaymentStatusEnum::EXPIRED->name => 'منتهي الصلاحية',
     ],
     'api' => [
         'payment_methods' => [

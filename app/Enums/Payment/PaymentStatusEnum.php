@@ -22,12 +22,21 @@ enum PaymentStatusEnum: int implements HasColor, HasIcon, HasLabel
 
     public function getLabel(): ?string
     {
-        return match ($this) {
-            self::PENDING => trans('payments.statuses.pending'),
-            self::PAID => trans('payments.statuses.paid'),
-            self::FAILED => trans('payments.statuses.failed'),
-            self::EXPIRED => trans('payments.statuses.expired'),
-        };
+        return trans('payments.statuses.' . $this->name);
+    }
+
+    /**
+     * Get frontend-friendly label for payment status
+     *
+     * Returns user-friendly labels:
+     * - PAID -> "Success"
+     * - FAILED -> "Failure"
+     * - PENDING -> "Pending"
+     * - EXPIRED -> "Expired"
+     */
+    public function getFrontendLabel(): ?string
+    {
+        return trans('payments.frontend_statuses.' . $this->name);
     }
 
     public function getColor(): string | array | null

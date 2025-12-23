@@ -15,5 +15,6 @@ Route::name('payments.')
         Route::middleware('auth:customer')->group(function () {
             Route::get('/check-pending', 'checkPendingPayment')->name('check-pending');
             Route::post('/link', 'getLink')->name('link');
+            Route::get('/{payment:payment_number}/check-status', 'checkPaymentStatus')->name('check-status');
         });
     });
