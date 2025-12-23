@@ -35,7 +35,7 @@ class CreatePaymentLinkDTO implements ArrayDataTransferObject
     // Customer information
     public string $customerName;
 
-    public string $customerEmail;
+    public ?string $customerEmail = null;
 
     public string $customerMobile;
 
