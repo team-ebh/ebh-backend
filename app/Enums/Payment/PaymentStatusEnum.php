@@ -27,12 +27,6 @@ enum PaymentStatusEnum: int implements HasColor, HasIcon, HasLabel
 
     /**
      * Get frontend-friendly label for payment status
-     *
-     * Returns user-friendly labels:
-     * - PAID -> "Success"
-     * - FAILED -> "Failure"
-     * - PENDING -> "Pending"
-     * - EXPIRED -> "Expired"
      */
     public function getFrontendLabel(): ?string
     {

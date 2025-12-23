@@ -34,6 +34,7 @@ return [
         'payment_gateway_failure_status' => 'أرجعت بوابة الدفع حالة الفشل',
         'payment_gateway_missing_link' => 'أرجعت بوابة الدفع نجاحًا ولكن رابط الدفع مفقود',
         'payment_not_found' => 'الدفع غير موجود',
+        'payment_not_paid' => 'لم يتم دفع المبلغ بعد',
         'payment_already_processed' => 'تمت معالجة الدفع بالفعل',
         'payment_verification_failed' => 'فشل التحقق من الدفع',
     ],

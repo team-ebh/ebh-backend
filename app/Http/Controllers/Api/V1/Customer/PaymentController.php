@@ -5,23 +5,29 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Customer;
 
 use App\Actions\Api\V1\Customer\Payment\CheckPaymentStatusAction;
+use App\Actions\Api\V1\Customer\Payment\DownloadReceiptAction;
 use App\Actions\Api\V1\Customer\Payment\GetPaymentLinkAction;
+use App\Actions\Api\V1\Customer\Payment\GetReceiptLinkAction;
 use App\Actions\Api\V1\Customer\Payment\ProcessPaymentAction;
 use App\Actions\Api\V1\Customer\Trip\CheckPendingPaymentAction;
 use App\DTOs\Api\V1\Customer\Payment\CheckPaymentStatusDTO;
+use App\DTOs\Api\V1\Customer\Payment\GetReceiptLinkDTO;
 use App\DTOs\Api\V1\Customer\Payment\ProcessPaymentDTO;
 use App\DTOs\Api\V1\Customer\Trip\CheckPendingPaymentDTO;
+use App\Exceptions\InvalidRequestException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Customer\Payment\ProcessPaymentCallbackRequest;
 use App\Http\Requests\Api\V1\Customer\Payment\ProcessPaymentWebhookRequest;
 use App\Http\Resources\Api\V1\Customer\Payment\CheckPaymentStatusResource;
 use App\Http\Resources\Api\V1\Customer\Payment\PaymentLinkResource;
+use App\Http\Resources\Api\V1\Customer\Payment\PaymentReceiptLinkResource;
 use App\Http\Resources\Api\V1\Customer\Trip\PendingPaymentResource;
 use App\Models\Payment;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 /**
  * @tags Payment
@@ -82,6 +88,49 @@ class PaymentController extends Controller
         $dto->getDataFromRequest($request);
 
         return new CheckPaymentStatusResource($action($dto));
+    }
+
+    /**
+     * Get receipt link
+     *
+     * Generates a temporary signed URL to download the payment receipt.
+     * The link is valid for 30 minutes and requires a valid signature.
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function getReceiptLink(
+        Payment $payment,
+        Request $request,
+        GetReceiptLinkDTO $dto,
+        GetReceiptLinkAction $action
+    ): PaymentReceiptLinkResource {
+        $dto->getDataFromRequest($request, $payment);
+
+        return new PaymentReceiptLinkResource($action($dto));
+    }
+
+    /**
+     * Download receipt
+     *
+     * Downloads the payment receipt as a PDF file.
+     * Requires a valid signed URL from getReceiptLink endpoint.
+     * Only paid payments can have receipts.
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    #[ExcludeRouteFromDocs]
+    public function downloadReceipt(
+        Payment $payment,
+        Request $request,
+        DownloadReceiptAction $action
+    ): Response {
+        throw_unless($request->hasValidSignature(), InvalidRequestException::class);
+
+        return $action($payment);
     }
 
     /**

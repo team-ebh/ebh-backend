@@ -34,6 +34,7 @@ return [
         'payment_gateway_failure_status' => 'Payment gateway returned failure status',
         'payment_gateway_missing_link' => 'Payment gateway returned success but missing payment link',
         'payment_not_found' => 'Payment not found',
+        'payment_not_paid' => 'Payment has not been paid yet',
         'payment_already_processed' => 'Payment has already been processed',
         'payment_verification_failed' => 'Payment verification failed',
     ],
