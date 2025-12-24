@@ -108,8 +108,8 @@ test('customer can download receipt with valid signed URL', function () {
     // Download the receipt using the signed URL
     $response = actingAs($this->customer, 'customer')
         ->getJson(route('v1.customers.payments.download-receipt', [
-            'payment' => $this->paidPayment->{Payment::COLUMN_PAYMENT_NUMBER},
-        ]) . '?' . http_build_query($queryParams));
+                'payment' => $this->paidPayment->{Payment::COLUMN_PAYMENT_NUMBER},
+            ]) . '?' . http_build_query($queryParams));
 
     $response->assertOk();
     $response->assertHeader('content-type', 'application/pdf');
@@ -153,8 +153,8 @@ test('customer cannot download receipt for another customer payment even with va
     // Try to download as different customer
     $response = actingAs($this->otherCustomer, 'customer')
         ->getJson(route('v1.customers.payments.download-receipt', [
-            'payment' => $this->paidPayment->{Payment::COLUMN_PAYMENT_NUMBER},
-        ]) . '?' . http_build_query($queryParams));
+                'payment' => $this->paidPayment->{Payment::COLUMN_PAYMENT_NUMBER},
+            ]) . '?' . http_build_query($queryParams));
 
     $response->assertForbidden();
 });
@@ -171,6 +171,6 @@ test('receipt link expires after 30 minutes', function () {
     $urlParts = parse_url($link);
     parse_str($urlParts['query'] ?? '', $queryParams);
 
-    expect($queryParams)->toHaveKey('expires');
-    expect($queryParams['expires'])->toBeGreaterThan(now()->timestamp);
+    expect($queryParams)->toHaveKey('expires')
+        ->and($queryParams['expires'])->toBeGreaterThan(now()->timestamp);
 });

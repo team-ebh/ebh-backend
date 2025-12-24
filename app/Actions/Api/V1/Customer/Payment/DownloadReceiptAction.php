@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Api\V1\Customer\Payment;
 
+use App\Exceptions\PaymentNotFoundException;
+use App\Exceptions\PaymentNotPaidException;
 use App\Models\Payment;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
@@ -20,6 +22,20 @@ class DownloadReceiptAction
         return safeProcess()
             ->onFailed(fn ($e) => throw $e)
             ->do(function () use ($payment) {
+                if (auth('customer')->id()) {
+                    throw_if(
+                        ! $payment->isForCustomer(auth('customer')->id()),
+                        PaymentNotFoundException::class
+                    );
+                } else {
+                    abort(403);
+                }
+
+                throw_if(
+                    ! $payment->isPaid(),
+                    PaymentNotPaidException::class
+                );
+
                 $payment->load([
                     'trip:id,customer_id,rider_id,payment_method,total_price,accessibility_price,waiting_price,currency,created_at,updated_at',
                     'trip.customer:id,first_name,last_name,email,phone_number',
