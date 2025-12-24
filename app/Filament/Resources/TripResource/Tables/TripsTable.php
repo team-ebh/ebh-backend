@@ -73,16 +73,7 @@ class TripsTable
                     ->wrap(),
 
                 TextColumn::make('status')
-                    ->badge()
-                    ->formatStateUsing(fn ($state) => $state->getLabel())
-                    ->color(fn ($state) => match ($state) {
-                        TripStatusEnum::DRAFT => 'gray',
-                        TripStatusEnum::PENDING_RIDER => 'warning',
-                        TripStatusEnum::ACCEPTED_RIDER => 'info',
-                        TripStatusEnum::IN_PROGRESS => 'primary',
-                        TripStatusEnum::COMPLETED => 'success',
-                        TripStatusEnum::CANCELED_BY_CUSTOMER, TripStatusEnum::CANCELLED_BY_RIDER => 'danger',
-                    }),
+                    ->badge(),
 
                 TextColumn::make('trip_type_id')
                     ->label(trans('trips.admin.fields.trip_type'))
@@ -115,6 +106,7 @@ class TripsTable
                     ->options([
                         TripStatusEnum::PENDING_RIDER->value => TripStatusEnum::PENDING_RIDER->getLabel(),
                         TripStatusEnum::ACCEPTED_RIDER->value => TripStatusEnum::ACCEPTED_RIDER->getLabel(),
+                        TripStatusEnum::ARRIVED->value => TripStatusEnum::ARRIVED->getLabel(),
                         TripStatusEnum::IN_PROGRESS->value => TripStatusEnum::IN_PROGRESS->getLabel(),
                         TripStatusEnum::COMPLETED->value => TripStatusEnum::COMPLETED->getLabel(),
                         TripStatusEnum::CANCELED_BY_CUSTOMER->value => TripStatusEnum::CANCELED_BY_CUSTOMER->getLabel(),

@@ -32,7 +32,9 @@ readonly class ExecuteAndBroadcastPipe
         $this->riderTripRepository->updateTripLocationStatus($currentLocation, TripLocationStatusEnum::PICKED_UP);
 
         // Update trip status to IN_PROGRESS
-        $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::IN_PROGRESS);
+        if ($trip->isArrived()) {
+            $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::IN_PROGRESS);
+        }
 
         // Broadcast to customer
         broadcast(new TripPickedUpEvent(

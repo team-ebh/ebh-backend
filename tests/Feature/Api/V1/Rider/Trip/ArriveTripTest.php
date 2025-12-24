@@ -94,10 +94,10 @@ test('rider can mark trip as arrived at origin location successfully', function 
             ],
         ]);
 
-    // Verify trip status remains accepted (arrived doesn't change trip status)
+    // Verify trip status updated to ARRIVED
     assertDatabaseHas('trips', [
         'id' => $trip->id,
-        'status' => TripStatusEnum::ACCEPTED_RIDER->value,
+        'status' => TripStatusEnum::ARRIVED->value,
     ]);
 
     // Verify origin location status updated

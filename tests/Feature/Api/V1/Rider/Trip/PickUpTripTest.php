@@ -65,7 +65,7 @@ beforeEach(function () {
 
 test('rider can mark trip as picked up at origin location successfully', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::ARRIVED->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
@@ -110,7 +110,7 @@ test('rider can mark trip as picked up at origin location successfully', functio
 
 test('rider can mark trip as picked up and get next action', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::ARRIVED->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,

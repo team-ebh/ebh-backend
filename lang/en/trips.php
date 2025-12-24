@@ -321,6 +321,7 @@ return [
             TripStatusEnum::DRAFT->name => 'Draft',
             TripStatusEnum::PENDING_RIDER->name => 'Pending Rider',
             TripStatusEnum::ACCEPTED_RIDER->name => 'Accepted by Rider',
+            TripStatusEnum::ARRIVED->name => 'Arrived - Waiting for Passenger',
             TripStatusEnum::IN_PROGRESS->name => 'In Progress',
             TripStatusEnum::COMPLETED->name => 'Completed',
             TripStatusEnum::CANCELED_BY_CUSTOMER->name => 'Cancelled by Customer',

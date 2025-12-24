@@ -136,6 +136,14 @@ class Trip extends Model
     }
 
     /**
+     * Check if trip is arrived
+     */
+    public function isArrived(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::ARRIVED;
+    }
+
+    /**
      * Check if trip is in progress
      */
     public function isInProgress(): bool
@@ -185,11 +193,14 @@ class Trip extends Model
 
     /**
      * Check if trip can be cancelled by rider
-     * Only ACCEPTED_RIDER trips can be cancelled by rider
+     * Only ACCEPTED_RIDER and ARRIVED trips can be cancelled by rider
      */
     public function canBeCancelledByRider(): bool
     {
-        return $this->{self::COLUMN_STATUS} === TripStatusEnum::ACCEPTED_RIDER;
+        return in_array($this->{self::COLUMN_STATUS}, [
+            TripStatusEnum::ACCEPTED_RIDER,
+            TripStatusEnum::ARRIVED,
+        ], true);
     }
 
     /**
@@ -198,7 +209,10 @@ class Trip extends Model
      */
     public function canCancelTrip(): bool
     {
-        return in_array($this->{self::COLUMN_STATUS}, [TripStatusEnum::DRAFT, TripStatusEnum::PENDING_RIDER, TripStatusEnum::ACCEPTED_RIDER]);
+        return in_array(
+            $this->{self::COLUMN_STATUS},
+            [TripStatusEnum::DRAFT, TripStatusEnum::PENDING_RIDER, TripStatusEnum::ACCEPTED_RIDER, TripStatusEnum::ARRIVED]
+        );
     }
 
     /**
@@ -210,6 +224,7 @@ class Trip extends Model
         // Only these statuses allow location tracking
         return in_array($this->{self::COLUMN_STATUS}, [
             TripStatusEnum::ACCEPTED_RIDER,
+            TripStatusEnum::ARRIVED,
             TripStatusEnum::IN_PROGRESS,
         ], true);
     }
@@ -222,6 +237,7 @@ class Trip extends Model
     {
         return in_array($this->{self::COLUMN_STATUS}, [
             TripStatusEnum::ACCEPTED_RIDER,
+            TripStatusEnum::ARRIVED,
             TripStatusEnum::IN_PROGRESS,
             TripStatusEnum::COMPLETED,
         ], true);

@@ -174,6 +174,10 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
         $pickupLocation->refresh();
         expect($pickupLocation->status)->toBe(TripLocationStatusEnum::ARRIVED);
 
+        // Verify trip status updated to ARRIVED
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::ARRIVED);
+
         // Verify TripArrivedEvent would be dispatched
         Event::assertDispatched(
             TripArrivedEvent::class,
@@ -305,8 +309,8 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
         expect($acceptResponse->status())->toBe(200);
 
         $trip->refresh();
-        expect($trip->status)->toBe(TripStatusEnum::ACCEPTED_RIDER);
-        expect($trip->rider_id)->toBe($acceptingRider->id);
+        expect($trip->status)->toBe(TripStatusEnum::ACCEPTED_RIDER)
+            ->and($trip->rider_id)->toBe($acceptingRider->id);
 
         $acceptingRider->refresh();
         expect($acceptingRider->status)->toBe(RiderStatusEnum::BUSY);
@@ -479,5 +483,364 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
 
         expect($droppedOffCount)->toBe(2)  // First 2 destinations
             ->and($completedCount)->toBe(1);  // Last destination
+    });
+
+    it('handles rider cancellation when trip is in ARRIVED status', function () {
+        Event::fake();
+
+        // Create customer and rider
+        $customer = Customer::factory()->create();
+        $rider = Rider::factory()->create([
+            'status' => RiderStatusEnum::ONLINE,
+        ]);
+
+        $riderHeaders = [
+            'Authorization' => 'Bearer ' . $rider->createToken('test')->plainTextToken,
+        ];
+
+        // Create trip with ARRIVED status
+        $trip = Trip::create([
+            'customer_id' => $customer->id,
+            'rider_id' => $rider->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => 'KWD',
+            'status' => TripStatusEnum::ARRIVED->value,
+        ]);
+
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'type' => TripLocationTypeEnum::ORIGIN,
+            'location_title' => 'Pickup',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'sequence' => 1,
+            'status' => TripLocationStatusEnum::ARRIVED,
+        ]);
+
+        $tripRequest = TripRequest::create([
+            'trip_id' => $trip->id,
+            'rider_id' => $rider->id,
+            'status' => TripRequestStatusEnum::ACCEPTED,
+            'sent_at' => now(),
+            'distance_meters' => 1000,
+            'estimated_arrival_seconds' => 300,
+        ]);
+
+        // Update rider status to BUSY
+        $rider->update(['status' => RiderStatusEnum::BUSY]);
+
+        // Rider cancels the trip
+        $cancelResponse = postJson(
+            route('v1.riders.trips.requests.cancel', ['tripRequest' => $tripRequest->id]),
+            [],
+            $riderHeaders
+        );
+        expect($cancelResponse->status())->toBe(200);
+
+        // Verify trip is cancelled
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::CANCELLED_BY_RIDER);
+
+        // Verify rider status is back to ONLINE
+        $rider->refresh();
+        expect($rider->status)->toBe(RiderStatusEnum::ONLINE);
+
+        // Verify trip request is cancelled
+        $tripRequest->refresh();
+        expect($tripRequest->status)->toBe(TripRequestStatusEnum::CANCELLED);
+    });
+
+    it('handles customer cancellation when trip is in ARRIVED status', function () {
+        Event::fake();
+
+        // Create customer and rider
+        $customer = Customer::factory()->create();
+        $customerHeaders = [
+            'Authorization' => 'Bearer ' . $customer->createToken('test')->plainTextToken,
+        ];
+
+        $rider = Rider::factory()->create([
+            'status' => RiderStatusEnum::BUSY,
+        ]);
+
+        // Create trip with ARRIVED status
+        $trip = Trip::create([
+            'customer_id' => $customer->id,
+            'rider_id' => $rider->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'accessibility_price' => null,
+            'waiting_price' => null,
+            'total_price' => 5.000,
+            'currency' => 'KWD',
+            'payment_method' => PaymentMethodEnum::CASH,
+            'status' => TripStatusEnum::ARRIVED->value,
+        ]);
+
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'type' => TripLocationTypeEnum::ORIGIN,
+            'location_title' => 'Pickup',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'sequence' => 1,
+            'status' => TripLocationStatusEnum::ARRIVED,
+        ]);
+
+        TripRequest::create([
+            'trip_id' => $trip->id,
+            'rider_id' => $rider->id,
+            'status' => TripRequestStatusEnum::ACCEPTED,
+            'sent_at' => now(),
+        ]);
+
+        // Customer cancels the trip
+        $cancelResponse = postJson(
+            route('v1.customers.trips.cancel', ['trip' => $trip->id]),
+            [],
+            $customerHeaders
+        );
+        expect($cancelResponse->status())->toBe(200);
+
+        // Verify trip is cancelled
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::CANCELED_BY_CUSTOMER);
+
+        // Verify rider status is back to ONLINE
+        $rider->refresh();
+        expect($rider->status)->toBe(RiderStatusEnum::ONLINE);
+    });
+
+    it('allows customer to get rider location when trip is ARRIVED', function () {
+        // Create customer and rider
+        $customer = Customer::factory()->create();
+        $customerHeaders = [
+            'Authorization' => 'Bearer ' . $customer->createToken('test')->plainTextToken,
+        ];
+
+        $rider = Rider::factory()->create([
+            'status' => RiderStatusEnum::BUSY,
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+        ]);
+
+        // Create trip with ARRIVED status
+        $trip = Trip::create([
+            'customer_id' => $customer->id,
+            'rider_id' => $rider->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => 'KWD',
+            'payment_method' => PaymentMethodEnum::CASH,
+            'status' => TripStatusEnum::ARRIVED->value,
+        ]);
+
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'type' => TripLocationTypeEnum::ORIGIN,
+            'location_title' => 'Pickup',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'sequence' => 1,
+            'status' => TripLocationStatusEnum::ARRIVED,
+        ]);
+
+        // Customer gets rider location
+        $locationResponse = \Pest\Laravel\getJson(
+            route('v1.customers.trips.rider-location', ['trip' => $trip->id]),
+            $customerHeaders
+        );
+        expect($locationResponse->status())->toBe(200)
+            ->and($locationResponse->json('data.latitude'))->toBe(29.3759)
+            ->and($locationResponse->json('data.longitude'))->toBe(47.9774);
+    });
+
+    it('allows customer to get trip status when trip is ARRIVED', function () {
+        // Create customer and rider
+        $customer = Customer::factory()->create();
+        $customerHeaders = [
+            'Authorization' => 'Bearer ' . $customer->createToken('test')->plainTextToken,
+        ];
+
+        $rider = Rider::factory()->create([
+            'status' => RiderStatusEnum::BUSY,
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+        ]);
+
+        // Create trip with ARRIVED status
+        $trip = Trip::create([
+            'customer_id' => $customer->id,
+            'rider_id' => $rider->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => 'KWD',
+            'payment_method' => PaymentMethodEnum::CASH,
+            'status' => TripStatusEnum::ARRIVED->value,
+        ]);
+
+        $pickupLocation = TripLocation::create([
+            'trip_id' => $trip->id,
+            'type' => TripLocationTypeEnum::ORIGIN,
+            'location_title' => 'Pickup Location',
+            'location_sub_title' => 'Building A',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'sequence' => 1,
+            'status' => TripLocationStatusEnum::ARRIVED,
+        ]);
+
+        $destinationLocation = TripLocation::create([
+            'trip_id' => $trip->id,
+            'type' => TripLocationTypeEnum::DESTINATION,
+            'location_title' => 'Destination Location',
+            'location_sub_title' => 'Building B',
+            'latitude' => 29.3117,
+            'longitude' => 47.4818,
+            'sequence' => 2,
+            'status' => TripLocationStatusEnum::PENDING,
+        ]);
+
+        TripRequest::create([
+            'trip_id' => $trip->id,
+            'rider_id' => $rider->id,
+            'status' => TripRequestStatusEnum::ACCEPTED,
+            'sent_at' => now(),
+            'distance_meters' => 1000,
+            'estimated_arrival_seconds' => 300,
+        ]);
+
+        // Customer gets trip status
+        $statusResponse = \Pest\Laravel\getJson(
+            route('v1.customers.trips.status', ['trip' => $trip->id]),
+            $customerHeaders
+        );
+        expect($statusResponse->status())->toBe(200)
+            ->and($statusResponse->json('data.found'))->toBeTrue()
+            ->and($statusResponse->json('data.rider'))->not->toBeNull();
+    });
+
+    it('verifies complete trip status progression through lifecycle', function () {
+        Event::fake();
+
+        // Create customer and rider
+        $customer = Customer::factory()->create();
+        $customerHeaders = [
+            'Authorization' => 'Bearer ' . $customer->createToken('test')->plainTextToken,
+        ];
+
+        $rider = Rider::factory()->create([
+            'status' => RiderStatusEnum::ONLINE,
+        ]);
+        $riderHeaders = [
+            'Authorization' => 'Bearer ' . $rider->createToken('test')->plainTextToken,
+        ];
+
+        // Create trip
+        $trip = Trip::create([
+            'customer_id' => $customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => 'KWD',
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        $pickupLocation = TripLocation::create([
+            'trip_id' => $trip->id,
+            'type' => TripLocationTypeEnum::ORIGIN,
+            'location_title' => 'Pickup',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'sequence' => 1,
+            'status' => TripLocationStatusEnum::PENDING,
+        ]);
+
+        $destinationLocation = TripLocation::create([
+            'trip_id' => $trip->id,
+            'type' => TripLocationTypeEnum::DESTINATION,
+            'location_title' => 'Destination',
+            'latitude' => 29.3117,
+            'longitude' => 47.4818,
+            'sequence' => 2,
+            'status' => TripLocationStatusEnum::PENDING,
+        ]);
+
+        // Status 1: DRAFT
+        expect($trip->status)->toBe(TripStatusEnum::DRAFT);
+
+        // Status 2: PENDING_RIDER (after confirmation)
+        postJson(
+            route('v1.customers.trips.confirm', ['trip' => $trip->id]),
+            ['payment_method' => PaymentMethodEnum::CASH->value],
+            $customerHeaders
+        )->assertOk();
+
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::PENDING_RIDER);
+
+        // Create trip request for rider
+        $tripRequest = TripRequest::create([
+            'trip_id' => $trip->id,
+            'rider_id' => $rider->id,
+            'status' => TripRequestStatusEnum::PENDING,
+            'sent_at' => now(),
+            'distance_meters' => 1000,
+            'estimated_arrival_seconds' => 300,
+        ]);
+
+        // Status 3: ACCEPTED_RIDER (after rider accepts)
+        postJson(
+            route('v1.riders.trips.requests.accept', ['tripRequest' => $tripRequest->id]),
+            [],
+            $riderHeaders
+        )->assertOk();
+
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::ACCEPTED_RIDER);
+
+        // Status 4: ARRIVED (after rider arrives)
+        postJson(
+            route('v1.riders.trips.requests.arrived', ['tripRequest' => $tripRequest->id]),
+            ['location_id' => $pickupLocation->id],
+            $riderHeaders
+        )->assertOk();
+
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::ARRIVED);
+
+        // Status 5: IN_PROGRESS (after rider picks up customer)
+        postJson(
+            route('v1.riders.trips.requests.picked-up', ['tripRequest' => $tripRequest->id]),
+            ['location_id' => $pickupLocation->id],
+            $riderHeaders
+        )->assertOk();
+
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::IN_PROGRESS);
+
+        // Status 6: COMPLETED (after rider completes trip)
+        postJson(
+            route('v1.riders.trips.requests.completed', ['tripRequest' => $tripRequest->id]),
+            ['location_id' => $destinationLocation->id],
+            $riderHeaders
+        )->assertOk();
+
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::COMPLETED);
+
+        // Verify all 6 statuses were encountered
+        // DRAFT -> PENDING_RIDER -> ACCEPTED_RIDER -> ARRIVED -> IN_PROGRESS -> COMPLETED
     });
 });
