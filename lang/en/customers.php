@@ -39,7 +39,7 @@ return [
         ],
         'exceptions' => [
             'not_found' => 'Customer not found.',
-            'account_disabled' => 'Your account is disabled.',
+            'account_disabled' => 'Your account is suspended or inactive. Please contact support.',
             'invalid_otp' => 'Invalid or expired OTP.',
             'before_registered' => 'Customer is already registered.',
             'must_be_registered' => 'Customer must be registered first.',

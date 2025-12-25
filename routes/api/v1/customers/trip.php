@@ -12,7 +12,7 @@ Route::name('trips.')
     ->group(function () {
         Route::get('/form-data', 'formData')->name('form-data');
 
-        Route::middleware(['auth:customer'])
+        Route::middleware(['auth:customer', 'customer.active'])
             ->group(function () {
                 Route::get('/active', 'activeTrip')->name('active');
                 Route::post('/', 'store')->name('store');

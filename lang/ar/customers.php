@@ -39,7 +39,7 @@ return [
         ],
         'exceptions' => [
             'not_found' => 'العميل غير موجود.',
-            'account_disabled' => 'حسابك معطل.',
+            'account_disabled' => 'حسابك موقوف أو غير نشط. يرجى التواصل مع الدعم.',
             'invalid_otp' => 'رمز التحقق غير صالح أو منتهي الصلاحية.',
             'before_registered' => 'العميل مسجل مسبقاً.',
             'must_be_registered' => 'يجب تسجيل العميل أولاً.',
