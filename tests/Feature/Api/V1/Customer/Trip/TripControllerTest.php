@@ -1162,6 +1162,7 @@ describe('Confirm Trip API', function () {
 
         // Confirm the trip
         postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
         ])
             ->assertStatus(200);
@@ -1262,6 +1263,7 @@ describe('Confirm Trip API', function () {
 
         // Confirm the trip
         postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
         ])
             ->assertStatus(200);
@@ -1308,6 +1310,7 @@ describe('Confirm Trip API', function () {
 
         // Try to confirm the new trip - should fail
         $response = postJson(route('v1.customers.trips.confirm', $newTrip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
         ]);
 
@@ -1360,6 +1363,7 @@ describe('Confirm Trip API', function () {
 
         // Confirm the new trip - should succeed
         $response = postJson(route('v1.customers.trips.confirm', $newTrip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
         ]);
 
@@ -1418,6 +1422,7 @@ describe('Confirm Trip API', function () {
 
         // Confirm the new trip - should succeed
         $response = postJson(route('v1.customers.trips.confirm', $newTrip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
         ]);
 
@@ -1445,6 +1450,7 @@ describe('Confirm Trip API', function () {
 
         // Try to confirm the trip as authenticated customer
         $response = postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
         ]);
 
@@ -1452,6 +1458,52 @@ describe('Confirm Trip API', function () {
             ->assertJson([
                 'meta' => [
                     'message' => trans('trips.not_your_trip'),
+                ],
+            ]);
+    });
+
+    it('cannot confirm trip with mismatched ride type', function () {
+        // Create a draft trip with ROUND_TRIP ride type
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'ride_type' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Add origin and destination locations for the ROUND_TRIP
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Origin Location',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'type' => TripLocationTypeEnum::ORIGIN->value,
+            'sequence' => 1,
+        ]);
+
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Destination Location',
+            'latitude' => 29.3117,
+            'longitude' => 47.4818,
+            'type' => TripLocationTypeEnum::DESTINATION->value,
+            'sequence' => 2,
+        ]);
+
+        // Try to confirm with ONE_WAY ride type (mismatch)
+        $response = postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('trips.api.exceptions.ride_type_mismatch'),
                 ],
             ]);
     });

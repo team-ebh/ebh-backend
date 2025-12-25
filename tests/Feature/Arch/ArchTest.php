@@ -36,6 +36,7 @@ arch('avoid inheritance')
     ->toExtendNothing()
     ->ignoring([
         'App\Console\Commands',
+        'App\DTOs',
         'App\Events',
         'App\Exceptions',
         'App\Filament',

@@ -64,7 +64,10 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
         // Step 3: Customer confirms the trip
         $confirmResponse = postJson(
             route('v1.customers.trips.confirm', ['trip' => $trip->id]),
-            ['payment_method' => PaymentMethodEnum::CASH->value],
+            [
+                'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+                'payment_method' => PaymentMethodEnum::CASH->value,
+            ],
             $customerHeaders
         );
         expect($confirmResponse->status())->toBe(200);
@@ -783,7 +786,10 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
         // Status 2: PENDING_RIDER (after confirmation)
         postJson(
             route('v1.customers.trips.confirm', ['trip' => $trip->id]),
-            ['payment_method' => PaymentMethodEnum::CASH->value],
+            [
+                'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+                'payment_method' => PaymentMethodEnum::CASH->value,
+            ],
             $customerHeaders
         )->assertOk();
 

@@ -7,13 +7,16 @@ namespace App\Repositories\Api\V1\Customer\Trip;
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
 use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Payment\PaymentMethodEnum;
+use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
 use App\Enums\Trip\TripStatusEnum;
+use App\Enums\Trip\TripTypeEnum;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Models\Trip;
 use App\Models\TripAccessibility;
 use App\Models\TripLocation;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 
 class TripRepository implements TripRepositoryInterface
@@ -91,6 +94,13 @@ class TripRepository implements TripRepositoryInterface
     {
         return Trip::query()
             ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->where(function ($query) {
+                // Exclude draft scheduled trips (demand trips)
+                $query->where(function ($q) {
+                    $q->where(Trip::COLUMN_STATUS, '!=', TripStatusEnum::DRAFT)
+                        ->orWhere(Trip::COLUMN_TRIP_TYPE_ID, '!=', TripTypeEnum::SCHEDULED->value);
+                });
+            })
             ->with(['customer', 'locations', 'accessibility'])
             ->orderByDesc(Trip::COLUMN_ID)
             ->get();
@@ -164,6 +174,87 @@ class TripRepository implements TripRepositoryInterface
                 TripLocation::COLUMN_LATITUDE => $latitude,
                 TripLocation::COLUMN_LONGITUDE => $longitude,
             ]);
+    }
+
+    public function updateRideTypeAndPrices(Trip $trip, RideTypeEnum $rideType, ?float $accessibilityPrice, ?float $waitingPrice, float $totalPrice): Trip
+    {
+        $trip->update([
+            Trip::COLUMN_RIDE_TYPE => $rideType,
+            Trip::COLUMN_ACCESSIBILITY_PRICE => $accessibilityPrice,
+            Trip::COLUMN_WAITING_PRICE => $waitingPrice,
+            Trip::COLUMN_TOTAL_PRICE => $totalPrice,
+        ]);
+
+        return $trip->fresh();
+    }
+
+    public function createDestinationLocation(Trip $trip, string $locationTitle, ?string $locationSubTitle, float $latitude, float $longitude, int $sequence): TripLocation
+    {
+        return TripLocation::query()->create([
+            TripLocation::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
+            TripLocation::COLUMN_LOCATION_TITLE => $locationTitle,
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => $locationSubTitle,
+            TripLocation::COLUMN_LATITUDE => $latitude,
+            TripLocation::COLUMN_LONGITUDE => $longitude,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+            TripLocation::COLUMN_SEQUENCE => $sequence,
+        ]);
+    }
+
+    public function deleteAdditionalDestinations(Trip $trip): void
+    {
+        // Delete all destination locations except the first one (sequence 2)
+        TripLocation::query()
+            ->where(TripLocation::COLUMN_TRIP_ID, $trip->{Trip::COLUMN_ID})
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)
+            ->where(TripLocation::COLUMN_SEQUENCE, '>', 2)
+            ->delete();
+    }
+
+    public function createDemandTrip(Trip $sourceTrip, array $originLocation, array $destinationLocation, ?int $scheduledTime): Trip
+    {
+        // Create demand trip with SCHEDULED type
+        $demandTrip = Trip::query()->create([
+            Trip::COLUMN_CUSTOMER_ID => $sourceTrip->{Trip::COLUMN_CUSTOMER_ID},
+            Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::SCHEDULED->value,
+            Trip::COLUMN_RIDE_TYPE => RideTypeEnum::ONE_WAY,
+            Trip::COLUMN_VEHICLE_TYPE_ID => $sourceTrip->{Trip::COLUMN_VEHICLE_TYPE_ID},
+            Trip::COLUMN_PASSENGER_COUNT => $sourceTrip->{Trip::COLUMN_PASSENGER_COUNT},
+            Trip::COLUMN_ACCESSIBILITY_PRICE => $sourceTrip->{Trip::COLUMN_ACCESSIBILITY_PRICE},
+            Trip::COLUMN_WAITING_PRICE => null,
+            Trip::COLUMN_TOTAL_PRICE => null,
+            Trip::COLUMN_CURRENCY => null,
+            Trip::COLUMN_STATUS => TripStatusEnum::DRAFT,
+            Trip::COLUMN_SCHEDULED_TIME => $scheduledTime ? Carbon::createFromTimestamp($scheduledTime) : null,
+            Trip::COLUMN_DEMAND_TRIP_ID => $sourceTrip->{Trip::COLUMN_ID},
+        ]);
+
+        // Create origin location (last destination of source trip)
+        TripLocation::query()->create([
+            TripLocation::COLUMN_TRIP_ID => $demandTrip->{Trip::COLUMN_ID},
+            TripLocation::COLUMN_LOCATION_TITLE => $originLocation['title'],
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => $originLocation['sub_title'],
+            TripLocation::COLUMN_LATITUDE => $originLocation['latitude'],
+            TripLocation::COLUMN_LONGITUDE => $originLocation['longitude'],
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+            TripLocation::COLUMN_SEQUENCE => 1,
+        ]);
+
+        // Create destination location
+        TripLocation::query()->create([
+            TripLocation::COLUMN_TRIP_ID => $demandTrip->{Trip::COLUMN_ID},
+            TripLocation::COLUMN_LOCATION_TITLE => $destinationLocation['title'],
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => $destinationLocation['sub_title'],
+            TripLocation::COLUMN_LATITUDE => $destinationLocation['latitude'],
+            TripLocation::COLUMN_LONGITUDE => $destinationLocation['longitude'],
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+            TripLocation::COLUMN_SEQUENCE => 2,
+        ]);
+
+        return $demandTrip->fresh(['locations']);
     }
 
     public function deleteDraftTrips(int $customerId): void

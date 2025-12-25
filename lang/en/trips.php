@@ -365,6 +365,7 @@ return [
             'trip_cannot_be_cancelled' => 'This trip cannot be cancelled. Only draft or pending rider trips can be cancelled.',
             'customer_already_has_active_trip' => 'You already have an active trip. Please complete or cancel your current trip before creating a new one.',
             'customer_has_unpaid_trip' => 'You have an unpaid trip. Please complete payment for your previous trip before creating a new one.',
+            'ride_type_mismatch' => 'The ride type you are trying to confirm does not match the trip ride type. Please use the change ride type endpoint first.',
             'rider_location_not_available' => 'Rider location is not available. Location tracking is only available when rider is accepted, arrived, or picked up.',
             'trip_status_cannot_be_checked' => 'Trip status cannot be checked. Status checking is not available for draft, cancelled, or completed trips.',
             'trip_not_found' => 'No active trip found for payment.',

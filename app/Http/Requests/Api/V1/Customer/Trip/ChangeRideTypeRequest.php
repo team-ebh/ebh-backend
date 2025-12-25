@@ -22,21 +22,38 @@ class ChangeRideTypeRequest extends FormRequest
         $isRoundTripWait = $rideTypeId === RideTypeEnum::ROUND_TRIP_WAIT->value;
 
         return [
-            // Ride type (required)
+            /**
+             * Ride type ID
+             *
+             * @example 2
+             */
             'ride_type_id' => ['required', 'integer', Rule::enum(RideTypeEnum::class)],
 
-            // Destination location - required for ROUND_TRIP and ROUND_TRIP_WAIT, nullable for ONE_WAY
+            /**
+             * Destination location title
+             *
+             * @example Kuwait City
+             */
             'destination_location_title' => [
                 $isRoundTrip || $isRoundTripWait ? 'required' : 'nullable',
                 'string',
                 'max:255',
             ],
+
+            /**
+             * Destination location subtitle
+             *
+             * @example Near the main square
+             */
             'destination_location_sub_title' => [
                 $isRoundTrip || $isRoundTripWait ? 'required' : 'nullable',
                 'string',
                 'max:255',
             ],
+
             /**
+             * Destination latitude
+             *
              * @example 29.353325
              */
             'destination_latitude' => [
@@ -45,7 +62,10 @@ class ChangeRideTypeRequest extends FormRequest
                 'min:-90',
                 'max:90',
             ],
+
             /**
+             * Destination longitude
+             *
              * @example 47.98227
              */
             'destination_longitude' => [
@@ -55,10 +75,13 @@ class ChangeRideTypeRequest extends FormRequest
                 'max:180',
             ],
 
-            // Return time - required only for ROUND_TRIP_WAIT, nullable for others
-            // Unix timestamp
+            /**
+             * Return time (Unix timestamp, required for ROUND_TRIP)
+             *
+             * @example 1766759492
+             */
             'return_time' => [
-                $isRoundTripWait ? 'required' : 'nullable',
+                $isRoundTrip ? 'required' : 'nullable',
                 'integer',
                 'min:' . now()->timestamp, // Must be in the future
             ],
@@ -68,11 +91,15 @@ class ChangeRideTypeRequest extends FormRequest
     public function messages(): array
     {
         return [
-            // Destination location
+            'ride_type_id.required' => trans('validations.trips.ride_type_id.required'),
+            'ride_type_id.integer' => trans('validations.trips.ride_type_id.integer'),
+            'ride_type_id.enum' => trans('validations.trips.ride_type_id.enum'),
+            'return_time.required' => trans('validations.trips.return_time.required'),
+            'return_time.integer' => trans('validations.trips.return_time.integer'),
+            'return_time.min' => trans('validations.trips.return_time.min'),
             'destination_location_title.required' => trans('validations.trips.destination_location_title.required'),
             'destination_location_title.string' => trans('validations.trips.destination_location_title.string'),
             'destination_location_title.max' => trans('validations.trips.destination_location_title.max'),
-            'destination_location_sub_title.required' => trans('validations.trips.destination_location_sub_title.required'),
             'destination_location_sub_title.string' => trans('validations.trips.destination_location_sub_title.string'),
             'destination_location_sub_title.max' => trans('validations.trips.destination_location_sub_title.max'),
             'destination_latitude.required' => trans('validations.trips.destination_latitude.required'),
@@ -83,16 +110,6 @@ class ChangeRideTypeRequest extends FormRequest
             'destination_longitude.numeric' => trans('validations.trips.destination_longitude.numeric'),
             'destination_longitude.min' => trans('validations.trips.destination_longitude.min'),
             'destination_longitude.max' => trans('validations.trips.destination_longitude.max'),
-
-            // Ride type
-            'ride_type_id.required' => trans('validations.trips.ride_type_id.required'),
-            'ride_type_id.integer' => trans('validations.trips.ride_type_id.integer'),
-            'ride_type_id.enum' => trans('validations.trips.ride_type_id.enum'),
-
-            // Return time
-            'return_time.required' => trans('validations.trips.return_time.required'),
-            'return_time.integer' => trans('validations.trips.return_time.integer'),
-            'return_time.min' => trans('validations.trips.return_time.min'),
         ];
     }
 }
