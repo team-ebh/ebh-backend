@@ -6,6 +6,7 @@ use App\Enums\ApplicationEnvironmentEnum;
 use App\Exceptions\BaseException;
 use App\Http\Middleware\AuthenticateBroadcasting;
 use App\Http\Middleware\EnsureCustomerIsActive;
+use App\Http\Middleware\EnsureRiderIsEnabled;
 use App\Http\Middleware\LocalizationMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -62,6 +63,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.broadcasting' => AuthenticateBroadcasting::class,
             'customer.active' => EnsureCustomerIsActive::class,
+            'rider.enabled' => EnsureRiderIsEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

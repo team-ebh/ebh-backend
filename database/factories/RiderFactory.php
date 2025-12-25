@@ -23,6 +23,7 @@ class RiderFactory extends Factory
             Rider::COLUMN_PHONE_NUMBER => fake()->unique()->numerify('########'), // 8-digit phone number
             Rider::COLUMN_COMPANY_ID => null,
             Rider::COLUMN_STATUS => RiderStatusEnum::OFFLINE,
+            Rider::COLUMN_ENABLED => true,
             Rider::COLUMN_OTP => null,
             Rider::COLUMN_OTP_EXPIRES_AT => null,
         ];

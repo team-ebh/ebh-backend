@@ -8,6 +8,7 @@ use App\Enums\Rider\RiderStatusEnum;
 use App\Observers\RiderObserver;
 use App\Traits\Model\Aggregates\RiderAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use App\Traits\Model\HasEnabledTrait;
 use App\Traits\Model\HasMediaTrait;
 use App\Traits\Model\LogsActivity;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -24,6 +25,7 @@ class Rider extends User implements HasMedia
 {
     use HasApiTokens;
     use HasDefaultColumnModelTrait;
+    use HasEnabledTrait;
     use HasFactory;
     use HasMediaTrait;
     use LogsActivity;

@@ -10,6 +10,7 @@ return [
             'phone_number' => 'رقم الهاتف',
             'company' => 'الشركة',
             'status' => 'الحالة',
+            'enabled' => 'مفعل؟',
             'profile_photo' => 'صورة الملف الشخصي',
             'accessibility_certifications' => [
                 'label' => 'شهادات إمكانية الوصول',
@@ -57,6 +58,9 @@ return [
             'documents_description' => 'المستندات والشهادات المرفوعة',
             'timestamps' => 'طوابع زمنية',
         ],
+        'exceptions' => [
+            'has_active_trip' => 'لا يمكن تعطيل السائق. السائق لديه رحلة نشطة قيد التنفيذ.',
+        ],
     ],
     'api' => [
         'validation' => [
@@ -76,6 +80,7 @@ return [
             'rider_must_be_available' => 'يجب أن تكون متاحًا لقبول الرحلات',
         ],
         'exceptions' => [
+            'account_disabled' => 'حسابك معطل. يرجى التواصل مع الدعم.',
             'cannot_change_status' => 'لا يمكن تغيير الحالة. يجب عليك إكمال أو إلغاء رحلتك النشطة أولاً، أو الانتظار حتى لا تكون مشغولاً.',
         ],
         'success' => [
