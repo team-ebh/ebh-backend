@@ -24,14 +24,14 @@ class CustomerFactory extends Factory
             Customer::COLUMN_PHONE_NUMBER => fake()->unique()->numerify('########'), // 8-digit phone number
             Customer::COLUMN_OTP => null,
             Customer::COLUMN_OTP_EXPIRES_AT => null,
-            Customer::COLUMN_STATUS => CustomerStatusEnum::ACTIVE,
+            Customer::COLUMN_STATUS => CustomerStatusEnum::ACTIVE->value,
         ];
     }
 
     public function pendingVerification(): static
     {
         return $this->state(fn (array $attributes) => [
-            Customer::COLUMN_STATUS => CustomerStatusEnum::PENDING_VERIFICATION,
+            Customer::COLUMN_STATUS => CustomerStatusEnum::PENDING_VERIFICATION->value,
         ]);
     }
 

@@ -93,6 +93,10 @@ return [
             'deactivated' => 'Customer has been deactivated successfully.',
             'suspended' => 'Customer has been suspended successfully.',
         ],
+        'exceptions' => [
+            'has_active_trip' => 'Cannot disable customer. The customer has an active trip in progress.',
+            'has_pending_payment' => 'Cannot disable customer. The customer has a pending payment that must be completed first.',
+        ],
         'stats' => [
             'total_customers' => 'Total Customers',
             'total_customers_description' => 'All registered customers',
