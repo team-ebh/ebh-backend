@@ -9,71 +9,69 @@ use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 // Custom broadcasting auth endpoint with Bearer token support (only on local/dev)
-if (! ApplicationEnvironmentEnum::isRiskyEnvironment()) {
-    Route::domain(config('app.domains.admin'))
-        ->post('/broadcasting/auth', function (Request $request) {
-            // Debug logging
-            \Log::info('Broadcasting auth request received', [
-                'has_auth_header' => $request->hasHeader('Authorization'),
-                'channel_name' => $request->input('channel_name'),
-                'socket_id' => $request->input('socket_id'),
-            ]);
+Route::domain(config('app.domains.admin'))
+    ->post('/broadcasting/auth', function (Request $request) {
+        // Debug logging
+        \Log::info('Broadcasting auth request received', [
+            'has_auth_header' => $request->hasHeader('Authorization'),
+            'channel_name' => $request->input('channel_name'),
+            'socket_id' => $request->input('socket_id'),
+        ]);
 
-            // Manual Bearer token authentication
-            $token = $request->bearerToken();
+        // Manual Bearer token authentication
+        $token = $request->bearerToken();
 
-            \Log::info('Token check', [
-                'has_token' => (bool) $token,
-                'token_preview' => $token ? substr($token, 0, 10) . '...' : null,
-            ]);
+        \Log::info('Token check', [
+            'has_token' => (bool) $token,
+            'token_preview' => $token ? substr($token, 0, 10) . '...' : null,
+        ]);
 
-            if (! $token) {
-                \Log::error('No bearer token provided');
-                abort(403, 'No bearer token');
-            }
+        if (! $token) {
+            \Log::error('No bearer token provided');
+            abort(403, 'No bearer token');
+        }
 
-            // Find the token in database
-            $personalAccessToken = Laravel\Sanctum\PersonalAccessToken::findToken($token);
+        // Find the token in database
+        $personalAccessToken = Laravel\Sanctum\PersonalAccessToken::findToken($token);
 
-            \Log::info('Token lookup', [
-                'token_found' => (bool) $personalAccessToken,
-            ]);
+        \Log::info('Token lookup', [
+            'token_found' => (bool) $personalAccessToken,
+        ]);
 
-            if (! $personalAccessToken) {
-                \Log::error('Invalid token');
-                abort(403, 'Invalid token');
-            }
+        if (! $personalAccessToken) {
+            \Log::error('Invalid token');
+            abort(403, 'Invalid token');
+        }
 
-            $user = $personalAccessToken->tokenable;
+        $user = $personalAccessToken->tokenable;
 
-            \Log::info('User found', [
+        \Log::info('User found', [
+            'user_id' => $user->id,
+            'user_type' => get_class($user),
+        ]);
+
+        // Set the authenticated user for broadcasting
+        $request->setUserResolver(fn () => $user);
+
+        // Authorize the channel
+        try {
+            $response = Broadcast::auth($request);
+
+            \Log::info('Broadcasting auth successful', [
                 'user_id' => $user->id,
-                'user_type' => get_class($user),
+                'channel' => $request->input('channel_name'),
             ]);
 
-            // Set the authenticated user for broadcasting
-            $request->setUserResolver(fn () => $user);
+            return $response;
+        } catch (\Exception $e) {
+            \Log::error('Broadcasting auth exception', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
-            // Authorize the channel
-            try {
-                $response = Broadcast::auth($request);
-
-                \Log::info('Broadcasting auth successful', [
-                    'user_id' => $user->id,
-                    'channel' => $request->input('channel_name'),
-                ]);
-
-                return $response;
-            } catch (\Exception $e) {
-                \Log::error('Broadcasting auth exception', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-
-                abort(403, 'Channel authorization failed: ' . $e->getMessage());
-            }
-        });
-}
+            abort(403, 'Channel authorization failed: ' . $e->getMessage());
+        }
+    });
 
 Route::domain(config('app.domains.api'))
     ->group(function () {
