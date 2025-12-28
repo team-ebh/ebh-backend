@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Riders\Pages;
 
+use App\Actions\Filament\Rider\ValidateRiderStatusChangeAction;
+use App\Exceptions\Rider\RiderHasActiveTripException;
 use App\Filament\Resources\Riders\RiderResource;
+use App\Models\Rider;
 use App\Traits\Filament\FilamentRedirectToListPage;
 use App\Traits\Filament\HandlesRiderDocuments;
 use Filament\Actions;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
 class EditRider extends EditRecord
@@ -28,6 +32,36 @@ class EditRider extends EditRecord
     public function hasDatabaseTransactions(): bool
     {
         return true;
+    }
+
+    protected function beforeSave(): void
+    {
+        $validateAction = app(ValidateRiderStatusChangeAction::class);
+
+        $currentEnabled = $this->record->getOriginal(Rider::COLUMN_ENABLED);
+        $newEnabled = $this->data['enabled'] ?? null;
+
+        // Check if enabled status is being changed
+        if ($currentEnabled !== $newEnabled && $newEnabled !== null) {
+            // Convert to boolean if needed
+            $currentEnabledBool = is_bool($currentEnabled) ? $currentEnabled : (bool) $currentEnabled;
+            $newEnabledBool = is_bool($newEnabled) ? $newEnabled : (bool) $newEnabled;
+
+            try {
+                $validateAction(
+                    $this->record->{Rider::COLUMN_ID},
+                    $currentEnabledBool,
+                    $newEnabledBool
+                );
+            } catch (RiderHasActiveTripException $e) {
+                Notification::make()
+                    ->danger()
+                    ->title(trans('riders.admin.exceptions.has_active_trip'))
+                    ->send();
+
+                $this->halt();
+            }
+        }
     }
 
     protected function mutateFormDataBeforeFill(array $data): array

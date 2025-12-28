@@ -6,6 +6,7 @@ namespace App\Repositories\Api\V1\Customer;
 
 use App\DTOs\Api\V1\Customer\Auth\SignUpDTO;
 use App\Enums\Customer\CustomerStatusEnum;
+use App\Exceptions\Customer\CustomerAccountDisabledException;
 use App\Exceptions\Customer\CustomerBeforeRegisteredException;
 use App\Exceptions\Customer\CustomerMustBeRegisterException;
 use App\Exceptions\Customer\CustomerNotFoundException;
@@ -95,6 +96,7 @@ class CustomerRepository implements CustomerRepositoryInterface
     public function checkCustomerCanSignIn(Customer $customer): void
     {
         throw_if($customer->isPendingVerification(), CustomerMustBeRegisterException::class);
+        throw_if($customer->isDisabled(), CustomerAccountDisabledException::class);
     }
 
     public function setActiveCustomer(Customer $customer): Customer

@@ -39,7 +39,7 @@ return [
         ],
         'exceptions' => [
             'not_found' => 'Customer not found.',
-            'account_disabled' => 'Your account is disabled.',
+            'account_disabled' => 'Your account is suspended or inactive. Please contact support.',
             'invalid_otp' => 'Invalid or expired OTP.',
             'before_registered' => 'Customer is already registered.',
             'must_be_registered' => 'Customer must be registered first.',
@@ -92,6 +92,10 @@ return [
             'activated' => 'Customer has been activated successfully.',
             'deactivated' => 'Customer has been deactivated successfully.',
             'suspended' => 'Customer has been suspended successfully.',
+        ],
+        'exceptions' => [
+            'has_active_trip' => 'Cannot disable customer. The customer has an active trip in progress.',
+            'has_pending_payment' => 'Cannot disable customer. The customer has a pending payment that must be completed first.',
         ],
         'stats' => [
             'total_customers' => 'Total Customers',

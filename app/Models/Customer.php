@@ -87,4 +87,12 @@ class Customer extends User
     {
         return $this->{self::COLUMN_STATUS} === CustomerStatusEnum::PENDING_VERIFICATION;
     }
+
+    public function isDisabled(): bool
+    {
+        return in_array($this->{self::COLUMN_STATUS}, [
+            CustomerStatusEnum::INACTIVE,
+            CustomerStatusEnum::SUSPENDED,
+        ]);
+    }
 }

@@ -13,7 +13,7 @@ Route::name('payments.')
         Route::any('/webhook', 'processWebhook')->name('webhook');
         Route::get('/{payment:payment_number}/download-receipt', 'downloadReceipt')->name('download-receipt');
 
-        Route::middleware('auth:customer')->group(function () {
+        Route::middleware(['auth:customer', 'customer.active'])->group(function () {
             Route::get('/check-pending', 'checkPendingPayment')->name('check-pending');
             Route::post('/link', 'getLink')->name('link');
             Route::get('/{payment:payment_number}/check-status', 'checkPaymentStatus')->name('check-status');
