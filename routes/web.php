@@ -86,7 +86,7 @@ Route::domain(config('app.domains.api'))
         Route::redirect('/', 'docs/v1/riders');
 
         // WebSocket test pages (only available in non-risky environments)
-        if (! ApplicationEnvironmentEnum::isRiskyEnvironment()) {
+        if (! ApplicationEnvironmentEnum::isProduction()) {
             Route::domain(config('app.domains.admin'))->get('/test-socket', function () {
                 return view('test-socket');
             });
