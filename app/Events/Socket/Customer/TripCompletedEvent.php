@@ -20,6 +20,7 @@ class TripCompletedEvent extends BaseSocketEvent implements ShouldDispatchAfterC
         public readonly int $customerId,
         public readonly int $tripId,
         public readonly int $riderId,
+        public readonly bool $hasPendingPayment,
     ) {}
 
     public function getEventName(): string
@@ -32,6 +33,7 @@ class TripCompletedEvent extends BaseSocketEvent implements ShouldDispatchAfterC
         return [
             'trip_id' => $this->tripId,
             'rider_id' => $this->riderId,
+            'has_pending_payment' => $this->hasPendingPayment,
         ];
     }
 

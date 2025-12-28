@@ -36,14 +36,20 @@ readonly class ValidateAndLoadPipe
             TripNotBelongToRiderException::class
         );
 
+        // Validate trip is assigned to this rider
+        throw_if(
+            ! $trip->belongsToRider($dto->riderId),
+            TripNotBelongToRiderException::class
+        );
+
         throw_if(
             ! $tripRequest->isAccepted(),
             InvalidTripActionException::class
         );
 
-        // Validate trip status (must be ACCEPTED_RIDER or ON_TRIP)
+        // Validate trip status (must be ACCEPTED_RIDER or IN_PROGRESS)
         throw_if(
-            ! $trip->isAcceptedByRider() && ! $trip->isOnTrip(),
+            ! $trip->isAcceptedByRider() && ! $trip->isInProgress(),
             InvalidTripActionException::class
         );
 

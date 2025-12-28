@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Payment\PaymentMethodEnum;
+use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
@@ -29,6 +31,10 @@ class Trip extends Model
 
     public const string COLUMN_TRIP_TYPE_ID = 'trip_type_id';
 
+    public const string COLUMN_RIDE_TYPE_ID = 'ride_type_id';
+
+    public const string COLUMN_RIDE_TYPE = 'ride_type';
+
     public const string COLUMN_VEHICLE_TYPE_ID = 'vehicle_type_id';
 
     public const string COLUMN_PASSENGER_COUNT = 'passenger_count';
@@ -41,6 +47,8 @@ class Trip extends Model
 
     public const string COLUMN_CURRENCY = 'currency';
 
+    public const string COLUMN_PAYMENT_METHOD = 'payment_method';
+
     public const string COLUMN_STATUS = 'status';
 
     public const string COLUMN_DEMAND_TRIP_ID = 'demand_trip_id';
@@ -49,8 +57,11 @@ class Trip extends Model
     {
         return [
             self::COLUMN_TRIP_TYPE_ID => TripTypeEnum::class,
+            self::COLUMN_RIDE_TYPE_ID => RideTypeEnum::class,
+            self::COLUMN_RIDE_TYPE => RideTypeEnum::class,
             self::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::class,
             self::COLUMN_CURRENCY => CurrencyEnum::class,
+            self::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::class,
             self::COLUMN_STATUS => TripStatusEnum::class,
         ];
     }
@@ -84,6 +95,22 @@ class Trip extends Model
         ]);
     }
 
+    #[Scope]
+    protected function excludingDraftAndCancelled($query)
+    {
+        return $query->whereNotIn(self::COLUMN_STATUS, [
+            TripStatusEnum::DRAFT,
+            TripStatusEnum::CANCELED_BY_CUSTOMER,
+            TripStatusEnum::CANCELLED_BY_RIDER,
+        ]);
+    }
+
+    #[Scope]
+    protected function withoutDraft($query)
+    {
+        return $query->where(self::COLUMN_STATUS, '<>', TripStatusEnum::DRAFT);
+    }
+
     /**
      * Check if trip is draft
      */
@@ -109,11 +136,19 @@ class Trip extends Model
     }
 
     /**
-     * Check if trip is on trip
+     * Check if trip is arrived
      */
-    public function isOnTrip(): bool
+    public function isArrived(): bool
     {
-        return $this->{self::COLUMN_STATUS} === TripStatusEnum::ON_TRIP;
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::ARRIVED;
+    }
+
+    /**
+     * Check if trip is in progress
+     */
+    public function isInProgress(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === TripStatusEnum::IN_PROGRESS;
     }
 
     /**
@@ -141,6 +176,14 @@ class Trip extends Model
     }
 
     /**
+     * Check if trip belongs to customer
+     */
+    public function belongsToCustomer(int $customerId): bool
+    {
+        return $this->{self::COLUMN_CUSTOMER_ID} === $customerId;
+    }
+
+    /**
      * Check if trip belongs to rider
      */
     public function belongsToRider(int $riderId): bool
@@ -150,11 +193,14 @@ class Trip extends Model
 
     /**
      * Check if trip can be cancelled by rider
-     * Only ACCEPTED_RIDER trips can be cancelled by rider
+     * Only ACCEPTED_RIDER and ARRIVED trips can be cancelled by rider
      */
     public function canBeCancelledByRider(): bool
     {
-        return $this->{self::COLUMN_STATUS} === TripStatusEnum::ACCEPTED_RIDER;
+        return in_array($this->{self::COLUMN_STATUS}, [
+            TripStatusEnum::ACCEPTED_RIDER,
+            TripStatusEnum::ARRIVED,
+        ], true);
     }
 
     /**
@@ -163,7 +209,10 @@ class Trip extends Model
      */
     public function canCancelTrip(): bool
     {
-        return in_array($this->{self::COLUMN_STATUS}, [TripStatusEnum::DRAFT, TripStatusEnum::PENDING_RIDER, TripStatusEnum::ACCEPTED_RIDER]);
+        return in_array(
+            $this->{self::COLUMN_STATUS},
+            [TripStatusEnum::DRAFT, TripStatusEnum::PENDING_RIDER, TripStatusEnum::ACCEPTED_RIDER, TripStatusEnum::ARRIVED]
+        );
     }
 
     /**
@@ -175,7 +224,8 @@ class Trip extends Model
         // Only these statuses allow location tracking
         return in_array($this->{self::COLUMN_STATUS}, [
             TripStatusEnum::ACCEPTED_RIDER,
-            TripStatusEnum::ON_TRIP,
+            TripStatusEnum::ARRIVED,
+            TripStatusEnum::IN_PROGRESS,
         ], true);
     }
 
@@ -187,8 +237,39 @@ class Trip extends Model
     {
         return in_array($this->{self::COLUMN_STATUS}, [
             TripStatusEnum::ACCEPTED_RIDER,
-            TripStatusEnum::ON_TRIP,
+            TripStatusEnum::ARRIVED,
+            TripStatusEnum::IN_PROGRESS,
             TripStatusEnum::COMPLETED,
         ], true);
+    }
+
+    /**
+     * Check if trip payment method is KNET
+     */
+    public function isKnetPayment(): bool
+    {
+        return $this->{self::COLUMN_PAYMENT_METHOD} === PaymentMethodEnum::KNET;
+    }
+
+    /**
+     * Check if trip payment method is KNET
+     */
+    public function isCashPayment(): bool
+    {
+        return $this->{self::COLUMN_PAYMENT_METHOD} === PaymentMethodEnum::CASH;
+    }
+
+    public function hasPaidPayment(): bool
+    {
+        if ($this->isCashPayment()) {
+            return true;
+        }
+
+        return $this->paidPayment()->exists();
+    }
+
+    public function hasCompletedAndPaidPayment(): bool
+    {
+        return $this->isCompleted() && $this->hasPaidPayment();
     }
 }

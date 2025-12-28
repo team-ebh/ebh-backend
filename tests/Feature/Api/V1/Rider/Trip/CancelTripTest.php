@@ -73,9 +73,30 @@ test('rider can cancel accepted trip successfully', function () {
     ]);
 });
 
+test('rider can cancel arrived trip successfully', function () {
+    $trip = ($this->createTrip)([
+        'status' => TripStatusEnum::ARRIVED->value,
+    ]);
+
+    $response = actingAs($this->rider, 'rider')
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
+
+    $response->assertOk();
+
+    assertDatabaseHas('trips', [
+        'id' => $trip->id,
+        'status' => TripStatusEnum::CANCELLED_BY_RIDER->value,
+    ]);
+
+    assertDatabaseHas('trip_requests', [
+        'id' => $trip->tripRequest->id,
+        'status' => TripRequestStatusEnum::CANCELLED->value,
+    ]);
+});
+
 test('rider cannot cancel trip that is on trip', function () {
     $trip = ($this->createTrip)([
-        'status' => TripStatusEnum::ON_TRIP->value,
+        'status' => TripStatusEnum::IN_PROGRESS->value,
     ]);
 
     $response = actingAs($this->rider, 'rider')
@@ -109,6 +130,21 @@ test('rider cannot cancel trip that is not assigned to them', function () {
     $response->assertForbidden();
 });
 
+test('rider cannot cancel trip when trip is not assigned to rider', function () {
+    // Create a trip request for this rider but trip is assigned to another rider
+    $otherRider = Rider::factory()->create();
+
+    $trip = ($this->createTrip)(
+        ['rider_id' => $otherRider->id, 'status' => TripStatusEnum::ACCEPTED_RIDER->value],
+        ['rider_id' => $this->rider->id] // TripRequest belongs to this rider but Trip is assigned to other rider
+    );
+
+    $response = actingAs($this->rider, 'rider')
+        ->postJson("http://api.localhost/v1/riders/trips/requests/{$trip->tripRequest->id}/cancel");
+
+    $response->assertForbidden();
+});
+
 test('rider cannot cancel trip with invalid status - draft', function () {
     $trip = ($this->createTrip)(
         ['status' => TripStatusEnum::DRAFT->value],
@@ -123,7 +159,7 @@ test('rider cannot cancel trip with invalid status - draft', function () {
 
 test('rider cannot cancel trip with invalid status - on trip', function () {
     $trip = ($this->createTrip)([
-        'status' => TripStatusEnum::ON_TRIP->value,
+        'status' => TripStatusEnum::IN_PROGRESS->value,
     ]);
 
     $response = actingAs($this->rider, 'rider')

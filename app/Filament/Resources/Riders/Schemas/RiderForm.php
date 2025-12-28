@@ -17,6 +17,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
@@ -80,6 +81,16 @@ class RiderForm
                             ->relationship('company', Company::COLUMN_NAME)
                             ->searchable()
                             ->preload()
+                            ->columnSpan(1),
+
+                        Toggle::make(Rider::COLUMN_ENABLED)
+                            ->inline(false)
+                            ->default(true)
+                            ->label(trans('companies.admin.fields.enabled'))
+                            ->onColor('success')
+                            ->offColor('danger')
+                            ->onIcon('heroicon-m-check-circle')
+                            ->offIcon('heroicon-m-x-circle')
                             ->columnSpan(1),
                     ]),
 

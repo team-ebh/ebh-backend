@@ -38,7 +38,7 @@ beforeEach(function () {
             Trip::COLUMN_PASSENGER_COUNT => 1,
             Trip::COLUMN_TOTAL_PRICE => 5.000,
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
-            Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value,
+            Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value,
         ], $tripOverrides));
 
         foreach ($locations as $location) {
@@ -65,7 +65,7 @@ beforeEach(function () {
 
 test('rider can mark single location trip as completed successfully', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
@@ -116,7 +116,7 @@ test('rider can mark single location trip as completed successfully', function (
 
 test('rider can complete first destination and get next action for second destination', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
@@ -156,7 +156,7 @@ test('rider can complete first destination and get next action for second destin
     // Verify trip is NOT completed yet
     assertDatabaseHas('trips', [
         'id' => $trip->id,
-        'status' => TripStatusEnum::ON_TRIP->value,
+        'status' => TripStatusEnum::IN_PROGRESS->value,
     ]);
 
     // Verify first destination is dropped off (not the last location)
@@ -175,7 +175,7 @@ test('rider can complete first destination and get next action for second destin
 
 test('rider can complete all locations and finish trip', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
@@ -231,7 +231,7 @@ test('rider cannot mark trip as completed that does not belong to them', functio
     $trip = ($this->createTripWithLocations)(
         [
             Trip::COLUMN_RIDER_ID => $otherRider->{Rider::COLUMN_ID},
-            Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value,
+            Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value,
         ],
         [
             [
@@ -347,7 +347,7 @@ test('rider cannot mark trip as completed with invalid status - already complete
 
 test('rider cannot mark trip as completed when all locations are finished', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
@@ -374,7 +374,7 @@ test('rider cannot mark trip as completed when all locations are finished', func
 
 test('unauthenticated rider cannot mark trip as completed', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
@@ -395,7 +395,7 @@ test('trip completed event is dispatched when rider completes all trip locations
     Event::fake([TripCompletedEvent::class]);
 
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
@@ -422,7 +422,7 @@ test('trip completed event is NOT dispatched when trip has more locations to com
     Event::fake([TripCompletedEvent::class]);
 
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,

@@ -191,7 +191,7 @@ describe('Update Rider Status API', function () {
             'waiting_price' => null,
             'total_price' => 5.000,
             'currency' => 'KWD',
-            'status' => TripStatusEnum::ON_TRIP->value,
+            'status' => TripStatusEnum::IN_PROGRESS->value,
         ]);
 
         putJson(route('v1.riders.status.update'), [

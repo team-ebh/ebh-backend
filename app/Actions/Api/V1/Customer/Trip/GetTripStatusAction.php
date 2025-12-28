@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Api\V1\Customer\Trip;
 
+use App\Exceptions\Customer\TripNotBelongToCustomerException;
 use App\Models\Trip;
 use App\Pipelines\Api\V1\Customer\Trip\GetTripStatus\BuildArrivedTimePipe;
 use App\Pipelines\Api\V1\Customer\Trip\GetTripStatus\BuildLocationHistoryPipe;
@@ -24,9 +25,18 @@ readonly class GetTripStatusAction
      * Execute the action
      *
      * Returns trip status with rider, vehicle, and location information
+     *
+     * @throws TripNotBelongToCustomerException
+     * @throws \Throwable
      */
     public function __invoke(Trip $trip): array
     {
+        // Validate trip belongs to authenticated customer
+        throw_if(
+            ! $trip->belongsToCustomer(auth('customer')->id()),
+            TripNotBelongToCustomerException::class
+        );
+
         return $this->buildTripStatus($trip);
     }
 

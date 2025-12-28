@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\GetEstimatedArrivalTimeDTO;
+use App\Exceptions\Customer\TripNotBelongToCustomerException;
+use App\Models\Trip;
 use App\Pipelines\Customer\Trip\GetEstimatedArrivalTime\ValidateAndLoadPipe;
 use App\Pipelines\Shared\Trip\GetEstimatedArrivalTime\CalculateEstimatedTimePipe;
 use Illuminate\Pipeline\Pipeline;
@@ -21,10 +23,17 @@ readonly class GetEstimatedArrivalTimeAction
      *
      * @return array{estimated_arrival_seconds: int}
      *
+     * @throws TripNotBelongToCustomerException
      * @throws \Throwable
      */
     public function __invoke(GetEstimatedArrivalTimeDTO $dto): array
     {
+        // Validate trip belongs to authenticated customer
+        throw_if(
+            ! $dto->trip->belongsToCustomer($dto->customerId),
+            TripNotBelongToCustomerException::class
+        );
+
         $result = app(Pipeline::class)
             ->send(['dto' => $dto])
             ->through([

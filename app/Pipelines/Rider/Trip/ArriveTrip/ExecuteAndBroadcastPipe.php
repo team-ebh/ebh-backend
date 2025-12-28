@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Pipelines\Rider\Trip\ArriveTrip;
 
 use App\Enums\Trip\TripLocationStatusEnum;
+use App\Enums\Trip\TripStatusEnum;
 use App\Events\Socket\Customer\TripArrivedEvent;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Models\Trip;
@@ -29,6 +30,11 @@ readonly class ExecuteAndBroadcastPipe
 
         // Update location status
         $this->riderTripRepository->updateTripLocationStatus($currentLocation, TripLocationStatusEnum::ARRIVED);
+
+        // Update trip status to ARRIVED
+        if ($trip->isAcceptedByRider()) {
+            $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::ARRIVED);
+        }
 
         // Broadcast to customer
         broadcast(new TripArrivedEvent(

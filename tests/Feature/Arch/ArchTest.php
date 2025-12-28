@@ -15,6 +15,7 @@ arch()->preset()->laravel()->ignoring([
     'App\Http\Controllers\Controller',
     'App\Http\Controllers\Api\V1\Customer\TripController', // Allow custom methods in TripController
     'App\Http\Controllers\Api\V1\Customer\AuthController', // Allow custom methods in AuthController
+    'App\Http\Controllers\Api\V1\Customer\PaymentController', // Allow custom methods in PaymentController
     'App\Http\Controllers\Api\V1\Rider\TripController', // Allow custom methods in Rider TripController
     'App\Http\Controllers\Api\V1\Rider\AuthController', // Allow custom methods in Rider AuthController
     'App\Http\Controllers\Api\V1\Rider\RiderController', // Allow custom methods in RiderController

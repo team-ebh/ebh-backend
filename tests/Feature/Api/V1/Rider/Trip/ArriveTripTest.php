@@ -94,10 +94,10 @@ test('rider can mark trip as arrived at origin location successfully', function 
             ],
         ]);
 
-    // Verify trip status remains accepted (arrived doesn't change trip status)
+    // Verify trip status updated to ARRIVED
     assertDatabaseHas('trips', [
         'id' => $trip->id,
-        'status' => TripStatusEnum::ACCEPTED_RIDER->value,
+        'status' => TripStatusEnum::ARRIVED->value,
     ]);
 
     // Verify origin location status updated
@@ -201,7 +201,7 @@ test('rider cannot mark trip as arrived with invalid status - already arrived', 
 
 test('rider cannot mark trip as arrived with invalid status - picked up', function () {
     $trip = ($this->createTripWithLocations)(
-        [Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP->value],
+        [Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS->value],
         [
             [
                 TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,

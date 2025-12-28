@@ -10,6 +10,7 @@ return [
             'phone_number' => 'Phone Number',
             'company' => 'Company',
             'status' => 'Status',
+            'enabled' => 'Is Enabled?',
             'profile_photo' => 'Profile Photo',
             'accessibility_certifications' => [
                 'label' => 'Accessibility Certifications',
@@ -59,6 +60,9 @@ return [
             'documents_description' => 'Uploaded documents and certificates',
             'timestamps' => 'Timestamps',
         ],
+        'exceptions' => [
+            'has_active_trip' => 'Cannot disable rider. The rider has an active trip in progress.',
+        ],
     ],
     'api' => [
         'validation' => [
@@ -78,6 +82,7 @@ return [
             'rider_must_be_available' => 'You must be available to accept trips',
         ],
         'exceptions' => [
+            'account_disabled' => 'Your account is disabled. Please contact support.',
             'cannot_change_status' => 'Cannot change status. You must complete or cancel your active trip first, or wait until you are not busy.',
         ],
         'success' => [

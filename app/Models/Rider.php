@@ -8,6 +8,7 @@ use App\Enums\Rider\RiderStatusEnum;
 use App\Observers\RiderObserver;
 use App\Traits\Model\Aggregates\RiderAggregate;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use App\Traits\Model\HasEnabledTrait;
 use App\Traits\Model\HasMediaTrait;
 use App\Traits\Model\LogsActivity;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -24,6 +25,7 @@ class Rider extends User implements HasMedia
 {
     use HasApiTokens;
     use HasDefaultColumnModelTrait;
+    use HasEnabledTrait;
     use HasFactory;
     use HasMediaTrait;
     use LogsActivity;
@@ -118,5 +120,17 @@ class Rider extends User implements HasMedia
         return new Attribute(
             get: fn ($value) => is_null($value) ? 47.98227 : (float) $value
         );
+    }
+
+    protected function phoneNumberWithPrefix(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): ?string => defaultPrefixPhoneNumber() . $this->{Customer::COLUMN_PHONE_NUMBER},
+        );
+    }
+
+    public function getPhoneNumberWithPrefix(): string
+    {
+        return $this->phone_number_with_prefix;
     }
 }

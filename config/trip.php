@@ -136,6 +136,6 @@ return [
         | Only search for riders who are currently online
         |
         */
-        'only_online_riders' => false,
+        'only_online_riders' => true,
     ],
 ];

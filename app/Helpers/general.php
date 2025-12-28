@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Enums\ApplicationEnvironmentEnum;
+use App\Models\Payment;
+use App\Models\Trip;
 use App\Services\SafeProcess;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -154,5 +156,49 @@ if (! function_exists('getAuthenticatedUser')) {
         return Auth::guard('customer')->user()
             ?? Auth::guard('rider')->user()
             ?? Auth::guard('web')->user();
+    }
+}
+
+if (! function_exists('generatePaymentNumber')) {
+    /**
+     * Generate unique payment number
+     *
+     * @throws \Random\RandomException
+     */
+    function generatePaymentNumber(): string
+    {
+        do {
+            $code = 'PAY-' . random_int(11111111, 99999999);
+        } while (Payment::query()->where(Payment::COLUMN_PAYMENT_NUMBER, $code)->exists());
+
+        return $code;
+    }
+}
+
+if (! function_exists('tripNumberFormat')) {
+    /**
+     * Generate unique trip number
+     */
+    function tripNumberFormat(Trip $trip): string
+    {
+        return 'TRP-' . $trip->{Trip::COLUMN_ID};
+    }
+}
+
+if (! function_exists('getApiUrl')) {
+    /**
+     * Get API domain URL
+     */
+    function getApiUrl(): string
+    {
+        $domain = config('app.domains.api');
+        $port = parse_url(config('app.url'), PHP_URL_PORT);
+        $scheme = parse_url(config('app.url'), PHP_URL_SCHEME) ?? 'http';
+
+        if ($port && $port !== 80 && $port !== 443) {
+            return "{$scheme}://{$domain}:{$port}";
+        }
+
+        return "{$scheme}://{$domain}";
     }
 }

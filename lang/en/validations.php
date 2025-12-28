@@ -87,5 +87,10 @@ return [
             'integer' => 'Return time must be a valid timestamp.',
             'min' => 'Return time must be in the future.',
         ],
+        'payment_method' => [
+            'required' => 'Payment method is required.',
+            'integer' => 'Payment method must be an integer.',
+            'enum' => 'The selected payment method is invalid.',
+        ],
     ],
 ];

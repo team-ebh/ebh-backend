@@ -94,3 +94,131 @@ test('it can handle decimal precision in coordinates', function () {
     expect((float) $this->rider->{Rider::COLUMN_LATITUDE})->toBe(29.37594567)
         ->and((float) $this->rider->{Rider::COLUMN_LONGITUDE})->toBe(47.97745678);
 });
+
+test('it broadcasts location update to customer when rider has active trip', function () {
+    Event::fake([App\Events\Socket\Customer\RiderLocationUpdatedEvent::class]);
+
+    // Create a customer
+    $customer = \App\Models\Customer::factory()->create();
+
+    // Create an active trip (ACCEPTED_RIDER status)
+    $trip = \App\Models\Trip::create([
+        \App\Models\Trip::COLUMN_CUSTOMER_ID => $customer->id,
+        \App\Models\Trip::COLUMN_RIDER_ID => $this->rider->id,
+        \App\Models\Trip::COLUMN_TRIP_TYPE_ID => \App\Enums\Trip\TripTypeEnum::RIDE_NOW,
+        \App\Models\Trip::COLUMN_VEHICLE_TYPE_ID => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE,
+        \App\Models\Trip::COLUMN_CURRENCY => \App\Enums\Currency\CurrencyEnum::KWD,
+        \App\Models\Trip::COLUMN_STATUS => \App\Enums\Trip\TripStatusEnum::ACCEPTED_RIDER,
+        \App\Models\Trip::COLUMN_PASSENGER_COUNT => 1,
+    ]);
+
+    // Update location
+    $this->postJson(apiUrl('/v1/riders/location'), [
+        'latitude' => 29.3759,
+        'longitude' => 47.9774,
+    ], $this->headers);
+
+    // Assert event was dispatched with correct data
+    Event::assertDispatched(
+        App\Events\Socket\Customer\RiderLocationUpdatedEvent::class,
+        fn ($event) => $event->customerId === $customer->id
+            && $event->tripId === $trip->id
+            && $event->riderId === $this->rider->id
+            && $event->latitude === 29.3759
+            && $event->longitude === 47.9774
+    );
+});
+
+test('it broadcasts location update when trip is IN_PROGRESS status', function () {
+    Event::fake([App\Events\Socket\Customer\RiderLocationUpdatedEvent::class]);
+
+    // Create a customer
+    $customer = \App\Models\Customer::factory()->create();
+
+    // Create a trip with IN_PROGRESS status
+    \App\Models\Trip::create([
+        \App\Models\Trip::COLUMN_CUSTOMER_ID => $customer->id,
+        \App\Models\Trip::COLUMN_RIDER_ID => $this->rider->id,
+        \App\Models\Trip::COLUMN_TRIP_TYPE_ID => \App\Enums\Trip\TripTypeEnum::RIDE_NOW,
+        \App\Models\Trip::COLUMN_VEHICLE_TYPE_ID => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE,
+        \App\Models\Trip::COLUMN_CURRENCY => \App\Enums\Currency\CurrencyEnum::KWD,
+        \App\Models\Trip::COLUMN_STATUS => \App\Enums\Trip\TripStatusEnum::IN_PROGRESS,
+        \App\Models\Trip::COLUMN_PASSENGER_COUNT => 1,
+    ]);
+
+    // Update location
+    $this->postJson(apiUrl('/v1/riders/location'), [
+        'latitude' => 29.3759,
+        'longitude' => 47.9774,
+    ], $this->headers);
+
+    // Assert event was dispatched
+    Event::assertDispatched(App\Events\Socket\Customer\RiderLocationUpdatedEvent::class);
+});
+
+test('it does NOT broadcast location update when rider has no active trip', function () {
+    Event::fake([App\Events\Socket\Customer\RiderLocationUpdatedEvent::class]);
+
+    // Update location (no active trip)
+    $this->postJson(apiUrl('/v1/riders/location'), [
+        'latitude' => 29.3759,
+        'longitude' => 47.9774,
+    ], $this->headers);
+
+    // Assert event was NOT dispatched
+    Event::assertNotDispatched(App\Events\Socket\Customer\RiderLocationUpdatedEvent::class);
+});
+
+test('it does NOT broadcast location update when trip is completed', function () {
+    Event::fake([App\Events\Socket\Customer\RiderLocationUpdatedEvent::class]);
+
+    // Create a customer
+    $customer = \App\Models\Customer::factory()->create();
+
+    // Create a completed trip
+    \App\Models\Trip::create([
+        \App\Models\Trip::COLUMN_CUSTOMER_ID => $customer->id,
+        \App\Models\Trip::COLUMN_RIDER_ID => $this->rider->id,
+        \App\Models\Trip::COLUMN_TRIP_TYPE_ID => \App\Enums\Trip\TripTypeEnum::RIDE_NOW,
+        \App\Models\Trip::COLUMN_VEHICLE_TYPE_ID => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE,
+        \App\Models\Trip::COLUMN_CURRENCY => \App\Enums\Currency\CurrencyEnum::KWD,
+        \App\Models\Trip::COLUMN_STATUS => \App\Enums\Trip\TripStatusEnum::COMPLETED,
+        \App\Models\Trip::COLUMN_PASSENGER_COUNT => 1,
+    ]);
+
+    // Update location
+    $this->postJson(apiUrl('/v1/riders/location'), [
+        'latitude' => 29.3759,
+        'longitude' => 47.9774,
+    ], $this->headers);
+
+    // Assert event was NOT dispatched
+    Event::assertNotDispatched(App\Events\Socket\Customer\RiderLocationUpdatedEvent::class);
+});
+
+test('it does NOT broadcast location update when trip is pending rider', function () {
+    Event::fake([App\Events\Socket\Customer\RiderLocationUpdatedEvent::class]);
+
+    // Create a customer
+    $customer = \App\Models\Customer::factory()->create();
+
+    // Create a pending trip (no rider assigned yet)
+    \App\Models\Trip::create([
+        \App\Models\Trip::COLUMN_CUSTOMER_ID => $customer->id,
+        \App\Models\Trip::COLUMN_RIDER_ID => $this->rider->id,
+        \App\Models\Trip::COLUMN_TRIP_TYPE_ID => \App\Enums\Trip\TripTypeEnum::RIDE_NOW,
+        \App\Models\Trip::COLUMN_VEHICLE_TYPE_ID => \App\Enums\Trip\TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE,
+        \App\Models\Trip::COLUMN_CURRENCY => \App\Enums\Currency\CurrencyEnum::KWD,
+        \App\Models\Trip::COLUMN_STATUS => \App\Enums\Trip\TripStatusEnum::PENDING_RIDER,
+        \App\Models\Trip::COLUMN_PASSENGER_COUNT => 1,
+    ]);
+
+    // Update location
+    $this->postJson(apiUrl('/v1/riders/location'), [
+        'latitude' => 29.3759,
+        'longitude' => 47.9774,
+    ], $this->headers);
+
+    // Assert event was NOT dispatched (PENDING_RIDER is not in canGetRiderLocation)
+    Event::assertNotDispatched(App\Events\Socket\Customer\RiderLocationUpdatedEvent::class);
+});

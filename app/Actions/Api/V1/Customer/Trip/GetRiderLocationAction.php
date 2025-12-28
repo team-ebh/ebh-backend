@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Api\V1\Customer\Trip;
 
+use App\Exceptions\Customer\TripNotBelongToCustomerException;
 use App\Exceptions\Trip\RiderLocationNotAvailableException;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\RiderLocationRepositoryInterface;
 use App\Models\Trip;
@@ -21,11 +22,18 @@ readonly class GetRiderLocationAction
     ) {}
 
     /**
+     * @throws TripNotBelongToCustomerException
      * @throws RiderLocationNotAvailableException
      * @throws \Throwable
      */
     public function __invoke(Trip $trip): array
     {
+        // Validate trip belongs to authenticated customer
+        throw_if(
+            ! $trip->belongsToCustomer(auth('customer')->id()),
+            TripNotBelongToCustomerException::class
+        );
+
         throw_if(
             ! $trip->canGetRiderLocation(),
             RiderLocationNotAvailableException::class

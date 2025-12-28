@@ -3,10 +3,14 @@
 declare(strict_types=1);
 
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Payment\PaymentGatewayEnum;
+use App\Enums\Payment\PaymentMethodEnum;
+use App\Enums\Payment\PaymentStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
 use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Trip;
 
 use function Pest\Laravel\actingAs;
@@ -51,7 +55,7 @@ test('customer can get app state when has active trip', function () {
 });
 
 test('customer app state ignores completed trips', function () {
-    Trip::query()->create([
+    $trip = Trip::query()->create([
         Trip::COLUMN_CUSTOMER_ID => $this->customer->{Customer::COLUMN_ID},
         Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED,
         Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
@@ -59,6 +63,18 @@ test('customer app state ignores completed trips', function () {
         Trip::COLUMN_PASSENGER_COUNT => 1,
         Trip::COLUMN_TOTAL_PRICE => 5.000,
         Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+        Trip::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET->value,
+    ]);
+
+    // Create paid payment for the completed trip
+    Payment::query()->create([
+        Payment::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
+        Payment::COLUMN_CUSTOMER_ID => $this->customer->{Customer::COLUMN_ID},
+        Payment::COLUMN_AMOUNT => 5.000,
+        Payment::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+        Payment::COLUMN_GATEWAY => PaymentGatewayEnum::UPAYMENTS->value,
+        Payment::COLUMN_STATUS => PaymentStatusEnum::PAID->value,
+        Payment::COLUMN_PAYMENT_NUMBER => generatePaymentNumber(),
     ]);
 
     $response = actingAs($this->customer, 'customer')

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Interfaces\Repositories\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
+use App\Enums\Payment\PaymentMethodEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Models\Trip;
 use Illuminate\Database\Eloquent\Collection;
@@ -19,7 +20,15 @@ interface TripRepositoryInterface
 
     public function getCustomerTrips(int $customerId): Collection;
 
+    public function getActiveTrip(int $customerId): ?Trip;
+
+    public function getLastTrip(int $customerId): ?Trip;
+
     public function updateStatus(Trip $trip, TripStatusEnum $status): Trip;
+
+    public function updatePaymentMethod(Trip $trip, PaymentMethodEnum $paymentMethod): Trip;
+
+    public function updatePaymentMethodAndStatus(Trip $trip, PaymentMethodEnum $paymentMethod, TripStatusEnum $status): Trip;
 
     public function updateTripPrices(Trip $trip, ?float $accessibilityPrice, ?float $waitingPrice, float $totalPrice): Trip;
 

@@ -20,4 +20,9 @@ enum CustomerAppStateEnum: string
      * Customer has an active trip
      */
     case HAS_ACTIVE_TRIP = 'HAS_ACTIVE_TRIP';
+
+    /**
+     * Customer has an active trip
+     */
+    case HAS_PENDING_PAYMENT = 'HAS_PENDING_PAYMENT';
 }

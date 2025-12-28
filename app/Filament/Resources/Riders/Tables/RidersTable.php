@@ -10,6 +10,7 @@ use App\Models\Company;
 use App\Models\Rider;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -73,6 +74,15 @@ class RidersTable
                     ->badge()
                     ->sortable()
                     ->color(fn ($state) => $state?->getColor() ?? 'gray'),
+
+                IconColumn::make(Company::COLUMN_ENABLED)
+                    ->label(trans('riders.admin.fields.enabled'))
+                    ->boolean()
+                    ->sortable()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
 
                 TextColumn::make(Rider::COLUMN_CREATED_AT)
                     ->searchable(false)

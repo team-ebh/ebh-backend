@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\Rider\TripController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:rider')
+Route::middleware(['auth:rider', 'rider.enabled'])
     ->name('trips.requests.')
     ->prefix('trips/requests')
     ->controller(TripController::class)

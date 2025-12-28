@@ -180,7 +180,7 @@ test('customer can get active trip with PENDING_RIDER status', function () {
         ]);
 });
 
-test('customer can get active trip with ON_TRIP status', function () {
+test('customer can get active trip with IN_PROGRESS status', function () {
     $rider = Rider::factory()->create([
         Rider::COLUMN_STATUS => RiderStatusEnum::BUSY,
     ]);
@@ -220,7 +220,7 @@ test('customer can get active trip with ON_TRIP status', function () {
     $trip = Trip::query()->create([
         Trip::COLUMN_CUSTOMER_ID => $this->customer->{Customer::COLUMN_ID},
         Trip::COLUMN_RIDER_ID => $rider->{Rider::COLUMN_ID},
-        Trip::COLUMN_STATUS => TripStatusEnum::ON_TRIP,
+        Trip::COLUMN_STATUS => TripStatusEnum::IN_PROGRESS,
         Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
         Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
         Trip::COLUMN_PASSENGER_COUNT => 1,

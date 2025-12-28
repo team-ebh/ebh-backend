@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Traits\Model\Aggregates;
 
+use App\Enums\Payment\PaymentStatusEnum;
+use App\Enums\Trip\TripLocationTypeEnum;
 use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripAccessibility;
@@ -43,6 +46,34 @@ trait TripAggregate
             ->orderBy(TripLocation::COLUMN_SEQUENCE);
     }
 
+    public function originLocations(): HasMany
+    {
+        return $this->hasMany(TripLocation::class, TripLocation::COLUMN_TRIP_ID)
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::ORIGIN)
+            ->orderBy(TripLocation::COLUMN_SEQUENCE);
+    }
+
+    public function firstOriginLocation(): HasOne
+    {
+        return $this->hasOne(TripLocation::class, TripLocation::COLUMN_TRIP_ID)
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::ORIGIN)
+            ->orderBy(TripLocation::COLUMN_SEQUENCE);
+    }
+
+    public function destinationLocations(): HasMany
+    {
+        return $this->hasMany(TripLocation::class, TripLocation::COLUMN_TRIP_ID)
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)
+            ->orderBy(TripLocation::COLUMN_SEQUENCE);
+    }
+
+    public function firstDestinationLocation(): HasOne
+    {
+        return $this->hasOne(TripLocation::class, TripLocation::COLUMN_TRIP_ID)
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)
+            ->orderBy(TripLocation::COLUMN_SEQUENCE);
+    }
+
     public function tripRequests(): HasMany
     {
         return $this->hasMany(TripRequest::class, TripRequest::COLUMN_TRIP_ID);
@@ -56,5 +87,22 @@ trait TripAggregate
     public function statusLogs(): HasMany
     {
         return $this->hasMany(TripStatusLog::class, TripStatusLog::COLUMN_TRIP_ID);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class, Payment::COLUMN_TRIP_ID);
+    }
+
+    public function paidPayment(): HasOne
+    {
+        return $this->hasOne(Payment::class, Payment::COLUMN_TRIP_ID)
+            ->withAttributes(Payment::COLUMN_STATUS, PaymentStatusEnum::PAID);
+    }
+
+    public function lastPayment(): HasOne
+    {
+        return $this->hasOne(Payment::class, Payment::COLUMN_TRIP_ID)
+            ->latest('id');
     }
 }

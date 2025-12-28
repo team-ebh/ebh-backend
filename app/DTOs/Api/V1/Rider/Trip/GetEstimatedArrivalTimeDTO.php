@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
  *
  * Data transfer object for getting estimated arrival time
  */
-readonly class GetEstimatedArrivalTimeDTO implements RequestDataTransferObject
+class GetEstimatedArrivalTimeDTO implements RequestDataTransferObject
 {
     public int $riderId;
 

@@ -21,6 +21,7 @@ use App\DTOs\Api\V1\Customer\Trip\GetEstimatedArrivalTimeDTO;
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Customer\Trip\ChangeRideTypeRequest;
+use App\Http\Requests\Api\V1\Customer\Trip\ConfirmTripRequest;
 use App\Http\Requests\Api\V1\Customer\Trip\TripStoreRequest;
 use App\Http\Resources\Api\V1\Customer\Trip\ChangeRideTypeResource;
 use App\Http\Resources\Api\V1\Customer\Trip\EstimatedArrivalTimeResource;
@@ -95,10 +96,12 @@ class TripController extends Controller
      * After confirmation, customer should poll getTripStatus endpoint to track the driver.
      *
      * @authenticated
+     *
+     * @throws \Throwable
      */
     public function confirm(
         Trip $trip,
-        Request $request,
+        ConfirmTripRequest $request,
         ConfirmTripDTO $dto,
         ConfirmTripAction $action
     ): JsonResponse {
