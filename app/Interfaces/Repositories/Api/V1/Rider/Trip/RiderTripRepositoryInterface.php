@@ -37,5 +37,7 @@ interface RiderTripRepositoryInterface
 
     public function updateTripStatus(Trip $trip, TripStatusEnum $status): void;
 
+    public function updateTripWaitingTimeAndPrice(Trip $trip, int $waitingTime, float $waitingPrice): void;
+
     public function existsActiveTrip(int $riderId): bool;
 }

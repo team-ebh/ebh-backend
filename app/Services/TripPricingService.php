@@ -6,6 +6,11 @@ namespace App\Services;
 
 use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Trip\RideTypeEnum;
+use App\Enums\Trip\TripLocationStatusEnum;
+use App\Enums\Trip\TripLocationTypeEnum;
+use App\Models\TripLocation;
+use App\Models\TripLocationStatusLog;
+use Illuminate\Support\Collection;
 
 /**
  * Trip Pricing Service
@@ -29,7 +34,7 @@ class TripPricingService
     /**
      * Waiting time configuration
      */
-    private const float WAITING_TIME_RATE_PER_30_MIN = 2.500; // KWD per 30 minutes
+    private const float WAITING_TIME_RATE = 2.500; // KWD per 30 minutes
 
     private const int WAITING_TIME_INTERVAL_MINUTES = 30;
 
@@ -93,7 +98,7 @@ class TripPricingService
 
         $intervals = ceil($returnTimeMinutes / self::WAITING_TIME_INTERVAL_MINUTES);
 
-        return round($intervals * self::WAITING_TIME_RATE_PER_30_MIN, 3);
+        return round($intervals * self::WAITING_TIME_RATE, 3);
     }
 
     /**
@@ -305,9 +310,56 @@ class TripPricingService
     public function getWaitingTimeConfig(): array
     {
         return [
-            'price' => priceFormat(self::WAITING_TIME_RATE_PER_30_MIN) . ' ' . CurrencyEnum::KWD->getLabel(),
+            'price' => priceFormat(self::WAITING_TIME_RATE) . ' ' . CurrencyEnum::KWD->getLabel(),
             'time' => self::WAITING_TIME_INTERVAL_MINUTES . ' ' . trans('trips.api.time_units.minutes'),
         ];
+    }
+
+    /**
+     * Calculate actual waiting time from completed trip locations
+     * For ROUND_TRIP_WAIT: calculates time between first destination DROPPED_OFF and second destination/origin PICKED_UP
+     *
+     * @param  Collection  $locations  Trip locations with statusLogs relationship loaded
+     * @return int|null Waiting time in minutes, or null if cannot be calculated
+     */
+    public function calculateActualWaitingTime(Collection $locations): ?int
+    {
+        // Find first destination that was dropped off
+        $firstDestination = $locations->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)->first();
+
+        if (! $firstDestination) {
+            return null;
+        }
+
+        // Find the DROPPED_OFF status log for first destination
+        $droppedOffLog = $firstDestination->statusLogs
+            ->firstWhere(TripLocationStatusLog::COLUMN_STATUS, TripLocationStatusEnum::DROPPED_OFF);
+
+        if (! $droppedOffLog) {
+            return null;
+        }
+
+        // Find the next location after first destination (should be sequence + 1)
+        $nextLocation = $locations->where('sequence', '>', $firstDestination->sequence)
+            ->sortBy('sequence')
+            ->first();
+
+        if (! $nextLocation) {
+            return null;
+        }
+
+        // Find the PICKED_UP status log for the next location
+        $pickedUpLog = $nextLocation->statusLogs
+            ->firstWhere('status', TripLocationStatusEnum::PICKED_UP);
+
+        if (! $pickedUpLog) {
+            return null;
+        }
+
+        // Calculate difference in minutes
+        $waitingMinutes = $droppedOffLog->created_at->diffInMinutes($pickedUpLog->created_at);
+
+        return (int) $waitingMinutes;
     }
 
     /**

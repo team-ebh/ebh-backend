@@ -41,6 +41,8 @@ class Trip extends Model
 
     public const string COLUMN_WAITING_PRICE = 'waiting_price';
 
+    public const string COLUMN_WAITING_TIME = 'waiting_time';
+
     public const string COLUMN_TOTAL_PRICE = 'total_price';
 
     public const string COLUMN_CURRENCY = 'currency';
@@ -271,5 +273,10 @@ class Trip extends Model
     public function hasCompletedAndPaidPayment(): bool
     {
         return $this->isCompleted() && $this->hasPaidPayment();
+    }
+
+    public function isRoundTripWithWait(): bool
+    {
+        return $this->{Trip::COLUMN_RIDE_TYPE} === RideTypeEnum::ROUND_TRIP_WAIT;
     }
 }
