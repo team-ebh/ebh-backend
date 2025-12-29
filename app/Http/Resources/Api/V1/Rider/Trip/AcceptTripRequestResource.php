@@ -7,6 +7,8 @@ namespace App\Http\Resources\Api\V1\Rider\Trip;
 use App\Http\Resources\Api\PriceResource;
 use App\Http\Resources\Api\V1\Customer\Trip\FormattedLocationResource;
 use App\Http\Resources\Api\V1\Customer\Trip\MapLocationResource;
+use App\Http\Resources\Api\V1\Customer\Trip\RideTypeResource;
+use App\Http\Resources\Api\V1\Customer\Trip\TripTypeResource;
 use App\Http\Resources\Api\V1\Rider\CustomerResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -79,6 +81,24 @@ class AcceptTripRequestResource extends JsonResource
              * @var CustomerResource
              */
             'customer' => new CustomerResource($this->resource['customer']),
+
+            /**
+             * Trip Type
+             *
+             * Type of the trip (ride now, scheduled, etc.)
+             *
+             * @var TripTypeResource
+             */
+            'trip_type' => new TripTypeResource($this->resource['trip_type_id']),
+
+            /**
+             * Trip Ride Type
+             *
+             * Ride type of the trip (one way, round trip, etc.)
+             *
+             * @var RideTypeResource
+             */
+            'trip_ride_type' => new RideTypeResource($this->resource['ride_type']),
         ];
     }
 }

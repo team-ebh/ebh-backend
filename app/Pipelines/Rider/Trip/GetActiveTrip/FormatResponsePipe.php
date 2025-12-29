@@ -33,6 +33,8 @@ readonly class FormatResponsePipe
             'next_action' => $nextAction,
             'trip_completed' => $nextAction === null,
             'customer' => $activeTrip->customer,
+            'trip_type_id' => $activeTrip->trip_type_id,
+            'ride_type' => $activeTrip->ride_type,
         ]);
 
         return $next($payload);
