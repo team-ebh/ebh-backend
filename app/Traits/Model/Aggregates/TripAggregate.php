@@ -7,6 +7,7 @@ namespace App\Traits\Model\Aggregates;
 use App\Enums\Payment\PaymentStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Rider;
 use App\Models\Trip;
@@ -28,6 +29,11 @@ trait TripAggregate
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, Trip::COLUMN_CUSTOMER_ID);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, Trip::COLUMN_ORDER_ID);
     }
 
     public function rider(): BelongsTo

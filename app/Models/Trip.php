@@ -27,6 +27,8 @@ class Trip extends Model
 
     public const string COLUMN_CUSTOMER_ID = 'customer_id';
 
+    public const string COLUMN_ORDER_ID = 'order_id';
+
     public const string COLUMN_RIDER_ID = 'rider_id';
 
     public const string COLUMN_TRIP_TYPE_ID = 'trip_type_id';

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Traits\Model\Aggregates;
 
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentLog;
 use App\Models\PaymentStatusLog;
@@ -27,6 +28,11 @@ trait PaymentAggregate
     public function trip(): BelongsTo
     {
         return $this->belongsTo(Trip::class, Payment::COLUMN_TRIP_ID);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, Payment::COLUMN_ORDER_ID);
     }
 
     public function logs(): HasMany
