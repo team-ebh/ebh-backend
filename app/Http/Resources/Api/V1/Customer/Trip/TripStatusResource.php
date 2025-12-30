@@ -99,6 +99,15 @@ class TripStatusResource extends JsonResource
              * @var FormattedLocationResource[]
              */
             'formatted_locations' => FormattedLocationResource::collection($this->resource['formatted_locations']),
+
+            /**
+             * Payment Information
+             *
+             * Trip payment with price and currency
+             *
+             * @var string
+             */
+            'payment' => $this->resource['payment'],
         ];
     }
 }

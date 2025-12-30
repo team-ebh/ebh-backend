@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1\Rider\Trip;
 
-use App\Http\Resources\Api\PriceResource;
 use App\Http\Resources\Api\V1\Customer\Trip\FormattedLocationResource;
 use App\Http\Resources\Api\V1\Customer\Trip\MapLocationResource;
 use App\Http\Resources\Api\V1\Customer\Trip\RideTypeResource;
@@ -57,7 +56,9 @@ class AcceptTripRequestResource extends JsonResource
              *
              * Trip payment with price and currency
              *
-             * @var PriceResource
+             * @example "2.500 KWD"
+             *
+             * @var string
              */
             'payment' => $this->resource['payment'],
 
