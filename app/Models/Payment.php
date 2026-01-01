@@ -23,7 +23,7 @@ class Payment extends Model
 
     public const string COLUMN_CUSTOMER_ID = 'customer_id';
 
-    public const string COLUMN_TRIP_ID = 'trip_id';
+    public const string COLUMN_ORDER_ID = 'order_id';
 
     public const string COLUMN_STATUS = 'status';
 

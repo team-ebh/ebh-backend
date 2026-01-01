@@ -38,13 +38,21 @@ class TripLocationFormatterService
     {
         $formattedLocations = collect();
         $sortedLocations = $trip->locations->sortBy(TripLocation::COLUMN_SEQUENCE);
+        $foundActiveSegment = false;
 
         foreach ($sortedLocations as $index => $location) {
             $nextLocation = $sortedLocations->slice($index + 1, 1)->first();
 
             if ($nextLocation) {
+                // Only the first segment with unfinished destination should be active
+                $isActive = ! $foundActiveSegment && ! $nextLocation->isFinished();
+
+                if ($isActive) {
+                    $foundActiveSegment = true;
+                }
+
                 $formattedLocations->push([
-                    'is_active' => ! $nextLocation->isFinished(),
+                    'is_active' => $isActive,
                     'from' => [
                         'location_title' => $location->{TripLocation::COLUMN_LOCATION_TITLE},
                         'location_sub_title' => $location->{TripLocation::COLUMN_LOCATION_SUB_TITLE},

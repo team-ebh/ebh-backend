@@ -30,7 +30,7 @@ class TripsTable
             ->modifyQueryUsing(
                 fn ($query) => $query
                     ->where(Trip::COLUMN_STATUS, '!=', TripStatusEnum::DRAFT)
-                    ->with(['customer', 'rider', 'firstOriginLocation', 'firstDestinationLocation'])
+                    ->with(['customer', 'rider', 'firstOriginLocation', 'firstDestinationLocation', 'order'])
             )
             ->columns([
                 TextColumn::make('id')
@@ -122,7 +122,7 @@ class TripsTable
                     ->label(trans('trips.admin.filters.vehicle_type'))
                     ->options(TripVehicleTypeEnum::class),
 
-                SelectFilter::make('payment_method')
+                SelectFilter::make('order.payment_method')
                     ->label(trans('trips.admin.filters.payment_method'))
                     ->options(PaymentMethodEnum::class),
 
@@ -223,8 +223,8 @@ class TripsTable
                 TernaryFilter::make('is_paid')
                     ->label(trans('trips.admin.fields.is_paid'))
                     ->queries(
-                        true: fn (Builder $query) => $query->has('paidPayment'),
-                        false: fn (Builder $query) => $query->doesntHave('paidPayment'),
+                        true: fn (Builder $query) => $query->whereHas('order', fn ($q) => $q->has('paidPayment')),
+                        false: fn (Builder $query) => $query->whereHas('order', fn ($q) => $q->doesntHave('paidPayment')),
                         blank: fn (Builder $query) => $query,
                     ),
             ])

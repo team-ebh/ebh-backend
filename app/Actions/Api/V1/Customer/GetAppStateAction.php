@@ -31,7 +31,7 @@ readonly class GetAppStateAction
         // Check if customer has completed trips without payment
         $lastTrip = $this->tripRepository->getLastTrip($dto->customerId);
 
-        if ($lastTrip && ! $lastTrip->hasPaidPayment()) {
+        if ($lastTrip && ! $lastTrip->hasPaidPayment() && ! $lastTrip->isRoundTrip()) {
             return CustomerAppStateEnum::HAS_PENDING_PAYMENT;
         }
 

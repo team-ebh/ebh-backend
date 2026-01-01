@@ -24,7 +24,7 @@ readonly class CheckPendingPaymentAction
     {
         $lastTrip = $this->tripRepository->getLastTrip($dto->customerId);
 
-        if (! $lastTrip || $lastTrip->hasPaidPayment()) {
+        if (! $lastTrip || $lastTrip->hasPaidPayment() || $lastTrip->isRoundTrip()) {
             return [
                 'has_pending_payment' => false,
                 'price' => null,

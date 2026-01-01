@@ -51,7 +51,11 @@ readonly class BuildRideTypeBreakdownPipe
         );
 
         // Build price estimation using service
-        $context->priceEstimation = $this->pricingService->buildPriceEstimation($context->totalPrice);
+        $context->priceEstimation = $this->pricingService->buildPriceEstimation(
+            $context->totalPrice,
+            $context->dto->rideTypeId,
+            $context->accessibilityCost
+        );
 
         return $next($context);
     }

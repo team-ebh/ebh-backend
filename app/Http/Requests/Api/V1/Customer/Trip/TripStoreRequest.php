@@ -21,7 +21,18 @@ class TripStoreRequest extends FormRequest
     {
         return [
             // Origin location
+            /**
+             * Origin location title
+             *
+             * @example Kuwait City
+             */
             'origin_location_title' => ['required', 'string', 'max:255'],
+
+            /**
+             * Origin location subtitle
+             *
+             * @example Near the main square
+             */
             'origin_location_sub_title' => ['required', 'string', 'max:255'],
             /**
              * @example 29.353325
@@ -42,8 +53,18 @@ class TripStoreRequest extends FormRequest
                 'max:180',
             ],
 
-            // Destination location
+            /**
+             * Destination location title
+             *
+             * @example Salmiya
+             */ // Destination location
             'destination_location_title' => ['required', 'string', 'max:255'],
+
+            /**
+             * Destination location subtitle
+             *
+             * @example Belajat Street 112
+             */
             'destination_location_sub_title' => ['required', 'string', 'max:255'],
             /**
              * @example 29.327636

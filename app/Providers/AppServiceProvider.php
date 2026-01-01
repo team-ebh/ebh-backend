@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Exceptions\Handler;
 use App\Http\Responses\LoginResponse;
 use App\Interfaces\Repositories\Api\V1\Customer\CustomerRepositoryInterface;
+use App\Interfaces\Repositories\Api\V1\Customer\OrderRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\CustomerTripRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\RiderLocationRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
@@ -17,6 +18,7 @@ use App\Interfaces\Repositories\Payment\PaymentRepositoryInterface;
 use App\Interfaces\Repositories\TripRequestRepositoryInterface;
 use App\Models\Admin;
 use App\Repositories\Api\V1\Customer\CustomerRepository;
+use App\Repositories\Api\V1\Customer\OrderRepository;
 use App\Repositories\Api\V1\Customer\Trip\CustomerTripRepository;
 use App\Repositories\Api\V1\Customer\Trip\RiderLocationRepository;
 use App\Repositories\Api\V1\Customer\Trip\TripRepository;
@@ -66,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
     public $singletons = [
         FilamentLoginResponse::class => LoginResponse::class,
         CustomerRepositoryInterface::class => CustomerRepository::class,
+        OrderRepositoryInterface::class => OrderRepository::class,
         CustomerTripRepositoryInterface::class => CustomerTripRepository::class,
         TripRepositoryInterface::class => TripRepository::class,
         RiderLocationRepositoryInterface::class => RiderLocationRepository::class,

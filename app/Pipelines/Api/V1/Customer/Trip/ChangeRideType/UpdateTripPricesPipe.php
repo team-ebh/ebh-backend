@@ -25,6 +25,8 @@ readonly class UpdateTripPricesPipe
             $this->tripRepository->updateRideTypeAndPrices(
                 $context->dto->trip,
                 $context->dto->rideTypeId,
+                $context->baseFare,
+                $context->roundTripFee,
                 $context->accessibilityCost,
                 $context->waitingCharge,
                 $context->totalPrice

@@ -12,12 +12,12 @@ use Carbon\Carbon;
 class PaymentRepository implements PaymentRepositoryInterface
 {
     /**
-     * Find existing pending payment for a trip
+     * Find existing pending payment for an order
      */
-    public function findPendingPaymentForTrip(int $tripId): ?Payment
+    public function findPendingPaymentForOrder(int $orderId): ?Payment
     {
         return Payment::query()
-            ->where(Payment::COLUMN_TRIP_ID, $tripId)
+            ->where(Payment::COLUMN_ORDER_ID, $orderId)
             ->where(Payment::COLUMN_STATUS, PaymentStatusEnum::PENDING)
             ->where(function ($query) {
                 // Either no expiration (null) or not yet expired

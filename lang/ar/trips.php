@@ -343,6 +343,7 @@ return [
             'COMPLETED' => 'مكتمل',
         ],
         'price_estimation' => 'تقدير السعر',
+        'price' => 'السعر',
         'waiting_time_rate_description' => ':price لكل :minutes دقيقة',
         'time_units' => [
             'minutes' => 'دقيقة',

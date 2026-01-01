@@ -343,6 +343,7 @@ return [
             'COMPLETED' => 'Completed',
         ],
         'price_estimation' => 'Price Estimation',
+        'price' => 'Price',
         'waiting_time_rate_description' => ':price per :minutes minutes',
         'time_units' => [
             'minutes' => 'minutes',

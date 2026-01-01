@@ -4,21 +4,24 @@ declare(strict_types=1);
 
 namespace App\Pipelines\Api\V1\Customer\Trip\ConfirmTrip;
 
+use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Models\Trip;
 use App\Models\TripLocation;
+use App\Services\TripPricingService;
 use Closure;
 
 /**
  * Create Demand Trip Pipe
  *
- * Creates demand trip for ROUND_TRIP ride type
+ * Creates demand trip for ROUND_TRIP ride type with proper price calculation
  */
 readonly class CreateDemandTripPipe
 {
     public function __construct(
-        private TripRepositoryInterface $tripRepository
+        private TripRepositoryInterface $tripRepository,
+        private TripPricingService $pricingService
     ) {}
 
     public function handle(ConfirmTripContext $context, Closure $next): mixed
@@ -51,11 +54,36 @@ readonly class CreateDemandTripPipe
                     'longitude' => $context->dto->destinationLongitude,
                 ];
 
+                // Calculate distance for demand trip
+                $distance = $this->pricingService->calculateDistance(
+                    $originLocation['latitude'],
+                    $originLocation['longitude'],
+                    $destinationLocation['latitude'],
+                    $destinationLocation['longitude']
+                );
+
+                // Get accessibility requirements from source trip
+                $accessibilityRequirements = $context->dto->trip->accessibility->pluck('accessibility_requirement')->toArray();
+
+                // Calculate price for demand trip as ONE_WAY
+                $pricing = $this->pricingService->calculatePriceByRideType(
+                    RideTypeEnum::ONE_WAY,
+                    $distance,
+                    $accessibilityRequirements,
+                    null,
+                    null
+                );
+
+                // Create demand trip (without order_id - will be set later)
                 $context->demandTrip = $this->tripRepository->createDemandTrip(
                     $context->dto->trip,
                     $originLocation,
                     $destinationLocation,
-                    $context->dto->scheduledTime
+                    $context->dto->scheduledTime,
+                    $pricing['base_fare'],
+                    $pricing['round_trip_fee'],
+                    $pricing['accessibility_cost'],
+                    $pricing['total_price']
                 );
             }
         }

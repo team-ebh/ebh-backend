@@ -33,10 +33,11 @@ class ViewTrip extends ViewRecord
             'statusLogs' => fn ($query) => $query->orderBy('id', 'desc'),
             'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence,status',
             'locations.statusLogs' => fn ($query) => $query->orderBy('id', 'desc'),
-            'payments' => fn ($query) => $query->orderBy('id', 'desc'),
-            'payments.logs' => fn ($query) => $query->orderBy('id', 'asc'),
-            'lastPayment:id,trip_id,status',
-            'paidPayment:id,trip_id,status',
+            'order',
+            'order.payments' => fn ($query) => $query->orderBy('id', 'desc'),
+            'order.payments.logs' => fn ($query) => $query->orderBy('id', 'asc'),
+            'order.lastPayment:id,order_id,status',
+            'order.paidPayment:id,order_id,status',
         ]);
     }
 

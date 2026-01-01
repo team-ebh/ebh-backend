@@ -55,15 +55,6 @@ class AccessibilityRequirementsResource extends JsonResource
              * @var string
              */
             'icon' => $accessibilityRequirement->getIcon(),
-
-            /**
-             * Price in KWD for this accessibility requirement
-             *
-             * @example 3.000
-             *
-             * @var float|null
-             */
-            'price' => $accessibilityRequirement->getPrice(),
         ];
     }
 }
