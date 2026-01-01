@@ -10,8 +10,6 @@ use App\Enums\Payment\PaymentStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
-use App\Exceptions\Customer\CustomerHasActiveTripException;
-use App\Exceptions\Customer\CustomerHasPendingPaymentException;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\Customers\Pages\CreateCustomer;
 use App\Filament\Resources\Customers\Pages\EditCustomer;

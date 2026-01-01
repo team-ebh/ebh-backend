@@ -1291,11 +1291,22 @@ describe('Confirm Trip API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
+
+        // Create order with KNET payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::PENDING->value,
+        ]);
+
+        // Link trip to order
+        $previousTrip->update(['order_id' => $order->id]);
 
         // Create new draft trip
         $newTrip = Trip::create([
@@ -1335,11 +1346,22 @@ describe('Confirm Trip API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
+
+        // Create order with CASH payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::COMPLETED->value,
+        ]);
+
+        // Link trip to order
+        $previousTrip->update(['order_id' => $order->id]);
 
         // Create new draft trip with locations
         $newTrip = Trip::create([
@@ -1383,16 +1405,27 @@ describe('Confirm Trip API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
 
-        // Create a payment record for the previous trip
+        // Create order with KNET payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::COMPLETED->value,
+        ]);
+
+        // Link trip to order
+        $previousTrip->update(['order_id' => $order->id]);
+
+        // Create a payment record for the order
         \App\Models\Payment::create([
             'payment_number' => generatePaymentNumber(),
-            'trip_id' => $previousTrip->id,
+            'order_id' => $order->id,
             'customer_id' => $this->customer->id,
             'amount' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
@@ -1518,16 +1551,27 @@ describe('Check Pending Payment API', function () {
 
     it('returns true when customer has unpaid trip', function () {
         // Create a completed trip with KNET payment that wasn't paid
-        Trip::create([
+        $trip = Trip::create([
             'customer_id' => $this->customer->id,
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
+
+        // Create order with KNET payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::PENDING->value,
+        ]);
+
+        // Link trip to order
+        $trip->update(['order_id' => $order->id]);
 
         $response = getJson(route('v1.customers.payments.check-pending'));
 
@@ -1557,16 +1601,27 @@ describe('Check Pending Payment API', function () {
 
     it('returns false when customer last trip has cash payment', function () {
         // Create a completed trip with CASH payment (always considered paid)
-        Trip::create([
+        $trip = Trip::create([
             'customer_id' => $this->customer->id,
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
+
+        // Create order with CASH payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::COMPLETED->value,
+        ]);
+
+        // Link trip to order
+        $trip->update(['order_id' => $order->id]);
 
         $response = getJson(route('v1.customers.payments.check-pending'));
 
@@ -1586,16 +1641,27 @@ describe('Check Pending Payment API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
 
-        // Create a payment record
+        // Create order with KNET payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::COMPLETED->value,
+        ]);
+
+        // Link trip to order
+        $trip->update(['order_id' => $order->id]);
+
+        // Create a payment record for the order
         \App\Models\Payment::create([
             'payment_number' => generatePaymentNumber(),
-            'trip_id' => $trip->id,
+            'order_id' => $order->id,
             'customer_id' => $this->customer->id,
             'amount' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
@@ -1621,7 +1687,6 @@ describe('Check Pending Payment API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::DRAFT->value,
@@ -1633,7 +1698,6 @@ describe('Check Pending Payment API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::CANCELED_BY_CUSTOMER->value,

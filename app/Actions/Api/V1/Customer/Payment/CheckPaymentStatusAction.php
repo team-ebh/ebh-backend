@@ -6,8 +6,8 @@ namespace App\Actions\Api\V1\Customer\Payment;
 
 use App\DTOs\Api\V1\Customer\Payment\CheckPaymentStatusDTO;
 use App\Exceptions\PaymentNotFoundException;
+use App\Models\Order;
 use App\Models\Payment;
-use App\Models\Trip;
 
 class CheckPaymentStatusAction
 {
@@ -25,9 +25,10 @@ class CheckPaymentStatusAction
             PaymentNotFoundException::class,
         );
 
-        // Load trip with payment_method
+        // Load order with payment_method and trips
         $payment->load([
-            'trip:' . Trip::COLUMN_ID . ',' . Trip::COLUMN_PAYMENT_METHOD,
+            'order:' . Order::COLUMN_ID . ',' . Order::COLUMN_PAYMENT_METHOD,
+            'order.trips:id,order_id',
         ]);
 
         return $payment;

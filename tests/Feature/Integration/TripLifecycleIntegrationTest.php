@@ -582,7 +582,6 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
             'waiting_price' => null,
             'total_price' => 5.000,
             'currency' => 'KWD',
-            'payment_method' => PaymentMethodEnum::CASH,
             'status' => TripStatusEnum::ARRIVED->value,
         ]);
 
@@ -642,7 +641,6 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
             'passenger_count' => 1,
             'total_price' => 5.000,
             'currency' => 'KWD',
-            'payment_method' => PaymentMethodEnum::CASH,
             'status' => TripStatusEnum::ARRIVED->value,
         ]);
 
@@ -688,7 +686,6 @@ describe('Complete Trip Lifecycle Integration Tests', function () {
             'passenger_count' => 1,
             'total_price' => 5.000,
             'currency' => 'KWD',
-            'payment_method' => PaymentMethodEnum::CASH,
             'status' => TripStatusEnum::ARRIVED->value,
         ]);
 

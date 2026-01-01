@@ -16,8 +16,6 @@ class PaymentStatusLog extends Model
 
     public const string COLUMN_PAYMENT_ID = 'payment_id';
 
-    public const string COLUMN_TRIP_ID = 'trip_id';
-
     public const string COLUMN_STATUS = 'status';
 
     public const string COLUMN_CHANGED_BY_ID = 'changed_by_id';

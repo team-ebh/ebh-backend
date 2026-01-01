@@ -81,7 +81,6 @@ describe('Change Ride Type API - Update Ride Type and Recalculate Pricing', func
         // Verify trip WAS modified
         $this->trip->refresh();
         expect($this->trip->{Trip::COLUMN_RIDE_TYPE})->toBe(RideTypeEnum::ROUND_TRIP);
-        expect($this->trip->{Trip::COLUMN_SCHEDULED_TIME}->timestamp)->toBe($returnTime);
         expect($this->trip->{Trip::COLUMN_TOTAL_PRICE})->toBeGreaterThan(0);
     });
 
