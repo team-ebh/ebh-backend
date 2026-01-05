@@ -9,6 +9,7 @@ use App\Enums\Trip\TripStatusEnum;
 use App\Events\Socket\Customer\TripPickedUpEvent;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Models\Trip;
+use App\Models\TripLocation;
 use App\Services\Trip\TripActionService;
 use Closure;
 
@@ -28,8 +29,17 @@ readonly class ExecuteAndBroadcastPipe
         $trip = $payload['trip'];
         $currentLocation = $payload['currentLocation'];
 
-        // Update location status
-        $this->riderTripRepository->updateTripLocationStatus($currentLocation, TripLocationStatusEnum::PICKED_UP);
+        // For ROUND_TRIP_WAIT: if pickup at DROPPED_OFF destination, update NEXT destination to PICKED_UP
+        // The current (DROPPED_OFF) destination stays as is
+        if ($trip->isRoundTripWithWait() && $currentLocation->isDestination() && $currentLocation->isDroppedOff()) {
+            $nextDestination = $this->getNextDestination($trip, $currentLocation);
+            if ($nextDestination) {
+                $this->riderTripRepository->updateTripLocationStatus($nextDestination, TripLocationStatusEnum::PICKED_UP);
+            }
+        } else {
+            // Standard pickup at origin: mark current location as PICKED_UP
+            $this->riderTripRepository->updateTripLocationStatus($currentLocation, TripLocationStatusEnum::PICKED_UP);
+        }
 
         // Update trip status to IN_PROGRESS
         if ($trip->isArrived()) {
@@ -45,8 +55,23 @@ readonly class ExecuteAndBroadcastPipe
 
         // Calculate next action
         $nextAction = $this->tripActionService->getNextAction($trip->fresh());
-        $payload['next_action'] = $nextAction;
+        $payload['next_action'] = $nextAction?->value;
 
         return $next($payload);
+    }
+
+    /**
+     * Get the next destination after the current location
+     */
+    private function getNextDestination(Trip $trip, TripLocation $currentLocation): ?TripLocation
+    {
+        $locations = $trip->loadMissing('locations')->locations;
+        $currentSequence = $currentLocation->{TripLocation::COLUMN_SEQUENCE};
+
+        return $locations->first(function (TripLocation $loc) use ($currentSequence) {
+            return $loc->isDestination()
+                && $loc->{TripLocation::COLUMN_SEQUENCE} > $currentSequence
+                && $loc->isPending();
+        });
     }
 }

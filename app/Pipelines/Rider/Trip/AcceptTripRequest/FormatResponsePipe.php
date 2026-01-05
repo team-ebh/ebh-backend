@@ -30,7 +30,7 @@ readonly class FormatResponsePipe
         $nextAction = $this->tripActionService->getNextAction($trip->fresh());
 
         $payload['result'] = array_merge($tripData, [
-            'next_action' => $nextAction,
+            'next_action' => $nextAction?->value,
             'trip_completed' => $nextAction === null,
             'customer' => $trip->customer,
             'trip_type_id' => $trip->trip_type_id,

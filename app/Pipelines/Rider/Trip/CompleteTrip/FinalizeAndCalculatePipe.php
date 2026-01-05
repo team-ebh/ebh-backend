@@ -53,7 +53,7 @@ readonly class FinalizeAndCalculatePipe
             $payload['next_action'] = null;
         } else {
             $payload['trip_completed'] = false;
-            $payload['next_action'] = $this->tripActionService->getNextAction($trip->fresh());
+            $payload['next_action'] = $this->tripActionService->getNextAction($trip->fresh())?->value;
         }
 
         return $next($payload);
