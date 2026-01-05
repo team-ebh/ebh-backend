@@ -11,4 +11,8 @@ interface CustomerTripRepositoryInterface
     public function getActiveTrip(int $customerId): ?Trip;
 
     public function existsActiveTrip(int $customerId): bool;
+
+    public function getScheduledTrip(int $customerId): ?Trip;
+
+    public function existsScheduledTrip(int $customerId): bool;
 }

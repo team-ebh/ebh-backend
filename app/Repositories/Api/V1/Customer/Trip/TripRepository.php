@@ -270,9 +270,11 @@ class TripRepository implements TripRepositoryInterface
 
     public function deleteDraftTrips(int $customerId): void
     {
+        // Delete draft trips but preserve scheduled trips (demand trips from ROUND_TRIP)
         Trip::query()
             ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
             ->where(Trip::COLUMN_STATUS, TripStatusEnum::DRAFT)
+            ->where(Trip::COLUMN_TRIP_TYPE_ID, '!=', TripTypeEnum::SCHEDULED)
             ->delete();
     }
 }

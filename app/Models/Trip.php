@@ -101,6 +101,13 @@ class Trip extends Model
     }
 
     #[Scope]
+    protected function scheduledTrips($query)
+    {
+        return $query->where(self::COLUMN_STATUS, TripStatusEnum::DRAFT)
+            ->where(self::COLUMN_TRIP_TYPE_ID, TripTypeEnum::SCHEDULED);
+    }
+
+    #[Scope]
     protected function excludingDraftAndCancelled($query)
     {
         return $query->whereNotIn(self::COLUMN_STATUS, [

@@ -120,6 +120,66 @@ test('customer app state ignores cancelled trips', function () {
         ]);
 });
 
+test('customer can get app state when has scheduled trip', function () {
+    // Create a scheduled trip (DRAFT with SCHEDULED type)
+    Trip::query()->create([
+        Trip::COLUMN_CUSTOMER_ID => $this->customer->{Customer::COLUMN_ID},
+        Trip::COLUMN_STATUS => TripStatusEnum::DRAFT,
+        Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::SCHEDULED->value,
+        Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+        Trip::COLUMN_PASSENGER_COUNT => 1,
+        Trip::COLUMN_TOTAL_PRICE => 5.000,
+        Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+        Trip::COLUMN_SCHEDULED_TIME => now()->addHour(),
+    ]);
+
+    $response = actingAs($this->customer, 'customer')
+        ->getJson(route('v1.customers.app-state'));
+
+    $response->assertOk()
+        ->assertJson([
+            'data' => [
+                'state' => 'HAS_SCHEDULED_TRIP',
+            ],
+        ]);
+});
+
+test('customer app state prioritizes active trip over scheduled trip', function () {
+    // Create a scheduled trip
+    Trip::query()->create([
+        Trip::COLUMN_CUSTOMER_ID => $this->customer->{Customer::COLUMN_ID},
+        Trip::COLUMN_STATUS => TripStatusEnum::DRAFT,
+        Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::SCHEDULED->value,
+        Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+        Trip::COLUMN_PASSENGER_COUNT => 1,
+        Trip::COLUMN_TOTAL_PRICE => 5.000,
+        Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+        Trip::COLUMN_SCHEDULED_TIME => now()->addHour(),
+    ]);
+
+    // Create an active trip
+    Trip::query()->create([
+        Trip::COLUMN_CUSTOMER_ID => $this->customer->{Customer::COLUMN_ID},
+        Trip::COLUMN_STATUS => TripStatusEnum::PENDING_RIDER,
+        Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
+        Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+        Trip::COLUMN_PASSENGER_COUNT => 1,
+        Trip::COLUMN_TOTAL_PRICE => 5.000,
+        Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+    ]);
+
+    $response = actingAs($this->customer, 'customer')
+        ->getJson(route('v1.customers.app-state'));
+
+    // Active trip should take priority
+    $response->assertOk()
+        ->assertJson([
+            'data' => [
+                'state' => 'HAS_ACTIVE_TRIP',
+            ],
+        ]);
+});
+
 test('unauthenticated customer cannot get app state', function () {
     $response = getJson(route('v1.customers.app-state'));
 

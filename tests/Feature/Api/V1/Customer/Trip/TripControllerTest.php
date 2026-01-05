@@ -447,6 +447,39 @@ describe('Trip Store API', function () {
         ])->assertStatus(406);
     });
 
+    it('cannot create trip when customer has scheduled trip', function () {
+        // Create a scheduled trip (DRAFT with SCHEDULED type - from ROUND_TRIP)
+        $scheduledTrip = Trip::create([
+            Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::SCHEDULED->value,
+            Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            Trip::COLUMN_PASSENGER_COUNT => 1,
+            Trip::COLUMN_ACCESSIBILITY_PRICE => null,
+            Trip::COLUMN_WAITING_PRICE => null,
+            Trip::COLUMN_TOTAL_PRICE => 3.000,
+            Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+            Trip::COLUMN_STATUS => TripStatusEnum::DRAFT->value,
+            Trip::COLUMN_SCHEDULED_TIME => now()->addHour(),
+        ]);
+
+        // Try to create another trip - should be blocked
+        postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+        ])->assertStatus(406)
+            ->assertJsonPath('meta.message', trans('trips.api.exceptions.customer_has_scheduled_trip'));
+    });
+
     it('can create trip when only draft trips exist', function () {
         // Create draft trips (should be deleted automatically)
         Trip::create([

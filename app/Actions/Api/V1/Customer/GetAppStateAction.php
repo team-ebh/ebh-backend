@@ -28,6 +28,11 @@ readonly class GetAppStateAction
             return CustomerAppStateEnum::HAS_ACTIVE_TRIP;
         }
 
+        // Check if customer has scheduled trip (from ROUND_TRIP)
+        if ($this->customerTripRepository->existsScheduledTrip($dto->customerId)) {
+            return CustomerAppStateEnum::HAS_SCHEDULED_TRIP;
+        }
+
         // Check if customer has completed trips without payment
         $lastTrip = $this->tripRepository->getLastTrip($dto->customerId);
 
