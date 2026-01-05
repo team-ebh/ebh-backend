@@ -63,9 +63,9 @@ class OrderRepository implements OrderRepositoryInterface
     /**
      * Update order status
      */
-    public function updateOrderStatus(int $orderId, OrderStatusEnum $status): bool
+    public function updateOrderStatus(int $orderId, OrderStatusEnum $status): void
     {
-        return Order::query()
+        Order::query()
             ->where(Order::COLUMN_ID, $orderId)
             ->update([Order::COLUMN_STATUS => $status]);
     }

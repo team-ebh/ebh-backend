@@ -29,11 +29,6 @@ trait PaymentAggregate
         return $this->belongsTo(Order::class, Payment::COLUMN_ORDER_ID);
     }
 
-    public function order(): BelongsTo
-    {
-        return $this->belongsTo(Order::class, Payment::COLUMN_ORDER_ID);
-    }
-
     public function logs(): HasMany
     {
         return $this->hasMany(PaymentLog::class, PaymentLog::COLUMN_PAYMENT_ID);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Customer\CustomerStatusEnum;
+use App\Enums\Order\OrderStatusEnum;
 use App\Enums\Payment\PaymentGatewayEnum;
 use App\Enums\Payment\PaymentMethodEnum;
 use App\Enums\Payment\PaymentStatusEnum;
@@ -16,6 +17,7 @@ use App\Filament\Resources\Customers\Pages\EditCustomer;
 use App\Filament\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Resources\Customers\Pages\ViewCustomer;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Trip;
 use Livewire\Livewire;
@@ -242,13 +244,22 @@ it('cannot deactivate customer with pending payment', function () {
         Customer::COLUMN_STATUS => CustomerStatusEnum::ACTIVE,
     ]);
 
+    // Create order with payment method
+    $order = Order::create([
+        Order::COLUMN_CUSTOMER_ID => $customer->id,
+        Order::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET,
+        Order::COLUMN_TOTAL_PRICE => 5.000,
+        Order::COLUMN_CURRENCY => CurrencyEnum::KWD,
+        Order::COLUMN_STATUS => OrderStatusEnum::PENDING,
+    ]);
+
     // Create a completed trip with unpaid payment
     $trip = Trip::create([
         Trip::COLUMN_CUSTOMER_ID => $customer->id,
+        Trip::COLUMN_ORDER_ID => $order->id,
         Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
         Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
         Trip::COLUMN_PASSENGER_COUNT => 1,
-        Trip::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET,
         Trip::COLUMN_TOTAL_PRICE => 5.000,
         Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
         Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED,
@@ -257,7 +268,7 @@ it('cannot deactivate customer with pending payment', function () {
     // Create payment with PENDING status
     Payment::create([
         Payment::COLUMN_CUSTOMER_ID => $customer->id,
-        Payment::COLUMN_TRIP_ID => $trip->id,
+        Payment::COLUMN_ORDER_ID => $order->id,
         Payment::COLUMN_PAYMENT_NUMBER => 'PAY-' . uniqid(),
         Payment::COLUMN_GATEWAY => PaymentGatewayEnum::UPAYMENTS,
         Payment::COLUMN_AMOUNT => 5.000,
@@ -282,13 +293,22 @@ it('can deactivate customer with completed and paid trip', function () {
         Customer::COLUMN_STATUS => CustomerStatusEnum::ACTIVE,
     ]);
 
+    // Create order with payment method
+    $order = Order::create([
+        Order::COLUMN_CUSTOMER_ID => $customer->id,
+        Order::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET,
+        Order::COLUMN_TOTAL_PRICE => 5.000,
+        Order::COLUMN_CURRENCY => CurrencyEnum::KWD,
+        Order::COLUMN_STATUS => OrderStatusEnum::COMPLETED,
+    ]);
+
     // Create a completed trip with paid payment
     $trip = Trip::create([
         Trip::COLUMN_CUSTOMER_ID => $customer->id,
+        Trip::COLUMN_ORDER_ID => $order->id,
         Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
         Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
         Trip::COLUMN_PASSENGER_COUNT => 1,
-        Trip::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET,
         Trip::COLUMN_TOTAL_PRICE => 5.000,
         Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
         Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED,
@@ -297,7 +317,7 @@ it('can deactivate customer with completed and paid trip', function () {
     // Create payment with PAID status
     Payment::create([
         Payment::COLUMN_CUSTOMER_ID => $customer->id,
-        Payment::COLUMN_TRIP_ID => $trip->id,
+        Payment::COLUMN_ORDER_ID => $order->id,
         Payment::COLUMN_PAYMENT_NUMBER => 'PAY-' . uniqid(),
         Payment::COLUMN_GATEWAY => PaymentGatewayEnum::UPAYMENTS,
         Payment::COLUMN_AMOUNT => 5.000,
@@ -348,13 +368,22 @@ it('can deactivate customer with cash payment trip', function () {
         Customer::COLUMN_STATUS => CustomerStatusEnum::ACTIVE,
     ]);
 
+    // Create order with CASH payment method
+    $order = Order::create([
+        Order::COLUMN_CUSTOMER_ID => $customer->id,
+        Order::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::CASH,
+        Order::COLUMN_TOTAL_PRICE => 5.000,
+        Order::COLUMN_CURRENCY => CurrencyEnum::KWD,
+        Order::COLUMN_STATUS => OrderStatusEnum::COMPLETED,
+    ]);
+
     // Create a completed trip with CASH payment (no payment record needed)
     Trip::create([
         Trip::COLUMN_CUSTOMER_ID => $customer->id,
+        Trip::COLUMN_ORDER_ID => $order->id,
         Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
         Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
         Trip::COLUMN_PASSENGER_COUNT => 1,
-        Trip::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::CASH,
         Trip::COLUMN_TOTAL_PRICE => 5.000,
         Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
         Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED,
@@ -434,13 +463,22 @@ it('cannot edit customer to inactive when has pending payment', function () {
         Customer::COLUMN_STATUS => CustomerStatusEnum::ACTIVE,
     ]);
 
+    // Create order with payment method
+    $order = Order::create([
+        Order::COLUMN_CUSTOMER_ID => $customer->id,
+        Order::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET,
+        Order::COLUMN_TOTAL_PRICE => 5.000,
+        Order::COLUMN_CURRENCY => CurrencyEnum::KWD,
+        Order::COLUMN_STATUS => OrderStatusEnum::PENDING,
+    ]);
+
     // Create a completed trip with unpaid payment
     $trip = Trip::create([
         Trip::COLUMN_CUSTOMER_ID => $customer->id,
+        Trip::COLUMN_ORDER_ID => $order->id,
         Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
         Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
         Trip::COLUMN_PASSENGER_COUNT => 1,
-        Trip::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET,
         Trip::COLUMN_TOTAL_PRICE => 5.000,
         Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
         Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED,
@@ -449,7 +487,7 @@ it('cannot edit customer to inactive when has pending payment', function () {
     // Create payment with PENDING status
     Payment::create([
         Payment::COLUMN_CUSTOMER_ID => $customer->id,
-        Payment::COLUMN_TRIP_ID => $trip->id,
+        Payment::COLUMN_ORDER_ID => $order->id,
         Payment::COLUMN_PAYMENT_NUMBER => 'PAY-' . uniqid(),
         Payment::COLUMN_GATEWAY => PaymentGatewayEnum::UPAYMENTS,
         Payment::COLUMN_AMOUNT => 5.000,
@@ -475,13 +513,22 @@ it('can edit customer to inactive when completed and paid', function () {
         Customer::COLUMN_STATUS => CustomerStatusEnum::ACTIVE,
     ]);
 
+    // Create order with payment method
+    $order = Order::create([
+        Order::COLUMN_CUSTOMER_ID => $customer->id,
+        Order::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET,
+        Order::COLUMN_TOTAL_PRICE => 5.000,
+        Order::COLUMN_CURRENCY => CurrencyEnum::KWD,
+        Order::COLUMN_STATUS => OrderStatusEnum::COMPLETED,
+    ]);
+
     // Create a completed trip with paid payment
     $trip = Trip::create([
         Trip::COLUMN_CUSTOMER_ID => $customer->id,
+        Trip::COLUMN_ORDER_ID => $order->id,
         Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
         Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
         Trip::COLUMN_PASSENGER_COUNT => 1,
-        Trip::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET,
         Trip::COLUMN_TOTAL_PRICE => 5.000,
         Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
         Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED,
@@ -490,7 +537,7 @@ it('can edit customer to inactive when completed and paid', function () {
     // Create payment with PAID status
     Payment::create([
         Payment::COLUMN_CUSTOMER_ID => $customer->id,
-        Payment::COLUMN_TRIP_ID => $trip->id,
+        Payment::COLUMN_ORDER_ID => $order->id,
         Payment::COLUMN_PAYMENT_NUMBER => 'PAY-' . uniqid(),
         Payment::COLUMN_GATEWAY => PaymentGatewayEnum::UPAYMENTS,
         Payment::COLUMN_AMOUNT => 5.000,

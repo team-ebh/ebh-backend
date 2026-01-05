@@ -6,11 +6,6 @@ use App\Enums\Rider\RiderStatusEnum;
 use App\Models\Company;
 use App\Models\Rider;
 
-function apiUrl(string $path): string
-{
-    return 'http://api.localhost' . $path;
-}
-
 beforeEach(function () {
     $company = Company::query()->create([
         Company::COLUMN_NAME => 'Test Company',
@@ -34,7 +29,7 @@ beforeEach(function () {
 });
 
 test('it can update rider location with valid coordinates', function () {
-    $response = $this->postJson(apiUrl('/v1/riders/location'), [
+    $response = $this->postJson(route('v1.riders.location.update'), [
         'latitude' => 29.3759,
         'longitude' => 47.9774,
     ], $this->headers);
@@ -49,7 +44,7 @@ test('it can update rider location with valid coordinates', function () {
 });
 
 test('it requires authentication', function () {
-    $response = $this->postJson(apiUrl('/v1/riders/location'), [
+    $response = $this->postJson(route('v1.riders.location.update'), [
         'latitude' => 29.3759,
         'longitude' => 47.9774,
     ]);
@@ -59,7 +54,7 @@ test('it requires authentication', function () {
 
 test('it updates location timestamp on each request', function () {
     // First update
-    $this->postJson(apiUrl('/v1/riders/location'), [
+    $this->postJson(route('v1.riders.location.update'), [
         'latitude' => 29.3759,
         'longitude' => 47.9774,
     ], $this->headers);
@@ -71,7 +66,7 @@ test('it updates location timestamp on each request', function () {
     sleep(1);
 
     // Second update
-    $this->postJson(apiUrl('/v1/riders/location'), [
+    $this->postJson(route('v1.riders.location.update'), [
         'latitude' => 29.3860,
         'longitude' => 47.9880,
     ], $this->headers);
@@ -83,7 +78,7 @@ test('it updates location timestamp on each request', function () {
 });
 
 test('it can handle decimal precision in coordinates', function () {
-    $response = $this->postJson(apiUrl('/v1/riders/location'), [
+    $response = $this->postJson(route('v1.riders.location.update'), [
         'latitude' => 29.37594567,
         'longitude' => 47.97745678,
     ], $this->headers);
@@ -113,7 +108,7 @@ test('it broadcasts location update to customer when rider has active trip', fun
     ]);
 
     // Update location
-    $this->postJson(apiUrl('/v1/riders/location'), [
+    $this->postJson(route('v1.riders.location.update'), [
         'latitude' => 29.3759,
         'longitude' => 47.9774,
     ], $this->headers);
@@ -147,7 +142,7 @@ test('it broadcasts location update when trip is IN_PROGRESS status', function (
     ]);
 
     // Update location
-    $this->postJson(apiUrl('/v1/riders/location'), [
+    $this->postJson(route('v1.riders.location.update'), [
         'latitude' => 29.3759,
         'longitude' => 47.9774,
     ], $this->headers);
@@ -160,7 +155,7 @@ test('it does NOT broadcast location update when rider has no active trip', func
     Event::fake([App\Events\Socket\Customer\RiderLocationUpdatedEvent::class]);
 
     // Update location (no active trip)
-    $this->postJson(apiUrl('/v1/riders/location'), [
+    $this->postJson(route('v1.riders.location.update'), [
         'latitude' => 29.3759,
         'longitude' => 47.9774,
     ], $this->headers);
@@ -187,7 +182,7 @@ test('it does NOT broadcast location update when trip is completed', function ()
     ]);
 
     // Update location
-    $this->postJson(apiUrl('/v1/riders/location'), [
+    $this->postJson(route('v1.riders.location.update'), [
         'latitude' => 29.3759,
         'longitude' => 47.9774,
     ], $this->headers);
@@ -214,7 +209,7 @@ test('it does NOT broadcast location update when trip is pending rider', functio
     ]);
 
     // Update location
-    $this->postJson(apiUrl('/v1/riders/location'), [
+    $this->postJson(route('v1.riders.location.update'), [
         'latitude' => 29.3759,
         'longitude' => 47.9774,
     ], $this->headers);

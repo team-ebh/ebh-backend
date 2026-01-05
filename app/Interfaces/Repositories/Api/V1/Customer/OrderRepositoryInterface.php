@@ -39,7 +39,7 @@ interface OrderRepositoryInterface
     /**
      * Update order status
      */
-    public function updateOrderStatus(int $orderId, OrderStatusEnum $status): bool;
+    public function updateOrderStatus(int $orderId, OrderStatusEnum $status): void;
 
     /**
      * Update order total price

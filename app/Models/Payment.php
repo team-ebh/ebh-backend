@@ -25,8 +25,6 @@ class Payment extends Model
 
     public const string COLUMN_ORDER_ID = 'order_id';
 
-    public const string COLUMN_ORDER_ID = 'order_id';
-
     public const string COLUMN_STATUS = 'status';
 
     public const string COLUMN_GATEWAY_REFERENCE_ID = 'gateway_reference_id';
