@@ -189,7 +189,7 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     /**
      * Update trip commission rate and amount
      */
-    public function updateTripCommission(Trip $trip, float $commissionRate, float $commissionAmount): void
+    public function updateTripCommission(Trip $trip, float $commissionRate, string | float $commissionAmount): void
     {
         $trip->update([
             Trip::COLUMN_COMMISSION_RATE => $commissionRate,

@@ -76,8 +76,11 @@ readonly class FinalizeAndCalculatePipe
         $commissionRate = $this->getCommissionRate($trip);
 
         // Calculate commission amount
-        $totalPrice = (float) $trip->{Trip::COLUMN_TOTAL_PRICE};
-        $commissionAmount = round(($totalPrice * $commissionRate) / 100, 3);
+        $commissionAmount = bcdiv(
+            bcmul((string) $trip->{Trip::COLUMN_TOTAL_PRICE}, (string) $commissionRate, 4),
+            '100',
+            3
+        );
 
         // Update trip with commission
         $this->riderTripRepository->updateTripCommission($trip, $commissionRate, $commissionAmount);

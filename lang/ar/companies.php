@@ -10,6 +10,8 @@ return [
             'phone_number' => 'رقم الهاتف',
             'address' => 'العنوان',
             'commission_rate' => 'نسبة العمولة',
+            'default_rate' => 'افتراضي',
+            'custom_rate' => 'مخصص',
             'riders_count' => 'السائقين',
             'enabled' => 'مفعل؟',
         ],

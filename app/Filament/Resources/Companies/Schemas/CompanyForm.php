@@ -41,15 +41,6 @@ class CompanyForm
                             ->label(trans('companies.admin.fields.address'))
                             ->required()
                             ->maxLength(255),
-                        TextInput::make(Company::COLUMN_COMMISSION_RATE)
-                            ->label(trans('companies.admin.fields.commission_rate'))
-                            ->numeric()
-                            ->required()
-                            ->minValue(0)
-                            ->maxValue(100)
-                            ->step(0.01)
-                            ->suffix('%')
-                            ->default(0.00),
                         Toggle::make(Company::COLUMN_ENABLED)
                             ->inline(false)
                             ->default(true)

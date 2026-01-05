@@ -57,13 +57,6 @@ class CompaniesTable
                     ->badge()
                     ->color('info'),
 
-                TextColumn::make(Company::COLUMN_COMMISSION_RATE)
-                    ->label(trans('companies.admin.fields.commission_rate'))
-                    ->icon('heroicon-o-percent-badge')
-                    ->suffix('%')
-                    ->sortable()
-                    ->color(fn ($state) => $state >= 10 ? 'warning' : 'success'),
-
                 IconColumn::make(Company::COLUMN_ENABLED)
                     ->label(trans('companies.admin.fields.enabled'))
                     ->boolean()
