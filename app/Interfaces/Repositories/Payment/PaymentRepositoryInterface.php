@@ -9,9 +9,9 @@ use App\Models\Payment;
 interface PaymentRepositoryInterface
 {
     /**
-     * Find existing pending payment for a trip
+     * Find existing pending payment for an order
      */
-    public function findPendingPaymentForTrip(int $tripId): ?Payment;
+    public function findPendingPaymentForOrder(int $orderId): ?Payment;
 
     /**
      * Check if payment has valid time remaining (more than threshold)

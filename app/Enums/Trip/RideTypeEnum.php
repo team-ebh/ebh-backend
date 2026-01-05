@@ -43,8 +43,28 @@ enum RideTypeEnum: int implements HasDescription, HasIcon, HasLabel
         return $this === self::getDefault();
     }
 
-    public function needsWaitingTimeConfig(): bool
+    public function isRoundTripWithWait(): bool
+    {
+        return $this === self::ROUND_TRIP_WAIT;
+    }
+
+    public function isRoundTrip(): bool
     {
         return $this === self::ROUND_TRIP;
+    }
+
+    public function needsWaitingTimeConfig(): bool
+    {
+        return $this === self::ROUND_TRIP_WAIT;
+    }
+
+    public static function hasSecondDestination(self $rideType): bool
+    {
+        return in_array($rideType, [self::ROUND_TRIP, self::ROUND_TRIP_WAIT]);
+    }
+
+    public static function hasScheduleTime(self $rideType): bool
+    {
+        return $rideType === self::ROUND_TRIP;
     }
 }

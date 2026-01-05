@@ -173,6 +173,20 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     }
 
     /**
+     * Update trip waiting time and price
+     */
+    public function updateTripWaitingTimeAndPrice(Trip $trip, int $waitingTime, float $waitingPrice): void
+    {
+        $currentTotalPrice = $trip->{Trip::COLUMN_TOTAL_PRICE} ?? 0.0;
+
+        $trip->update([
+            Trip::COLUMN_WAITING_TIME => $waitingTime,
+            Trip::COLUMN_WAITING_PRICE => $waitingPrice,
+            Trip::COLUMN_TOTAL_PRICE => $currentTotalPrice + $waitingPrice,
+        ]);
+    }
+
+    /**
      * Check if rider has an active trip
      */
     public function existsActiveTrip(int $riderId): bool

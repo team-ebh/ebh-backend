@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Traits\Model\Aggregates;
 
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentLog;
 use App\Models\PaymentStatusLog;
-use App\Models\Trip;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -24,9 +24,9 @@ trait PaymentAggregate
         return $this->belongsTo(Customer::class, Payment::COLUMN_CUSTOMER_ID);
     }
 
-    public function trip(): BelongsTo
+    public function order(): BelongsTo
     {
-        return $this->belongsTo(Trip::class, Payment::COLUMN_TRIP_ID);
+        return $this->belongsTo(Order::class, Payment::COLUMN_ORDER_ID);
     }
 
     public function logs(): HasMany

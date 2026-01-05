@@ -30,7 +30,6 @@ test('it can render view trip page', function () {
         Trip::COLUMN_PASSENGER_COUNT => 1,
         Trip::COLUMN_TOTAL_PRICE => 10.00,
         Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
-        Trip::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::CASH->value,
         Trip::COLUMN_STATUS => TripStatusEnum::DRAFT->value,
     ]);
 
@@ -49,7 +48,6 @@ test('it can render view trip page with status logs', function () {
         Trip::COLUMN_PASSENGER_COUNT => 1,
         Trip::COLUMN_TOTAL_PRICE => 10.00,
         Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
-        Trip::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::CASH->value,
         Trip::COLUMN_STATUS => TripStatusEnum::PENDING_RIDER->value,
     ]);
 
@@ -78,7 +76,6 @@ test('it can render view trip page with locations and location status logs', fun
         Trip::COLUMN_PASSENGER_COUNT => 1,
         Trip::COLUMN_TOTAL_PRICE => 10.00,
         Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
-        Trip::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::CASH->value,
         Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER->value,
     ]);
 

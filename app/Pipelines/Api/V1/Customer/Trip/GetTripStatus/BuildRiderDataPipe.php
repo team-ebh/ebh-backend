@@ -33,7 +33,7 @@ class BuildRiderDataPipe
 
         $context->rider = [
             'id' => $rider->{Rider::COLUMN_ID},
-            'image' => $rider->getFirstMediaLink(Rider::PROFILE_PHOTO),
+            'image' => $rider->getFirstMediaLink(),
             'name' => $rider->{Rider::COLUMN_FULL_NAME},
             'phone_number' => $rider->{Rider::COLUMN_PHONE_NUMBER},
             'rating' => 4.8, // TODO: Implement actual rating calculation

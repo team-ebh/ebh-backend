@@ -86,6 +86,7 @@ return [
             'required' => 'Return time is required.',
             'integer' => 'Return time must be a valid timestamp.',
             'min' => 'Return time must be in the future.',
+            'after' => 'Return time must be in the future.',
         ],
         'payment_method' => [
             'required' => 'Payment method is required.',

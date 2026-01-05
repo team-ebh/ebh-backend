@@ -30,7 +30,10 @@ readonly class ValidateAndLoadPipe
         $payload['trip'] = $trip;
 
         // Get current location
-        $currentLocation = $this->tripActionService->getCurrentLocation($trip);
+        // For ROUND_TRIP_WAIT, check for waiting pickup location first
+        $currentLocation = $trip->isRoundTripWithWait()
+            ? $this->tripActionService->getWaitingPickupLocation($trip) ?? $this->tripActionService->getCurrentLocation($trip)
+            : $this->tripActionService->getCurrentLocation($trip);
         $payload['currentLocation'] = $currentLocation;
 
         // Validate trip request belongs to rider
@@ -52,7 +55,7 @@ readonly class ValidateAndLoadPipe
 
         // Validate can pick up
         throw_if(
-            ! $this->tripActionService->validateCanPickUp($currentLocation),
+            ! $this->tripActionService->validateCanPickUp($currentLocation, $trip),
             InvalidTripActionException::class
         );
 

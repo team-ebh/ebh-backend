@@ -67,7 +67,7 @@ describe('V1 Rider Trip API → Accept Trip → Rider Status', function () {
 
         // Accept the trip
         $response = postJson(
-            apiUrl("/v1/riders/trips/requests/{$trip->tripRequest->id}/accept"),
+            route('v1.riders.trips.requests.accept', ['tripRequest' => $trip->tripRequest->id]),
             [],
             $this->headers
         );
@@ -87,7 +87,7 @@ describe('V1 Rider Trip API → Accept Trip → Rider Status', function () {
 
         // Accept first trip
         postJson(
-            apiUrl("/v1/riders/trips/requests/{$firstTrip->tripRequest->id}/accept"),
+            route('v1.riders.trips.requests.accept', ['tripRequest' => $firstTrip->tripRequest->id]),
             [],
             $this->headers
         );
@@ -103,7 +103,7 @@ describe('V1 Rider Trip API → Accept Trip → Rider Status', function () {
 
         // Try to accept second trip - should fail
         $response = postJson(
-            apiUrl("/v1/riders/trips/requests/{$secondTrip->tripRequest->id}/accept"),
+            route('v1.riders.trips.requests.accept', ['tripRequest' => $secondTrip->tripRequest->id]),
             [],
             $this->headers
         );
@@ -134,7 +134,7 @@ describe('V1 Rider Trip API → Accept Trip → Socket Events', function () {
 
         // Accept the trip
         $response = postJson(
-            apiUrl("/v1/riders/trips/requests/{$trip->tripRequest->id}/accept"),
+            route('v1.riders.trips.requests.accept', ['tripRequest' => $trip->tripRequest->id]),
             [],
             $this->headers
         );
@@ -207,7 +207,7 @@ describe('V1 Rider Trip API → Accept Trip → Socket Events', function () {
 
         // Accept the trip by rider 1
         $response = postJson(
-            apiUrl("/v1/riders/trips/requests/{$tripRequest1->id}/accept"),
+            route('v1.riders.trips.requests.accept', ['tripRequest' => $tripRequest1->id]),
             [],
             $this->headers
         );
@@ -267,7 +267,7 @@ describe('V1 Rider Trip API → Accept Trip → Socket Events', function () {
 
         // Accept the trip
         $response = postJson(
-            apiUrl("/v1/riders/trips/requests/{$tripRequestId}/accept"),
+            route('v1.riders.trips.requests.accept', ['tripRequest' => $tripRequestId]),
             [],
             $this->headers
         );

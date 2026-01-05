@@ -45,7 +45,7 @@ readonly class ExecuteAndBroadcastPipe
 
         // Calculate next action
         $nextAction = $this->tripActionService->getNextAction($trip->fresh());
-        $payload['next_action'] = $nextAction;
+        $payload['next_action'] = $nextAction?->value;
 
         return $next($payload);
     }

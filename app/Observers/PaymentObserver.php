@@ -37,7 +37,6 @@ class PaymentObserver
         PaymentStatusLog::query()
             ->create([
                 PaymentStatusLog::COLUMN_PAYMENT_ID => $payment->{Payment::COLUMN_ID},
-                PaymentStatusLog::COLUMN_TRIP_ID => $payment->{Payment::COLUMN_TRIP_ID},
                 PaymentStatusLog::COLUMN_STATUS => $payment->{Payment::COLUMN_STATUS},
                 PaymentStatusLog::COLUMN_CHANGED_BY_TYPE => $user ? get_class($user) : null,
                 PaymentStatusLog::COLUMN_CHANGED_BY_ID => $user?->id,

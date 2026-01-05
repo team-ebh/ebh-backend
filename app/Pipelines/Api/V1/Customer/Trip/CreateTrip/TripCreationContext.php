@@ -20,6 +20,8 @@ class TripCreationContext
 
     public float $baseFare;
 
+    public ?float $roundTripFee = null;
+
     public ?float $accessibilityCost = null;
 
     public float $estimatedPrice;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Api\V1\Customer\Payment;
 
 use App\Http\Resources\Api\PriceResource;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Trip;
 use Illuminate\Http\Request;
@@ -28,18 +29,18 @@ class CheckPaymentStatusResource extends JsonResource
              *
              * @example 123
              *
-             * @var int
+             * @var int|null
              */
-            'trip_id' => $this->resource->{Payment::COLUMN_TRIP_ID},
+            'trip_id' => $this->resource->order?->trips?->first()?->{Trip::COLUMN_ID},
 
             /**
              * Order ID
              *
              * @example "TRP-123"
              *
-             * @var string
+             * @var string|null
              */
-            'order_id' => tripNumberFormat($this->resource->trip),
+            'order_id' => tripNumberFormat($this->resource->order?->trips?->first()),
 
             /**
              * Payment created date
@@ -57,7 +58,7 @@ class CheckPaymentStatusResource extends JsonResource
              *
              * @var string
              */
-            'payment_method' => $this->resource->trip?->{Trip::COLUMN_PAYMENT_METHOD}?->getLabel(),
+            'payment_method' => $this->resource->order?->{Order::COLUMN_PAYMENT_METHOD}?->getLabel(),
 
             /**
              * Payment number

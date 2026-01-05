@@ -5,21 +5,15 @@ declare(strict_types=1);
 namespace App\DTOs\Api\V1\Customer\Trip;
 
 use App\Enums\Payment\PaymentMethodEnum;
-use App\Interfaces\DTOs\RequestDataTransferObject;
-use App\Models\Trip;
 use Illuminate\Http\Request;
 
 /**
  * Confirm Trip DTO
  *
- * Data Transfer Object for trip confirmation
+ * Data Transfer Object for trip confirmation with payment method and ride type data
  */
-class ConfirmTripDTO implements RequestDataTransferObject
+class ConfirmTripDTO extends ChangeRideTypeDTO
 {
-    public ?int $customerId;
-
-    public Trip $trip;
-
     public PaymentMethodEnum $paymentMethod;
 
     /**
@@ -27,8 +21,8 @@ class ConfirmTripDTO implements RequestDataTransferObject
      */
     public function getDataFromRequest(Request $request): void
     {
-        $this->customerId = auth('customer')->id();
-        $this->trip = $request->route()->parameter('trip');
+        parent::getDataFromRequest($request);
+
         $this->paymentMethod = $request->enum('payment_method', PaymentMethodEnum::class);
     }
 }

@@ -12,6 +12,7 @@ use App\Pipelines\Api\V1\Customer\Trip\GetTripStatus\BuildRiderDataPipe;
 use App\Pipelines\Api\V1\Customer\Trip\GetTripStatus\BuildVehicleDataPipe;
 use App\Pipelines\Api\V1\Customer\Trip\GetTripStatus\CheckTripStatusPipe;
 use App\Pipelines\Api\V1\Customer\Trip\GetTripStatus\TripStatusContext;
+use App\Services\Trip\TripRequestFormatterService;
 use Illuminate\Pipeline\Pipeline;
 
 /**
@@ -21,6 +22,10 @@ use Illuminate\Pipeline\Pipeline;
  */
 readonly class GetTripStatusAction
 {
+    public function __construct(
+        private TripRequestFormatterService $tripRequestFormatter,
+    ) {}
+
     /**
      * Execute the action
      *
@@ -68,6 +73,7 @@ readonly class GetTripStatusAction
             'vehicle' => $result->vehicle,
             'map_locations' => $result->mapLocations,
             'formatted_locations' => $result->formattedLocations,
+            'payment' => $this->tripRequestFormatter->preparePaymentData($result->trip),
         ];
     }
 }

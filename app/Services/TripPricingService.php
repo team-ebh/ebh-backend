@@ -6,6 +6,11 @@ namespace App\Services;
 
 use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Trip\RideTypeEnum;
+use App\Enums\Trip\TripLocationStatusEnum;
+use App\Enums\Trip\TripLocationTypeEnum;
+use App\Models\TripLocation;
+use App\Models\TripLocationStatusLog;
+use Illuminate\Support\Collection;
 
 /**
  * Trip Pricing Service
@@ -29,7 +34,7 @@ class TripPricingService
     /**
      * Waiting time configuration
      */
-    private const float WAITING_TIME_RATE_PER_30_MIN = 2.500; // KWD per 30 minutes
+    private const float WAITING_TIME_RATE = 2.500; // KWD per 30 minutes
 
     private const int WAITING_TIME_INTERVAL_MINUTES = 30;
 
@@ -93,7 +98,7 @@ class TripPricingService
 
         $intervals = ceil($returnTimeMinutes / self::WAITING_TIME_INTERVAL_MINUTES);
 
-        return round($intervals * self::WAITING_TIME_RATE_PER_30_MIN, 3);
+        return round($intervals * self::WAITING_TIME_RATE, 3);
     }
 
     /**
@@ -119,16 +124,25 @@ class TripPricingService
 
     /**
      * Calculate total trip price for ROUND_TRIP ride type
+     *
+     * Note: For ROUND_TRIP (ride type 2), the round_trip_fee is NOT included in total_price
+     * because a separate trip will be created and the price will be calculated when activated
      */
     public function calculateRoundTripPrice(
         float $distance,
         iterable $accessibilityRequirements = [],
-        ?int $vehicleId = null
+        ?int $vehicleId = null,
+        ?float $returnDistance = null
     ): array {
+        // Calculate base fare for outbound journey (origin -> destination)
         $baseFare = $this->calculateBaseFare($distance, $vehicleId);
         $accessibilityCost = $this->calculateAccessibilityCost($accessibilityRequirements);
-        $roundTripFee = $baseFare; // Round trip fee equals base fare
-        $totalPrice = $baseFare + $roundTripFee + ($accessibilityCost ?? 0.0);
+
+        // Calculate round trip fee for return journey (destination -> origin)
+        // Use returnDistance if provided, otherwise use same distance
+        $roundTripFee = $this->calculateBaseFare($returnDistance ?? $distance, $vehicleId);
+
+        $totalPrice = $baseFare + ($accessibilityCost ?? 0.0); // Round trip fee NOT included
 
         return [
             'base_fare' => $baseFare,
@@ -141,18 +155,27 @@ class TripPricingService
 
     /**
      * Calculate total trip price for ROUND_TRIP_WAIT ride type
+     *
+     * Note: For ROUND_TRIP_WAIT (ride type 3), the waiting_charge is NOT included in total_price
+     * because it's calculated at the end of the trip based on actual waiting time
      */
     public function calculateRoundTripWaitPrice(
         float $distance,
         ?int $returnTimeMinutes,
         iterable $accessibilityRequirements = [],
-        ?int $vehicleId = null
+        ?int $vehicleId = null,
+        ?float $returnDistance = null
     ): array {
+        // Calculate base fare for outbound journey (origin -> destination)
         $baseFare = $this->calculateBaseFare($distance, $vehicleId);
         $accessibilityCost = $this->calculateAccessibilityCost($accessibilityRequirements);
-        $roundTripFee = $baseFare;
-        $waitingCharge = $this->calculateWaitingCharge($returnTimeMinutes);
-        $totalPrice = $baseFare + $roundTripFee + ($waitingCharge ?? 0.0) + ($accessibilityCost ?? 0.0);
+
+        // Calculate round trip fee for return journey (destination -> origin)
+        // Use returnDistance if provided, otherwise use same distance
+        $roundTripFee = $this->calculateBaseFare($returnDistance ?? $distance, $vehicleId);
+
+        $waitingCharge = $this->calculateWaitingCharge($returnTimeMinutes); // Calculated but not included in total
+        $totalPrice = $baseFare + $roundTripFee + ($accessibilityCost ?? 0.0); // Waiting charge NOT included
 
         return [
             'base_fare' => $baseFare,
@@ -171,7 +194,8 @@ class TripPricingService
         float $distance,
         iterable $accessibilityRequirements = [],
         ?int $returnTimeMinutes = null,
-        ?int $vehicleId = null
+        ?int $vehicleId = null,
+        ?float $returnDistance = null
     ): array {
         return match ($rideType) {
             RideTypeEnum::ONE_WAY => $this->calculateOneWayPrice(
@@ -182,13 +206,15 @@ class TripPricingService
             RideTypeEnum::ROUND_TRIP => $this->calculateRoundTripPrice(
                 $distance,
                 $accessibilityRequirements,
-                $vehicleId
+                $vehicleId,
+                $returnDistance
             ),
             RideTypeEnum::ROUND_TRIP_WAIT => $this->calculateRoundTripWaitPrice(
                 $distance,
                 $returnTimeMinutes ?? 0,
                 $accessibilityRequirements,
-                $vehicleId
+                $vehicleId,
+                $returnDistance
             ),
         };
     }
@@ -213,28 +239,23 @@ class TripPricingService
 
         // Round trip fee (for ROUND_TRIP and ROUND_TRIP_WAIT)
         if ($rideType === RideTypeEnum::ROUND_TRIP || $rideType === RideTypeEnum::ROUND_TRIP_WAIT) {
+            $value = priceFormat($pricing['round_trip_fee']) . ' ' . CurrencyEnum::KWD->getLabel();
+
             $breakdown[] = [
                 'label' => trans('trips.api.breakdown.round_trip_fee'),
                 'sub_label' => null,
-                'value' => priceFormat($pricing['round_trip_fee']) . ' ' . CurrencyEnum::KWD->getLabel(),
+                'value' => $value,
             ];
         }
 
         // Waiting time charge (for ROUND_TRIP_WAIT)
+        // Always show "to be calculated" because waiting time is calculated at the end of the trip
         if ($rideType === RideTypeEnum::ROUND_TRIP_WAIT) {
-            if ($pricing['waiting_charge'] !== null) {
-                $breakdown[] = [
-                    'label' => trans('trips.api.breakdown.waiting_time_charge'),
-                    'sub_label' => null,
-                    'value' => priceFormat($pricing['waiting_charge']) . ' ' . CurrencyEnum::KWD->getLabel(),
-                ];
-            } else {
-                $breakdown[] = [
-                    'label' => trans('trips.api.breakdown.waiting_time_charge'),
-                    'sub_label' => null,
-                    'value' => trans('trips.api.breakdown.to_be_calculated'),
-                ];
-            }
+            $breakdown[] = [
+                'label' => trans('trips.api.breakdown.waiting_time_charge'),
+                'sub_label' => null,
+                'value' => trans('trips.api.breakdown.to_be_calculated'),
+            ];
         }
 
         // Accessibility services
@@ -251,10 +272,15 @@ class TripPricingService
             $subLabel = ! empty($accessibilityNames) ? implode(', ', $accessibilityNames) : null;
 
             if ($pricing['accessibility_cost'] !== null && $pricing['accessibility_cost'] > 0) {
+                // For ROUND_TRIP, display accessibility cost × 2 (used for both outbound and return)
+                $displayedAccessibilityCost = $rideType === RideTypeEnum::ROUND_TRIP
+                    ? $pricing['accessibility_cost'] * 2
+                    : $pricing['accessibility_cost'];
+
                 $breakdown[] = [
                     'label' => trans('trips.api.breakdown.accessibility_services'),
                     'sub_label' => $subLabel,
-                    'value' => priceFormat($pricing['accessibility_cost']) . ' ' . CurrencyEnum::KWD->getLabel(),
+                    'value' => priceFormat($displayedAccessibilityCost) . ' ' . CurrencyEnum::KWD->getLabel(),
                 ];
             } elseif (! empty($accessibilityNames)) {
                 $breakdown[] = [
@@ -270,12 +296,25 @@ class TripPricingService
 
     /**
      * Build price estimation
+     *
+     * For ROUND_TRIP, adds extra accessibility cost to display total (not stored in DB)
      */
-    public function buildPriceEstimation(float $totalPrice): array
+    public function buildPriceEstimation(float $totalPrice, RideTypeEnum $rideType, ?float $accessibilityCost = null): array
     {
+        // Use "Price Estimation" for ROUND_TRIP_WAIT, "Price" for other ride types
+        $label = $rideType === RideTypeEnum::ROUND_TRIP_WAIT
+            ? trans('trips.api.price_estimation')
+            : trans('trips.api.price');
+
+        // For ROUND_TRIP, add extra accessibility cost for display (doubled accessibility)
+        $displayTotalPrice = $totalPrice;
+        if ($rideType === RideTypeEnum::ROUND_TRIP && $accessibilityCost !== null && $accessibilityCost > 0) {
+            $displayTotalPrice = $totalPrice + $accessibilityCost;
+        }
+
         return [
-            'label' => trans('trips.api.price_estimation'),
-            'value' => priceFormat($totalPrice) . ' ' . CurrencyEnum::KWD->getLabel(),
+            'label' => $label,
+            'value' => priceFormat($displayTotalPrice) . ' ' . CurrencyEnum::KWD->getLabel(),
         ];
     }
 
@@ -285,9 +324,56 @@ class TripPricingService
     public function getWaitingTimeConfig(): array
     {
         return [
-            'price' => priceFormat(self::WAITING_TIME_RATE_PER_30_MIN) . ' ' . CurrencyEnum::KWD->getLabel(),
+            'price' => priceFormat(self::WAITING_TIME_RATE) . ' ' . CurrencyEnum::KWD->getLabel(),
             'time' => self::WAITING_TIME_INTERVAL_MINUTES . ' ' . trans('trips.api.time_units.minutes'),
         ];
+    }
+
+    /**
+     * Calculate actual waiting time from completed trip locations
+     * For ROUND_TRIP_WAIT: calculates time between first destination DROPPED_OFF and second destination/origin PICKED_UP
+     *
+     * @param  Collection  $locations  Trip locations with statusLogs relationship loaded
+     * @return int|null Waiting time in minutes, or null if you cannot be calculated
+     */
+    public function calculateActualWaitingTime(Collection $locations): ?int
+    {
+        // Find first destination that was dropped off
+        $firstDestination = $locations->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)->first();
+
+        if (! $firstDestination) {
+            return null;
+        }
+
+        // Find the DROPPED_OFF status log for first destination
+        $droppedOffLog = $firstDestination->statusLogs
+            ->firstWhere(TripLocationStatusLog::COLUMN_STATUS, TripLocationStatusEnum::DROPPED_OFF);
+
+        if (! $droppedOffLog) {
+            return null;
+        }
+
+        // Find the next location after first destination (should be sequence + 1)
+        $nextLocation = $locations->where('sequence', '>', $firstDestination->sequence)
+            ->sortBy('sequence')
+            ->first();
+
+        if (! $nextLocation) {
+            return null;
+        }
+
+        // Find the PICKED_UP status log for the next location
+        $pickedUpLog = $nextLocation->statusLogs
+            ->firstWhere('status', TripLocationStatusEnum::PICKED_UP);
+
+        if (! $pickedUpLog) {
+            return null;
+        }
+
+        // Calculate difference in minutes
+        $waitingMinutes = $droppedOffLog->created_at->diffInMinutes($pickedUpLog->created_at);
+
+        return (int) $waitingMinutes;
     }
 
     /**

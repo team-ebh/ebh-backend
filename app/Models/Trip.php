@@ -27,11 +27,11 @@ class Trip extends Model
 
     public const string COLUMN_CUSTOMER_ID = 'customer_id';
 
+    public const string COLUMN_ORDER_ID = 'order_id';
+
     public const string COLUMN_RIDER_ID = 'rider_id';
 
     public const string COLUMN_TRIP_TYPE_ID = 'trip_type_id';
-
-    public const string COLUMN_RIDE_TYPE_ID = 'ride_type_id';
 
     public const string COLUMN_RIDE_TYPE = 'ride_type';
 
@@ -39,30 +39,35 @@ class Trip extends Model
 
     public const string COLUMN_PASSENGER_COUNT = 'passenger_count';
 
+    public const string COLUMN_BASE_FARE = 'base_fare';
+
+    public const string COLUMN_ROUND_TRIP_PRICE = 'round_trip_price';
+
     public const string COLUMN_ACCESSIBILITY_PRICE = 'accessibility_price';
 
     public const string COLUMN_WAITING_PRICE = 'waiting_price';
+
+    public const string COLUMN_WAITING_TIME = 'waiting_time';
 
     public const string COLUMN_TOTAL_PRICE = 'total_price';
 
     public const string COLUMN_CURRENCY = 'currency';
 
-    public const string COLUMN_PAYMENT_METHOD = 'payment_method';
-
     public const string COLUMN_STATUS = 'status';
 
     public const string COLUMN_DEMAND_TRIP_ID = 'demand_trip_id';
+
+    public const string COLUMN_SCHEDULED_TIME = 'scheduled_time';
 
     protected function casts(): array
     {
         return [
             self::COLUMN_TRIP_TYPE_ID => TripTypeEnum::class,
-            self::COLUMN_RIDE_TYPE_ID => RideTypeEnum::class,
             self::COLUMN_RIDE_TYPE => RideTypeEnum::class,
             self::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::class,
             self::COLUMN_CURRENCY => CurrencyEnum::class,
-            self::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::class,
             self::COLUMN_STATUS => TripStatusEnum::class,
+            self::COLUMN_SCHEDULED_TIME => 'datetime',
         ];
     }
 
@@ -244,19 +249,19 @@ class Trip extends Model
     }
 
     /**
-     * Check if trip payment method is KNET
+     * Check if order payment method is KNET
      */
     public function isKnetPayment(): bool
     {
-        return $this->{self::COLUMN_PAYMENT_METHOD} === PaymentMethodEnum::KNET;
+        return $this->order?->{$this->order::COLUMN_PAYMENT_METHOD} === PaymentMethodEnum::KNET;
     }
 
     /**
-     * Check if trip payment method is KNET
+     * Check if order payment method is CASH
      */
     public function isCashPayment(): bool
     {
-        return $this->{self::COLUMN_PAYMENT_METHOD} === PaymentMethodEnum::CASH;
+        return $this->order?->{$this->order::COLUMN_PAYMENT_METHOD} === PaymentMethodEnum::CASH;
     }
 
     public function hasPaidPayment(): bool
@@ -265,11 +270,25 @@ class Trip extends Model
             return true;
         }
 
-        return $this->paidPayment()->exists();
+        // Check if order has paid payment
+        return $this->order()
+            ->whereHas('paidPayment')
+            ->exists();
+
     }
 
     public function hasCompletedAndPaidPayment(): bool
     {
         return $this->isCompleted() && $this->hasPaidPayment();
+    }
+
+    public function isRoundTripWithWait(): bool
+    {
+        return $this->{Trip::COLUMN_RIDE_TYPE} === RideTypeEnum::ROUND_TRIP_WAIT;
+    }
+
+    public function isRoundTrip(): bool
+    {
+        return $this->{Trip::COLUMN_RIDE_TYPE} === RideTypeEnum::ROUND_TRIP;
     }
 }

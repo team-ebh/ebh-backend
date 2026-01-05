@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Order\OrderStatusEnum;
 use App\Enums\Payment\PaymentGatewayEnum;
 use App\Enums\Payment\PaymentMethodEnum;
 use App\Enums\Payment\PaymentStatusEnum;
@@ -10,6 +11,7 @@ use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Trip;
 
@@ -20,13 +22,21 @@ beforeEach(function () {
     $this->customer = Customer::factory()->create();
     $this->otherCustomer = Customer::factory()->create();
 
+    $this->order = Order::create([
+        Order::COLUMN_CUSTOMER_ID => $this->customer->id,
+        Order::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET,
+        Order::COLUMN_TOTAL_PRICE => 15.5,
+        Order::COLUMN_CURRENCY => CurrencyEnum::KWD,
+        Order::COLUMN_STATUS => OrderStatusEnum::COMPLETED,
+    ]);
+
     $this->trip = Trip::create([
         Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
+        Trip::COLUMN_ORDER_ID => $this->order->id,
         Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED,
         Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
         Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
         Trip::COLUMN_PASSENGER_COUNT => 1,
-        Trip::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET,
         Trip::COLUMN_TOTAL_PRICE => 15.5,
         Trip::COLUMN_CURRENCY => CurrencyEnum::KWD,
     ]);
@@ -34,7 +44,7 @@ beforeEach(function () {
     $this->paidPayment = Payment::create([
         Payment::COLUMN_PAYMENT_NUMBER => 'PAY-RECEIPT-001',
         Payment::COLUMN_CUSTOMER_ID => $this->customer->id,
-        Payment::COLUMN_TRIP_ID => $this->trip->id,
+        Payment::COLUMN_ORDER_ID => $this->order->id,
         Payment::COLUMN_STATUS => PaymentStatusEnum::PAID,
         Payment::COLUMN_GATEWAY => PaymentGatewayEnum::UPAYMENTS,
         Payment::COLUMN_GATEWAY_REFERENCE_ID => 'ref-paid',
@@ -46,7 +56,7 @@ beforeEach(function () {
     $this->pendingPayment = Payment::create([
         Payment::COLUMN_PAYMENT_NUMBER => 'PAY-PENDING-001',
         Payment::COLUMN_CUSTOMER_ID => $this->customer->id,
-        Payment::COLUMN_TRIP_ID => $this->trip->id,
+        Payment::COLUMN_ORDER_ID => $this->order->id,
         Payment::COLUMN_STATUS => PaymentStatusEnum::PENDING,
         Payment::COLUMN_GATEWAY => PaymentGatewayEnum::UPAYMENTS,
         Payment::COLUMN_GATEWAY_REFERENCE_ID => 'ref-pending',

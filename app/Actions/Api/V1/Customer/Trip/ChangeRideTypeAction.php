@@ -11,14 +11,15 @@ use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\BuildRideTypeBreakdownPipe
 use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\CalculateDistancePipe;
 use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\CalculateRidePricingPipe;
 use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\ChangeRideTypeContext;
-use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\UpdateDestinationLocationPipe;
 use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\UpdateTripPricesPipe;
+use App\Pipelines\Api\V1\Customer\Trip\ChangeRideType\ValidateTripPipe;
 use Illuminate\Pipeline\Pipeline;
 
 /**
  * Change Ride Type Action
  *
- * Calculates pricing based on ride type and updates trip prices using pipeline pattern
+ * Updates trip ride type, scheduled time, and recalculates pricing
+ * Used to change ride type and update trip pricing
  */
 readonly class ChangeRideTypeAction
 {
@@ -31,17 +32,6 @@ readonly class ChangeRideTypeAction
      */
     public function __invoke(ChangeRideTypeDTO $dto): array
     {
-        // Validate trip belongs to authenticated customer
-        throw_if(
-            ! $dto->trip->belongsToCustomer($dto->customerId),
-            TripNotBelongToCustomerException::class
-        );
-
-        throw_if(! $dto->trip->isDraft(), TripNotDraftException::class);
-
-        // Load accessibility requirements for the trip
-        $dto->trip->load('accessibility');
-
         return safeProcess()
             ->withTransaction()
             ->onFailed(fn ($e) => throw $e)
@@ -61,11 +51,11 @@ readonly class ChangeRideTypeAction
         $result = app(Pipeline::class)
             ->send($context)
             ->through([
+                ValidateTripPipe::class,
                 CalculateDistancePipe::class,
                 CalculateRidePricingPipe::class,
                 BuildRideTypeBreakdownPipe::class,
                 UpdateTripPricesPipe::class,
-                UpdateDestinationLocationPipe::class,
             ])
             ->thenReturn();
 
