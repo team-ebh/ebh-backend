@@ -7,6 +7,8 @@ namespace App\Pipelines\Rider\Trip\CompleteTrip;
 use App\Enums\Trip\TripStatusEnum;
 use App\Events\Socket\Customer\TripCompletedEvent;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
+use App\Models\Company;
+use App\Models\Setting;
 use App\Models\Trip;
 use App\Services\Trip\TripActionService;
 use App\Services\TripPricingService;
@@ -36,6 +38,9 @@ readonly class FinalizeAndCalculatePipe
                 $this->calculateAndUpdateWaitingTime($trip);
             }
 
+            // Calculate and update commission
+            $this->calculateAndUpdateCommission($trip);
+
             // Complete trip and update rider status
             $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::COMPLETED);
 
@@ -57,6 +62,46 @@ readonly class FinalizeAndCalculatePipe
         }
 
         return $next($payload);
+    }
+
+    /**
+     * Calculate and update trip commission
+     */
+    private function calculateAndUpdateCommission(Trip $trip): void
+    {
+        // Refresh trip to get latest total_price (in case waiting time was added)
+        $trip->refresh();
+
+        // Get commission rate from rider's company
+        $commissionRate = $this->getCommissionRate($trip);
+
+        // Calculate commission amount
+        $totalPrice = (float) $trip->{Trip::COLUMN_TOTAL_PRICE};
+        $commissionAmount = round(($totalPrice * $commissionRate) / 100, 3);
+
+        // Update trip with commission
+        $this->riderTripRepository->updateTripCommission($trip, $commissionRate, $commissionAmount);
+    }
+
+    /**
+     * Get commission rate from rider's company or default setting
+     */
+    private function getCommissionRate(Trip $trip): float
+    {
+        // Load rider with company
+        $rider = $trip->rider()->with('company')->first();
+
+        if (! $rider) {
+            return Setting::getDefaultCommissionRate();
+        }
+
+        $company = $rider->company;
+
+        if ($company && $company->{Company::COLUMN_COMMISSION_RATE} !== null && $company->{Company::COLUMN_COMMISSION_RATE} > 0) {
+            return (float) $company->{Company::COLUMN_COMMISSION_RATE};
+        }
+
+        return Setting::getDefaultCommissionRate();
     }
 
     /**

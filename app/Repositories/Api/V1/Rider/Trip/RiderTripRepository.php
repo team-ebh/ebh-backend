@@ -187,6 +187,17 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     }
 
     /**
+     * Update trip commission rate and amount
+     */
+    public function updateTripCommission(Trip $trip, float $commissionRate, float $commissionAmount): void
+    {
+        $trip->update([
+            Trip::COLUMN_COMMISSION_RATE => $commissionRate,
+            Trip::COLUMN_COMMISSION_AMOUNT => $commissionAmount,
+        ]);
+    }
+
+    /**
      * Check if rider has an active trip
      */
     public function existsActiveTrip(int $riderId): bool

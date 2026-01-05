@@ -35,7 +35,7 @@ readonly class LoadLastTripPipe
         );
 
         // Eager load relationships needed for payment
-        $trip->load(['customer', 'paidPayment']);
+        $trip->load(['customer', 'order.paidPayment']);
 
         $context->trip = $trip;
 

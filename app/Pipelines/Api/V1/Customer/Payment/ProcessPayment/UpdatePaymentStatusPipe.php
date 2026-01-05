@@ -66,7 +66,7 @@ readonly class UpdatePaymentStatusPipe
         }
 
         $trip = $context->payment->trip;
-        $hasPaidPayment = $trip->paidPayment()->exists();
+        $hasPaidPayment = $trip->order?->paidPayment()->exists() ?? false;
 
         if ($hasPaidPayment) {
             // Trip already has a paid payment, mark this as LOCKED_PAID

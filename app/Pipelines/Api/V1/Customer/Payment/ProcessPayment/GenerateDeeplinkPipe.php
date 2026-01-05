@@ -31,9 +31,12 @@ readonly class GenerateDeeplinkPipe
             return $next($context);
         }
 
+        // Get trip ID from order's first trip
+        $tripId = $context->payment->order?->trips()?->first()?->id ?? 0;
+
         $context->deeplink = $context->payment->status->buildDeeplink(
             $this->baseDeeplink,
-            $context->payment->{Payment::COLUMN_TRIP_ID},
+            $tripId,
             $context->payment->{Payment::COLUMN_PAYMENT_NUMBER}
         );
 

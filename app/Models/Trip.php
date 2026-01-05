@@ -51,6 +51,10 @@ class Trip extends Model
 
     public const string COLUMN_TOTAL_PRICE = 'total_price';
 
+    public const string COLUMN_COMMISSION_RATE = 'commission_rate';
+
+    public const string COLUMN_COMMISSION_AMOUNT = 'commission_amount';
+
     public const string COLUMN_CURRENCY = 'currency';
 
     public const string COLUMN_STATUS = 'status';
@@ -68,6 +72,8 @@ class Trip extends Model
             self::COLUMN_CURRENCY => CurrencyEnum::class,
             self::COLUMN_STATUS => TripStatusEnum::class,
             self::COLUMN_SCHEDULED_TIME => 'datetime',
+            self::COLUMN_COMMISSION_RATE => 'decimal:2',
+            self::COLUMN_COMMISSION_AMOUNT => 'decimal:3',
         ];
     }
 
