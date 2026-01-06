@@ -554,6 +554,113 @@ describe('Trip Store API', function () {
             'passenger_count' => 2,
         ])->assertStatus(200);
     });
+
+    it('requires schedule_date_time for scheduled trips', function () {
+        // Try to create a scheduled trip without schedule_date_time
+        postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+        ])->assertStatus(422)
+            ->assertJsonPath('meta.errors.0.field', 'schedule_date_time')
+            ->assertJsonPath('meta.errors.0.messages.0', trans('validations.trips.schedule_date_time.required'));
+    });
+
+    it('can create scheduled trip with schedule_date_time', function () {
+        $scheduledTime = now()->addHours(2)->timestamp;
+
+        $response = postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+            'schedule_date_time' => $scheduledTime,
+        ])->assertStatus(200);
+
+        // Verify scheduled_time is saved in database
+        $trip = Trip::latest()->first();
+        expect($trip->{Trip::COLUMN_SCHEDULED_TIME})->not->toBeNull()
+            ->and($trip->{Trip::COLUMN_SCHEDULED_TIME}->timestamp)->toBe($scheduledTime);
+    });
+
+    it('does not require schedule_date_time for ride now trips', function () {
+        // Create a ride now trip without schedule_date_time - should succeed
+        postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+        ])->assertStatus(200);
+
+        // Verify scheduled_time is null
+        $trip = Trip::latest()->first();
+        expect($trip->{Trip::COLUMN_SCHEDULED_TIME})->toBeNull();
+    });
+
+    it('validates schedule_date_time must be integer', function () {
+        postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+            'schedule_date_time' => 'invalid',
+        ])->assertStatus(422)
+            ->assertJsonPath('meta.errors.0.field', 'schedule_date_time')
+            ->assertJsonPath('meta.errors.0.messages.0', trans('validations.trips.schedule_date_time.integer'));
+    });
+
+    it('validates schedule_date_time must be positive', function () {
+        postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+            'schedule_date_time' => -1,
+        ])->assertStatus(422)
+            ->assertJsonPath('meta.errors.0.field', 'schedule_date_time')
+            ->assertJsonPath('meta.errors.0.messages.0', trans('validations.trips.schedule_date_time.min'));
+    });
 });
 
 describe('Trip Show API', function () {
@@ -1018,13 +1125,13 @@ describe('Cancel Trip API', function () {
         Event::assertDispatched(TripCancelledByCustomerEvent::class, 2);
         Event::assertDispatched(
             TripCancelledByCustomerEvent::class,
-            fn($event) => $event->riderId === $rider1->id
+            fn ($event) => $event->riderId === $rider1->id
                 && $event->tripId === $trip->id
                 && $event->tripRequestId === $pendingRequest->id
         );
         Event::assertDispatched(
             TripCancelledByCustomerEvent::class,
-            fn($event) => $event->riderId === $rider2->id
+            fn ($event) => $event->riderId === $rider2->id
                 && $event->tripId === $trip->id
                 && $event->tripRequestId === $acceptedRequest->id
         );
@@ -1210,7 +1317,7 @@ describe('Confirm Trip API', function () {
         // Verify event was dispatched for rider1
         Event::assertDispatched(
             NewTripRequestEvent::class,
-            fn($event) => $event->riderId === $rider1->id
+            fn ($event) => $event->riderId === $rider1->id
                 && isset($event->tripData['trip_request'])
                 && isset($event->tripData['map_locations'])
                 && isset($event->tripData['formatted_locations'])
@@ -1220,7 +1327,7 @@ describe('Confirm Trip API', function () {
         // Verify event was dispatched for rider2
         Event::assertDispatched(
             NewTripRequestEvent::class,
-            fn($event) => $event->riderId === $rider2->id
+            fn ($event) => $event->riderId === $rider2->id
                 && isset($event->tripData['trip_request'])
                 && isset($event->tripData['map_locations'])
                 && isset($event->tripData['formatted_locations'])
@@ -1230,7 +1337,7 @@ describe('Confirm Trip API', function () {
         // Verify event was NOT dispatched for offline rider
         Event::assertNotDispatched(
             NewTripRequestEvent::class,
-            fn($event) => $event->riderId === $rider3->id
+            fn ($event) => $event->riderId === $rider3->id
         );
     });
 
@@ -1312,7 +1419,7 @@ describe('Confirm Trip API', function () {
         // Verify event was dispatched with correct data
         Event::assertDispatched(
             NewTripRequestEvent::class,
-            fn($event) => $event->riderId === $rider->id
+            fn ($event) => $event->riderId === $rider->id
                 && $event->tripData['trip_request']['trip_request_id'] === $tripRequest->id
         );
     });
@@ -1524,6 +1631,44 @@ describe('Confirm Trip API', function () {
             ->assertJson([
                 'meta' => [
                     'message' => trans('trips.not_your_trip'),
+                ],
+            ]);
+    });
+
+    it('cannot confirm scheduled trip', function () {
+        // Create a scheduled trip
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'ride_type' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+            'scheduled_time' => now()->addHours(2),
+        ]);
+
+        // Add origin location
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Origin Location',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'type' => TripLocationTypeEnum::ORIGIN->value,
+            'sequence' => 1,
+        ]);
+
+        // Try to confirm the scheduled trip - should fail
+        $response = postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+        ]);
+
+        $response->assertStatus(406)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('trips.api.exceptions.scheduled_trip_cannot_be_confirmed'),
                 ],
             ]);
     });

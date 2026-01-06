@@ -91,6 +91,18 @@ class TripStoreRequest extends FormRequest
             'accessibility_requirements' => ['nullable', 'array'],
             'accessibility_requirements.*' => ['integer', Rule::enum(AccessibilityRequirementsEnum::class)],
             'passenger_count' => ['required', 'integer', 'min:1', 'max:6'],
+
+            /**
+             * Scheduled date time (Unix timestamp). Required when trip_type_id is SCHEDULED (2)
+             *
+             * @example 1735689600
+             */
+            'schedule_date_time' => [
+                'nullable',
+                'integer',
+                'min:0',
+                Rule::requiredIf(fn () => (int) $this->input('trip_type_id') === TripTypeEnum::SCHEDULED->value),
+            ],
         ];
     }
 
@@ -143,6 +155,11 @@ class TripStoreRequest extends FormRequest
             'passenger_count.integer' => trans('validations.trips.passenger_count.integer'),
             'passenger_count.min' => trans('validations.trips.passenger_count.min'),
             'passenger_count.max' => trans('validations.trips.passenger_count.max'),
+
+            // Schedule date time
+            'schedule_date_time.required' => trans('validations.trips.schedule_date_time.required'),
+            'schedule_date_time.integer' => trans('validations.trips.schedule_date_time.integer'),
+            'schedule_date_time.min' => trans('validations.trips.schedule_date_time.min'),
         ];
     }
 }

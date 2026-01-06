@@ -6,6 +6,7 @@ namespace App\DTOs\Api\V1\Customer\Trip;
 
 use App\Enums\Trip\AccessibilityRequirementsEnum;
 use App\Interfaces\DTOs\RequestDataTransferObject;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 /**
@@ -41,6 +42,8 @@ class TripStoreDTO implements RequestDataTransferObject
 
     public int $passengerCount;
 
+    public ?Carbon $scheduledDateTime;
+
     /**
      * Populate DTO from request data
      */
@@ -72,5 +75,9 @@ class TripStoreDTO implements RequestDataTransferObject
         );
 
         $this->passengerCount = (int) $request->post('passenger_count');
+
+        // Schedule date time (for scheduled trips)
+        $scheduleDateTime = $request->post('schedule_date_time');
+        $this->scheduledDateTime = is_null($scheduleDateTime) ? null : Carbon::createFromTimestamp((int) $scheduleDateTime);
     }
 }

@@ -77,6 +77,11 @@ return [
             'min' => 'At least :min passenger is required.',
             'max' => 'Maximum :max passengers allowed.',
         ],
+        'schedule_date_time' => [
+            'required' => 'Schedule date time is required for scheduled trips.',
+            'integer' => 'Schedule date time must be a valid timestamp.',
+            'min' => 'Schedule date time must be a valid timestamp.',
+        ],
         'ride_type_id' => [
             'required' => 'Ride type is required.',
             'integer' => 'Ride type must be an integer.',

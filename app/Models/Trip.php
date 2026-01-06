@@ -138,6 +138,14 @@ class Trip extends Model
     }
 
     /**
+     * Check if trip is scheduled type
+     */
+    public function isScheduledTripType(): bool
+    {
+        return $this->{self::COLUMN_TRIP_TYPE_ID} === TripTypeEnum::SCHEDULED;
+    }
+
+    /**
      * Check if trip is pending rider acceptance
      */
     public function isPendingRider(): bool

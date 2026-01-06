@@ -36,6 +36,7 @@ class TripRepository implements TripRepositoryInterface
             Trip::COLUMN_TOTAL_PRICE => $totalPrice,
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD,
             Trip::COLUMN_STATUS => TripStatusEnum::DRAFT,
+            Trip::COLUMN_SCHEDULED_TIME => $dto->scheduledDateTime,
         ]);
 
         $locations = [

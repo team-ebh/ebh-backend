@@ -7,6 +7,7 @@ namespace App\Pipelines\Api\V1\Customer\Trip\ConfirmTrip;
 use App\Exceptions\Customer\TripNotBelongToCustomerException;
 use App\Exceptions\Trip\CustomerHasUnpaidTripException;
 use App\Exceptions\Trip\RideTypeMismatchException;
+use App\Exceptions\Trip\ScheduledTripCannotBeConfirmedException;
 use App\Exceptions\Trip\TripNotPendingException;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Models\Trip;
@@ -27,6 +28,7 @@ readonly class ValidateTripPipe
      * @throws TripNotBelongToCustomerException
      * @throws TripNotPendingException
      * @throws RideTypeMismatchException
+     * @throws ScheduledTripCannotBeConfirmedException
      * @throws CustomerHasUnpaidTripException|\Throwable
      */
     public function handle(ConfirmTripContext $context, Closure $next): mixed
@@ -41,6 +43,12 @@ readonly class ValidateTripPipe
         throw_if(
             ! $context->dto->trip->isDraft(),
             TripNotPendingException::class
+        );
+
+        // Validate scheduled trips cannot be confirmed via this API
+        throw_if(
+            $context->dto->trip->isScheduledTripType(),
+            ScheduledTripCannotBeConfirmedException::class
         );
 
         // Validate ride type matches trip's ride type
