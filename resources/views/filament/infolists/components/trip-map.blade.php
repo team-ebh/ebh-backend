@@ -64,6 +64,7 @@
                         <span class="mx-2">•</span>
                         <span class="text-base">📍</span>
                         <span class="font-semibold">{{ $location->location_title }}</span>
+                        <span class="text-gray-400 text-xs ml-2">({{ $location->latitude }}, {{ $location->longitude }})</span>
                         @if($location->location_sub_title)
                             <span class="mx-2">•</span>
                             <span class="text-base">📝</span>
@@ -73,6 +74,7 @@
                 @endforeach
             </div>
         </div>
+
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
         <style>.leaflet-pane svg{z-index:auto!important}.leaflet-overlay-pane{z-index:400!important}</style>
         <div id="{{ $mapId }}" style="width:100%;height:500px;background:#e5e7eb;border-radius:8px;position:relative;z-index:0;"></div>
@@ -81,70 +83,130 @@
         (function(){
             const C = {
                 id: '{{ $mapId }}',
-                loc:@json($locations),
-                rider:@json($riderLocation),
+                loc: @json($locations),
+                rider: @json($riderLocation),
                 oType: {{ TripLocationTypeEnum::ORIGIN->value }},
-                cLat: {{ $firstLocation?(float)$firstLocation->latitude:0 }},
-                cLng: {{ $firstLocation?(float)$firstLocation->longitude:0 }}
+                cLat: {{ $firstLocation ? (float)$firstLocation->latitude : 0 }},
+                cLng: {{ $firstLocation ? (float)$firstLocation->longitude : 0 }}
             };
-            if(window['_m_'+C.id])return;window['_m_'+C.id]=1;
+
+            console.log('[TripMap] Config:', C);
+            console.log('[TripMap] Locations count:', C.loc ? C.loc.length : 0);
+            console.log('[TripMap] Locations:', C.loc);
+            console.log('[TripMap] Rider:', C.rider);
+
+            if(window['_m_'+C.id]) {
+                console.log('[TripMap] Already initialized, skipping');
+                return;
+            }
+            window['_m_'+C.id] = 1;
+
             function go(){
                 const el = document.getElementById(C.id);
-                if(!el||typeof L==='undefined'){setTimeout(go,100);return;}
-                if(el._leaflet_id)return;
+                if(!el || typeof L === 'undefined'){
+                    console.log('[TripMap] Waiting for element or Leaflet...');
+                    setTimeout(go, 100);
+                    return;
+                }
+                if(el._leaflet_id) {
+                    console.log('[TripMap] Map already exists on element');
+                    return;
+                }
+
+                console.log('[TripMap] Creating map...');
                 const m = L.map(C.id).setView([C.cLat, C.cLng], 13);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);
-                const b = [];
-                C.loc.forEach(function(l){
-                    var c=l.type===C.oType?'#10B981':'#3B82F6';
-                    L.circleMarker([l.lat,l.lng],{radius:14,fillColor:c,color:'#fff',weight:3,fillOpacity:0.9}).addTo(m).bindPopup('<b>'+l.label+'</b><br>'+l.title);
-                    b.push([l.lat,l.lng]);
-                });
-                if(C.rider){
-                    L.circleMarker([C.rider.lat,C.rider.lng],{radius:16,fillColor:'#EF4444',color:'#fff',weight:3,fillOpacity:0.9}).addTo(m).bindPopup('<b>Rider:</b> '+C.rider.name);
-                    b.push([C.rider.lat,C.rider.lng]);
-                }
-                if(b.length>1)m.fitBounds(b,{padding:[40,40]});
 
-                // Draw route
-                const sorted = C.loc.slice().sort(function (a, b) {
-                    return a.sequence - b.sequence;
+                // Sort locations by sequence
+                const sorted = C.loc.slice().sort((a, b) => a.sequence - b.sequence);
+                console.log('[TripMap] Sorted locations:', sorted);
+
+                // Add markers for all locations
+                const bounds = [];
+                sorted.forEach(function(l, index){
+                    console.log('[TripMap] Adding marker ' + (index+1) + '/' + sorted.length + ':', l);
+                    const color = l.type === C.oType ? '#10B981' : '#3B82F6';
+                    L.circleMarker([l.lat, l.lng], {
+                        radius: 14,
+                        fillColor: color,
+                        color: '#fff',
+                        weight: 3,
+                        fillOpacity: 0.9
+                    }).addTo(m).bindPopup('<b>' + l.label + '</b><br>' + l.title);
+                    bounds.push([l.lat, l.lng]);
                 });
-                const rp = [];
+                console.log('[TripMap] Total markers added:', bounds.length);
+
+                // Add rider marker if exists
                 if(C.rider){
-                    // Active trip: rider -> incomplete locations
-                    rp.push(C.rider.lng+','+C.rider.lat);
-                    sorted.filter(function(l){return !l.isFinished;}).forEach(function(l){
-                        rp.push(l.lng+','+l.lat);
-                    });
-                }else{
-                    // Finished trip: all locations
-                    sorted.forEach(function(l){rp.push(l.lng+','+l.lat);});
+                    console.log('[TripMap] Adding rider marker:', C.rider);
+                    L.circleMarker([C.rider.lat, C.rider.lng], {
+                        radius: 16,
+                        fillColor: '#EF4444',
+                        color: '#fff',
+                        weight: 3,
+                        fillOpacity: 0.9
+                    }).addTo(m).bindPopup('<b>Rider:</b> ' + C.rider.name);
+                    bounds.push([C.rider.lat, C.rider.lng]);
                 }
-                if(rp.length>=2){
-                    fetch('https://router.project-osrm.org/route/v1/driving/'+rp.join(';')+'?overview=full&geometries=geojson')
-                        .then(function(r){return r.json();})
-                        .then(function(d){
-                            if(d.code==='Ok'&&d.routes&&d.routes[0]){
-                                var coords=d.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];});
-                                L.polyline(coords,{color:'#3B82F6',weight:5,opacity:0.7}).addTo(m);
-                            }else{
-                                drawFallback();
+
+                // Fit bounds
+                if(bounds.length > 1) {
+                    console.log('[TripMap] Fitting bounds for', bounds.length, 'points');
+                    m.fitBounds(bounds, {padding: [40, 40]});
+                }
+
+                // Draw route line
+                drawRoute(m, sorted);
+            }
+
+            function drawRoute(m, sorted){
+                console.log('[TripMap] Drawing route...');
+
+                const routePoints = [];
+
+                // Get incomplete locations
+                const incomplete = sorted.filter(l => !l.isFinished);
+                console.log('[TripMap] Incomplete locations:', incomplete.length);
+
+                if(C.rider && incomplete.length > 0){
+                    // Active trip: rider → incomplete locations
+                    routePoints.push([C.rider.lat, C.rider.lng]);
+                    incomplete.forEach(l => routePoints.push([l.lat, l.lng]));
+                    console.log('[TripMap] Route: rider → incomplete locations');
+                } else {
+                    // Completed trip or no rider: show full route through all locations
+                    sorted.forEach(l => routePoints.push([l.lat, l.lng]));
+                    console.log('[TripMap] Route: all locations (completed/no rider)');
+                }
+
+                console.log('[TripMap] Route points:', routePoints);
+
+                // Get real road route from OSRM
+                if(routePoints.length >= 2){
+                    const osrmPoints = routePoints.map(p => p[1] + ',' + p[0]).join(';');
+                    console.log('[TripMap] Fetching OSRM route...');
+                    fetch('https://router.project-osrm.org/route/v1/driving/' + osrmPoints + '?overview=full&geometries=geojson')
+                        .then(r => r.json())
+                        .then(data => {
+                            console.log('[TripMap] OSRM response:', data);
+                            if(data.code === 'Ok' && data.routes && data.routes[0]){
+                                const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                                L.polyline(coords, {
+                                    color: '#2563EB',
+                                    weight: 5,
+                                    opacity: 0.8
+                                }).addTo(m);
+                                console.log('[TripMap] OSRM route added');
                             }
-                        }).catch(function(){drawFallback();});
-                }
-                function drawFallback(){
-                    const pts = [];
-                    if(C.rider){
-                        pts.push([C.rider.lat,C.rider.lng]);
-                        sorted.filter(function(l){return !l.isFinished;}).forEach(function(l){pts.push([l.lat,l.lng]);});
-                    }else{
-                        sorted.forEach(function(l){pts.push([l.lat,l.lng]);});
-                    }
-                    if(pts.length>=2)L.polyline(pts,{color:'#3B82F6',weight:4,opacity:0.6,dashArray:'8,8'}).addTo(m);
+                        })
+                        .catch(err => {
+                            console.log('[TripMap] OSRM error:', err);
+                        });
                 }
             }
-            setTimeout(go,300);
+
+            setTimeout(go, 300);
         })();
         </script>
     @endif
