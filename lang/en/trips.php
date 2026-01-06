@@ -37,6 +37,7 @@ return [
             'paid' => 'Paid',
             'unpaid' => 'Unpaid',
             'passengers' => 'Passengers',
+            'waiting_time' => 'Waiting Time',
             'created' => 'Created',
             'updated' => 'Updated',
             'created_at' => 'Created At',

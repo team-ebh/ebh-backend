@@ -37,6 +37,7 @@ return [
             'paid' => 'مدفوع',
             'unpaid' => 'غير مدفوع',
             'passengers' => 'الركاب',
+            'waiting_time' => 'وقت الانتظار',
             'created' => 'تاريخ الإنشاء',
             'updated' => 'تاريخ التحديث',
             'created_at' => 'أنشئت في',

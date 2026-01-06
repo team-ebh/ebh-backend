@@ -17,19 +17,14 @@ class RelatedTripSection
 {
     public static function make(Trip $trip): ?Section
     {
-        // Only show for round trips (both round trip and round trip with wait)
-        if (! self::isRoundTrip($trip)) {
-            return null;
-        }
-
-        // Check if this is a demand trip with a scheduled return trip
-        if (self::hasScheduledReturnTrip($trip)) {
-            return self::makeScheduledReturnTripSection($trip);
-        }
-
-        // Check if this is a scheduled return trip with a demand trip
+        // Check if this is a scheduled return trip with a demand trip (show regardless of ride_type)
         if (self::hasDemandTrip($trip)) {
             return self::makeDemandTripSection($trip);
+        }
+
+        // Check if this is a demand trip with a scheduled return trip (only for round trips)
+        if (self::isRoundTrip($trip) && self::hasScheduledReturnTrip($trip)) {
+            return self::makeScheduledReturnTripSection($trip);
         }
 
         return null;
