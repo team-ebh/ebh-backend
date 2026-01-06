@@ -11,7 +11,6 @@ use App\Models\Company;
 use App\Models\Setting;
 use App\Models\Trip;
 use App\Services\Trip\TripActionService;
-use App\Services\TripPricingService;
 use Closure;
 
 readonly class FinalizeAndCalculatePipe
@@ -19,7 +18,6 @@ readonly class FinalizeAndCalculatePipe
     public function __construct(
         private RiderTripRepositoryInterface $riderTripRepository,
         private TripActionService $tripActionService,
-        private TripPricingService $tripPricingService,
     ) {}
 
     /**
@@ -33,9 +31,9 @@ readonly class FinalizeAndCalculatePipe
         $allLocationsFinished = $trip->loadMissing('locations')->locations->every(fn ($location) => $location->isFinished());
 
         if ($allLocationsFinished) {
-            // Calculate and update waiting time for ROUND_TRIP_WAIT
+            // Calculate and update waiting time for ROUND_TRIP_WAIT (fallback if not calculated during pickup)
             if ($trip->isRoundTripWithWait()) {
-                $this->calculateAndUpdateWaitingTime($trip);
+                $this->riderTripRepository->calculateAndUpdateWaitingTime($trip);
             }
 
             // Calculate and update commission
@@ -105,35 +103,5 @@ readonly class FinalizeAndCalculatePipe
         }
 
         return Setting::getDefaultCommissionRate();
-    }
-
-    /**
-     * Calculate and update waiting time for ROUND_TRIP_WAIT trips
-     */
-    private function calculateAndUpdateWaitingTime(Trip $trip): void
-    {
-        // Load locations with status logs
-        $trip->loadMissing(['locations.statusLogs']);
-
-        // Calculate actual waiting time from status logs
-        $waitingTimeMinutes = $this->tripPricingService->calculateActualWaitingTime($trip->locations);
-
-        if ($waitingTimeMinutes === null || $waitingTimeMinutes <= 0) {
-            return;
-        }
-
-        // Calculate waiting charge
-        $waitingCharge = $this->tripPricingService->calculateWaitingCharge($waitingTimeMinutes);
-
-        if ($waitingCharge === null || $waitingCharge <= 0) {
-            return;
-        }
-
-        // Update trip with waiting time and price
-        $this->riderTripRepository->updateTripWaitingTimeAndPrice(
-            $trip,
-            $waitingTimeMinutes,
-            $waitingCharge
-        );
     }
 }

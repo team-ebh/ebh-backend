@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Rider\Trip;
 
 use App\DTOs\Api\V1\Rider\Trip\PickUpTripDTO;
+use App\Pipelines\Rider\Trip\PickUpTrip\CalculateWaitingTimePipe;
 use App\Pipelines\Rider\Trip\PickUpTrip\ExecuteAndBroadcastPipe;
 use App\Pipelines\Rider\Trip\PickUpTrip\ValidateAndLoadPipe;
 use Illuminate\Pipeline\Pipeline;
@@ -45,6 +46,7 @@ readonly class PickUpTripAction
             ->through([
                 ValidateAndLoadPipe::class,
                 ExecuteAndBroadcastPipe::class,
+                CalculateWaitingTimePipe::class, // Calculate waiting time for ROUND_TRIP_WAIT second pickup
             ])
             ->thenReturn();
 

@@ -14,12 +14,14 @@ use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Models\TripRequest;
+use App\Services\TripPricingService;
 use Illuminate\Database\Eloquent\Collection;
 
 readonly class RiderTripRepository implements RiderTripRepositoryInterface
 {
     public function __construct(
-        private TripRequestRepositoryInterface $tripRequestRepository
+        private TripRequestRepositoryInterface $tripRequestRepository,
+        private TripPricingService $tripPricingService,
     ) {}
 
     /**
@@ -184,6 +186,40 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
             Trip::COLUMN_WAITING_PRICE => $waitingPrice,
             Trip::COLUMN_TOTAL_PRICE => $currentTotalPrice + $waitingPrice,
         ]);
+    }
+
+    /**
+     * Calculate and update waiting time for ROUND_TRIP_WAIT trips
+     * Returns true if waiting time was calculated and updated, false otherwise
+     */
+    public function calculateAndUpdateWaitingTime(Trip $trip): bool
+    {
+        // Skip if waiting time is already calculated
+        if ($trip->{Trip::COLUMN_WAITING_TIME} !== null && $trip->{Trip::COLUMN_WAITING_TIME} > 0) {
+            return false;
+        }
+
+        // Load locations with status logs
+        $trip->loadMissing(['locations.statusLogs']);
+
+        // Calculate actual waiting time from status logs
+        $waitingTimeMinutes = $this->tripPricingService->calculateActualWaitingTime($trip->locations);
+
+        if ($waitingTimeMinutes === null || $waitingTimeMinutes <= 0) {
+            return false;
+        }
+
+        // Calculate waiting charge
+        $waitingCharge = $this->tripPricingService->calculateWaitingCharge($waitingTimeMinutes);
+
+        if ($waitingCharge === null || $waitingCharge <= 0) {
+            return false;
+        }
+
+        // Update trip with waiting time and price
+        $this->updateTripWaitingTimeAndPrice($trip, $waitingTimeMinutes, $waitingCharge);
+
+        return true;
     }
 
     /**
