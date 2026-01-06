@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Vehicles\Schemas;
 
 use App\Enums\Trip\AccessibilityRequirementsEnum;
+use App\Enums\Trip\TripVehicleTypeEnum;
 use App\Models\Rider;
 use App\Models\Vehicle;
 use App\Models\VehicleSetting;
@@ -99,13 +100,9 @@ class VehicleForm
 
                         Select::make(Vehicle::COLUMN_VEHICLE_TYPE_ID)
                             ->label(trans('vehicles.admin.fields.vehicle_type'))
-                            ->options(function () {
-                                return VehicleSetting::getByType(VehicleSetting::TYPE_VEHICLE_TYPES)
-                                    ->pluck(VehicleSetting::COLUMN_NAME, 'id')
-                                    ->toArray();
-                            })
+                            ->options(TripVehicleTypeEnum::class)
                             ->searchable()
-                            ->nullable(),
+                            ->required(),
                     ])
                     ->columns(2),
 

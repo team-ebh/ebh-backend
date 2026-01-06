@@ -20,7 +20,6 @@ use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Models\TripRequest;
 use App\Models\Vehicle;
-use App\Models\VehicleSetting;
 use App\Services\GeocodingService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -1230,15 +1229,6 @@ describe('Confirm Trip API', function () {
             NewTripRequestEvent::class,
         ]);
 
-        // Create vehicle setting that matches the enum value
-        $vehicleSetting = VehicleSetting::create([
-            VehicleSetting::COLUMN_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
-            VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
-            VehicleSetting::COLUMN_NAME => 'Wheelchair Accessible',
-            VehicleSetting::COLUMN_NAME_AR => 'نقل كراسي متحركة',
-            VehicleSetting::COLUMN_ORDER => 1,
-        ]);
-
         // Create exactly 2 online riders and 1 offline rider
         $rider1 = Rider::factory()->create([
             'status' => RiderStatusEnum::ONLINE,
@@ -1347,14 +1337,6 @@ describe('Confirm Trip API', function () {
             NewTripRequestEvent::class,
         ]);
 
-        // Create vehicle setting for the trip vehicle type
-        $vehicleSetting = VehicleSetting::create([
-            VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
-            VehicleSetting::COLUMN_NAME => 'Wheelchair Accessible',
-            VehicleSetting::COLUMN_NAME_AR => 'نقل كراسي متحركة',
-            VehicleSetting::COLUMN_ORDER => 1,
-        ]);
-
         // Create a rider
         $rider = Rider::factory()->create([
             'status' => RiderStatusEnum::ONLINE,
@@ -1363,7 +1345,7 @@ describe('Confirm Trip API', function () {
         // Create vehicle for rider
         Vehicle::create([
             Vehicle::COLUMN_RIDER_ID => $rider->id,
-            Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
+            Vehicle::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             Vehicle::COLUMN_PLATE_NUMBER => 'GHI789',
             Vehicle::COLUMN_YEAR => 2023,
         ]);

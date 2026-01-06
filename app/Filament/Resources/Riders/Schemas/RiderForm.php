@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Riders\Schemas;
 use App\Enums\Document\FileFormatEnum;
 use App\Enums\Rider\AccessibilityCertificationEnum;
 use App\Enums\Trip\AccessibilityRequirementsEnum;
+use App\Enums\Trip\TripVehicleTypeEnum;
 use App\Models\Company;
 use App\Models\Document;
 use App\Models\Rider;
@@ -274,40 +275,9 @@ class RiderForm
 
                         Select::make(Vehicle::COLUMN_VEHICLE_TYPE_ID)
                             ->label(trans('vehicles.admin.fields.vehicle_type'))
-                            ->options(fn () => VehicleSetting::getOptionsForSelect(VehicleSetting::TYPE_VEHICLE_TYPES))
+                            ->options(TripVehicleTypeEnum::class)
                             ->required()
                             ->searchable()
-                            ->createOptionForm([
-                                TextInput::make('name')
-                                    ->label(trans('vehicle_settings.admin.fields.name'))
-                                    ->required()
-                                    ->maxLength(255),
-                                TextInput::make('name_ar')
-                                    ->label(trans('vehicle_settings.admin.fields.name_ar'))
-                                    ->required()
-                                    ->maxLength(255),
-                            ])
-                            ->createOptionUsing(fn (array $data): string => VehicleSetting::addItem(
-                                VehicleSetting::TYPE_VEHICLE_TYPES,
-                                $data['name'],
-                                $data['name_ar']
-                            ))
-                            ->editOptionForm([
-                                TextInput::make('name')
-                                    ->label(trans('vehicle_settings.admin.fields.name'))
-                                    ->required()
-                                    ->maxLength(255),
-                                TextInput::make('name_ar')
-                                    ->label(trans('vehicle_settings.admin.fields.name_ar'))
-                                    ->required()
-                                    ->maxLength(255),
-                            ])
-                            ->fillEditOptionActionFormUsing(fn ($state): array => VehicleSetting::findItemById($state) ?? ['name' => '', 'name_ar' => ''])
-                            ->updateOptionUsing(fn (array $data, $state): int => VehicleSetting::updateItemById(
-                                $state,
-                                $data['name'],
-                                $data['name_ar']
-                            ))
                             ->columnSpan(1),
 
                         Select::make(Vehicle::COLUMN_CAR_COLOR_ID)

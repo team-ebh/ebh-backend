@@ -42,19 +42,12 @@ test('customer can get active trip when one exists', function () {
         VehicleSetting::COLUMN_ORDER => 1,
     ]);
 
-    $vehicleType = VehicleSetting::create([
-        VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
-        VehicleSetting::COLUMN_NAME => 'Sedan',
-        VehicleSetting::COLUMN_NAME_AR => 'سيدان',
-        VehicleSetting::COLUMN_ORDER => 1,
-    ]);
-
     // Create vehicle for rider
     Vehicle::create([
         Vehicle::COLUMN_RIDER_ID => $rider->{Rider::COLUMN_ID},
         Vehicle::COLUMN_CAR_MAKE_ID => $carMake->{VehicleSetting::COLUMN_ID},
         Vehicle::COLUMN_CAR_MODEL_ID => $carModel->{VehicleSetting::COLUMN_ID},
-        Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleType->{VehicleSetting::COLUMN_ID},
+        Vehicle::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
         Vehicle::COLUMN_PLATE_NUMBER => 'ABC123',
         Vehicle::COLUMN_YEAR => 2023,
     ]);
@@ -200,19 +193,12 @@ test('customer can get active trip with IN_PROGRESS status', function () {
         VehicleSetting::COLUMN_ORDER => 1,
     ]);
 
-    $vehicleType = VehicleSetting::create([
-        VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
-        VehicleSetting::COLUMN_NAME => 'Sedan',
-        VehicleSetting::COLUMN_NAME_AR => 'سيدان',
-        VehicleSetting::COLUMN_ORDER => 1,
-    ]);
-
     // Create vehicle for rider
     Vehicle::create([
         Vehicle::COLUMN_RIDER_ID => $rider->{Rider::COLUMN_ID},
         Vehicle::COLUMN_CAR_MAKE_ID => $carMake->{VehicleSetting::COLUMN_ID},
         Vehicle::COLUMN_CAR_MODEL_ID => $carModel->{VehicleSetting::COLUMN_ID},
-        Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleType->{VehicleSetting::COLUMN_ID},
+        Vehicle::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
         Vehicle::COLUMN_PLATE_NUMBER => 'XYZ789',
         Vehicle::COLUMN_YEAR => 2022,
     ]);
@@ -301,19 +287,12 @@ test('active trip API does not have N+1 query problem', function () {
         VehicleSetting::COLUMN_ORDER => 1,
     ]);
 
-    $vehicleType = VehicleSetting::create([
-        VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
-        VehicleSetting::COLUMN_NAME => 'Sedan',
-        VehicleSetting::COLUMN_NAME_AR => 'سيدان',
-        VehicleSetting::COLUMN_ORDER => 1,
-    ]);
-
     // Create vehicle for rider
     Vehicle::create([
         Vehicle::COLUMN_RIDER_ID => $rider->{Rider::COLUMN_ID},
         Vehicle::COLUMN_CAR_MAKE_ID => $carMake->{VehicleSetting::COLUMN_ID},
         Vehicle::COLUMN_CAR_MODEL_ID => $carModel->{VehicleSetting::COLUMN_ID},
-        Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleType->{VehicleSetting::COLUMN_ID},
+        Vehicle::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
         Vehicle::COLUMN_PLATE_NUMBER => 'DEF456',
         Vehicle::COLUMN_YEAR => 2021,
     ]);

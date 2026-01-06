@@ -38,7 +38,6 @@ class VehicleSettings extends Page implements HasForms
             'passenger_capacity' => $this->getItemsForType(VehicleSetting::TYPE_PASSENGER_CAPACITY),
             'car_makes' => $this->getItemsForType(VehicleSetting::TYPE_CAR_MAKES),
             'car_models' => $this->getItemsForType(VehicleSetting::TYPE_CAR_MODELS),
-            'vehicle_types' => $this->getItemsForType(VehicleSetting::TYPE_VEHICLE_TYPES),
         ]);
     }
 
@@ -207,36 +206,6 @@ class VehicleSettings extends Page implements HasForms
                             ->itemLabel(fn (array $state): ?string => $state['name'] ?? null),
                     ])
                     ->columnSpanFull(),
-
-                SchemaSection::make(trans('vehicle_settings.admin.sections.vehicle_types.title'))
-                    ->description(trans('vehicle_settings.admin.sections.vehicle_types.description'))
-                    ->icon('heroicon-o-squares-2x2')
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        Repeater::make('vehicle_types')
-                            ->label('')
-                            ->schema([
-                                Hidden::make('id'),
-                                TextInput::make('name')
-                                    ->label(trans('vehicle_settings.admin.fields.name'))
-                                    ->required()
-                                    ->maxLength(255),
-                                TextInput::make('name_ar')
-                                    ->label(trans('vehicle_settings.admin.fields.name_ar'))
-                                    ->required()
-                                    ->maxLength(255),
-                            ])
-                            ->columns(2)
-                            ->grid(2)
-                            ->defaultItems(0)
-                            ->addActionLabel(trans('vehicle_settings.admin.actions.add_vehicle_type'))
-                            ->reorderable()
-                            ->collapsible()
-                            ->collapsed()
-                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? null),
-                    ])
-                    ->columnSpanFull(),
             ])
             ->columns(1)
             ->statePath('data');
@@ -262,7 +231,6 @@ class VehicleSettings extends Page implements HasForms
             VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_PASSENGER_CAPACITY, $data['passenger_capacity'] ?? []);
             VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_MAKES, $data['car_makes'] ?? []);
             VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_CAR_MODELS, $data['car_models'] ?? []);
-            VehicleSetting::updateOrCreateItems(VehicleSetting::TYPE_VEHICLE_TYPES, $data['vehicle_types'] ?? []);
 
             Notification::make()
                 ->success()

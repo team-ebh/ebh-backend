@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Riders\Infolists;
 
 use App\Enums\Rider\AccessibilityCertificationEnum;
 use App\Enums\Trip\AccessibilityRequirementsEnum;
+use App\Enums\Trip\TripVehicleTypeEnum;
 use App\Models\Company;
 use App\Models\Document;
 use App\Models\Rider;
@@ -106,9 +107,10 @@ class RiderInfolist
                             ->badge()
                             ->placeholder('-'),
 
-                        TextEntry::make('vehicle.vehicleType.' . VehicleSetting::COLUMN_NAME)
+                        TextEntry::make('vehicle.' . Vehicle::COLUMN_VEHICLE_TYPE_ID)
                             ->label(trans('vehicles.admin.fields.vehicle_type'))
                             ->icon('heroicon-o-squares-2x2')
+                            ->formatStateUsing(fn ($state) => $state ? TripVehicleTypeEnum::tryFrom($state)?->getLabel() : null)
                             ->placeholder('-'),
 
                         TextEntry::make('vehicle.passengerCapacity.' . VehicleSetting::COLUMN_CAPACITY)
