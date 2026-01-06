@@ -1,241 +1,151 @@
 @php
-    use App\Enums\Trip\TripLocationTypeEnum;use App\Enums\Trip\TripStatusEnum;
-    use App\Enums\Trip\TripLocationStatusEnum;
+    use App\Enums\Trip\TripLocationTypeEnum;
+    use App\Enums\Trip\TripStatusEnum;
 
     $trip = $getState()['trip'] ?? null;
-    if (!$trip) {
-        return;
-    }
-
-    $trip->load([
-        'locations:id,trip_id,latitude,longitude,type,location_title,location_sub_title,sequence,status',
-        'rider:id,full_name,phone_number,email,latitude,longitude,last_location_update'
-    ]);
-
-    if ($trip->locations->isEmpty()) {
-        echo '<div class="p-6 text-center text-gray-500">No locations available</div>';
-        return;
-    }
-
-    $locations = $trip->locations->map(function ($location) {
-        return [
-            'lat' => (float) $location->latitude,
-            'lng' => (float) $location->longitude,
-            'type' => $location->type->value,
-            'label' => $location->type->getLabel(),
-            'title' => $location->location_title,
-            'sequence' => $location->sequence,
-            'isFinished' => $location->isFinished(),
-        ];
-    })->toArray();
-
-    // Only show rider location for active trips (not completed/canceled)
+    $hasData = false;
+    $locations = [];
     $riderLocation = null;
-    $isFinishedTrip = in_array($trip->status, [
-        TripStatusEnum::COMPLETED,
-        TripStatusEnum::CANCELED_BY_CUSTOMER,
-        TripStatusEnum::CANCELLED_BY_RIDER,
-    ], true);
+    $firstLocation = null;
+    $mapId = 'trip-map-0';
 
-    if (!$isFinishedTrip && $trip->rider && $trip->rider->latitude && $trip->rider->longitude) {
-        $riderLocation = [
-            'lat' => (float) $trip->rider->latitude,
-            'lng' => (float) $trip->rider->longitude,
-            'name' => $trip->rider->full_name,
-        ];
+    if ($trip) {
+        $trip->load([
+            'locations:id,trip_id,latitude,longitude,type,location_title,location_sub_title,sequence,status',
+            'rider:id,full_name,phone_number,email,latitude,longitude,last_location_update'
+        ]);
+
+        if ($trip->locations->isNotEmpty()) {
+            $hasData = true;
+
+            $locations = $trip->locations->map(function ($location) {
+                return [
+                    'lat' => (float) $location->latitude,
+                    'lng' => (float) $location->longitude,
+                    'type' => $location->type->value,
+                    'label' => $location->type->getLabel(),
+                    'title' => $location->location_title,
+                    'sequence' => $location->sequence,
+                    'isFinished' => $location->isFinished(),
+                ];
+            })->toArray();
+
+            $isFinishedTrip = in_array($trip->status, [
+                TripStatusEnum::COMPLETED,
+                TripStatusEnum::CANCELED_BY_CUSTOMER,
+                TripStatusEnum::CANCELLED_BY_RIDER,
+            ], true);
+
+            if (!$isFinishedTrip && $trip->rider && $trip->rider->latitude && $trip->rider->longitude) {
+                $riderLocation = [
+                    'lat' => (float) $trip->rider->latitude,
+                    'lng' => (float) $trip->rider->longitude,
+                    'name' => $trip->rider->full_name,
+                ];
+            }
+
+            $firstLocation = $trip->locations->first();
+            $mapId = 'trip-map-' . $trip->id;
+        }
     }
-
-    $firstLocation = $trip->locations->first();
-    $lat = (float) $firstLocation->latitude;
-    $lng = (float) $firstLocation->longitude;
-    $mapId = 'map-' . uniqid();
 @endphp
 
-<div>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <div id="{{ $mapId }}" style="width: 100%; height: 600px; background: #f0f0f0;"></div>
-
-    {{-- Locations List --}}
-    <div class="mt-6 overflow-x-auto rounded-lg bg-white p-8 dark:bg-gray-800" style="line-height: 1.8;">
-        <h3 class="mb-6 text-base font-semibold text-gray-900 dark:text-white">
-            {{ trans('trips.admin.sections.locations') }}
-        </h3>
-        <div class="space-y-3">
-            @foreach($trip->locations->sortBy('sequence') as $location)
-                <div class="text-sm text-gray-900 dark:text-white">
-                    <span
-                        class="text-base">{{ $location->type->value === TripLocationTypeEnum::ORIGIN->value ? '🟢' : '🔵' }}</span>
-                    <span
-                        class="font-semibold text-gray-700 dark:text-gray-300">{{ $location->type->getLabel() }}</span>
-                    <span class="mx-2">•</span>
-                    <span class="text-base">📍</span>
-                    <span class="font-semibold">{{ $location->location_title }}</span>
-                    @if($location->location_sub_title)
+<div wire:ignore>
+    @if(!$hasData)
+        <div class="p-6 text-center text-gray-500">No locations available</div>
+    @else
+        <div class="mb-6 overflow-x-auto rounded-lg bg-white p-8 dark:bg-gray-800" style="line-height: 1.8;">
+            <h3 class="mb-6 text-base font-semibold text-gray-900 dark:text-white">{{ trans('trips.admin.sections.locations') }}</h3>
+            <div class="space-y-3">
+                @foreach($trip->locations->sortBy('sequence') as $location)
+                    <div class="text-sm text-gray-900 dark:text-white">
+                        <span class="text-base">{{ $location->type->value === TripLocationTypeEnum::ORIGIN->value ? '🟢' : '🔵' }}</span>
+                        <span class="font-semibold text-gray-700 dark:text-gray-300">{{ $location->type->getLabel() }}</span>
                         <span class="mx-2">•</span>
-                        <span class="text-base">📝</span>
-                        <span class="text-gray-600 dark:text-gray-400">{{ $location->location_sub_title }}</span>
-                    @endif
-                </div>
-            @endforeach
+                        <span class="text-base">📍</span>
+                        <span class="font-semibold">{{ $location->location_title }}</span>
+                        @if($location->location_sub_title)
+                            <span class="mx-2">•</span>
+                            <span class="text-base">📝</span>
+                            <span class="text-gray-600 dark:text-gray-400">{{ $location->location_sub_title }}</span>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
         </div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        (function () {
-            setTimeout(function () {
-                var container = document.getElementById('{{ $mapId }}');
-                if (!container || typeof L === 'undefined') {
-                    console.error('Map container or Leaflet not found');
-                    return;
-                }
-
-                var map = L.map('{{ $mapId }}').setView([{{ $lat }}, {{ $lng }}], 13);
-
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap'
-                }).addTo(map);
-
-                var locations = {!! json_encode($locations) !!};
-                var riderLocation = {!! json_encode($riderLocation) !!};
-
-                console.log('Map: ' + locations.length + ' locations' + (riderLocation ? ' + rider' : ''));
-
-                // Add location markers with different colors
-                locations.forEach(function (location) {
-                    var isOrigin = location.type === {{ TripLocationTypeEnum::ORIGIN->value }};
-                    var color = isOrigin ? '#10B981' : '#3B82F6'; // Green for origin, Blue for destination
-
-                    var marker = L.circleMarker([location.lat, location.lng], {
-                        radius: 12,
-                        fillColor: color,
-                        color: '#fff',
-                        weight: 3,
-                        opacity: 1,
-                        fillOpacity: 0.7
-                    }).addTo(map);
-
-                    marker.bindPopup('<b>' + location.label + '</b><br>' + location.title);
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        <style>.leaflet-pane svg{z-index:auto!important}.leaflet-overlay-pane{z-index:400!important}</style>
+        <div id="{{ $mapId }}" style="width:100%;height:500px;background:#e5e7eb;border-radius:8px;position:relative;z-index:0;"></div>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script>
+        (function(){
+            const C = {
+                id: '{{ $mapId }}',
+                loc:@json($locations),
+                rider:@json($riderLocation),
+                oType: {{ TripLocationTypeEnum::ORIGIN->value }},
+                cLat: {{ $firstLocation?(float)$firstLocation->latitude:0 }},
+                cLng: {{ $firstLocation?(float)$firstLocation->longitude:0 }}
+            };
+            if(window['_m_'+C.id])return;window['_m_'+C.id]=1;
+            function go(){
+                const el = document.getElementById(C.id);
+                if(!el||typeof L==='undefined'){setTimeout(go,100);return;}
+                if(el._leaflet_id)return;
+                const m = L.map(C.id).setView([C.cLat, C.cLng], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);
+                const b = [];
+                C.loc.forEach(function(l){
+                    var c=l.type===C.oType?'#10B981':'#3B82F6';
+                    L.circleMarker([l.lat,l.lng],{radius:14,fillColor:c,color:'#fff',weight:3,fillOpacity:0.9}).addTo(m).bindPopup('<b>'+l.label+'</b><br>'+l.title);
+                    b.push([l.lat,l.lng]);
                 });
-
-                // Add rider marker if available (Red)
-                if (riderLocation) {
-                    var riderMarker = L.circleMarker([riderLocation.lat, riderLocation.lng], {
-                        radius: 15,
-                        fillColor: '#EF4444',
-                        color: '#fff',
-                        weight: 3,
-                        opacity: 1,
-                        fillOpacity: 0.9
-                    }).addTo(map);
-
-                    riderMarker.bindPopup('<b>Rider: ' + riderLocation.name + '</b><br>Current Location');
-                    console.log('✓ Rider marker added');
+                if(C.rider){
+                    L.circleMarker([C.rider.lat,C.rider.lng],{radius:16,fillColor:'#EF4444',color:'#fff',weight:3,fillOpacity:0.9}).addTo(m).bindPopup('<b>Rider:</b> '+C.rider.name);
+                    b.push([C.rider.lat,C.rider.lng]);
                 }
+                if(b.length>1)m.fitBounds(b,{padding:[40,40]});
 
-                // Draw route using OSRM routing service
-                var routePoints = [];
-
-                // Sort locations by sequence
-                var sortedLocations = locations.sort(function (a, b) {
+                // Draw route
+                const sorted = C.loc.slice().sort(function (a, b) {
                     return a.sequence - b.sequence;
                 });
-
-                // Build route coordinates
-                if (riderLocation) {
-                    // Active trip: Start from rider location
-                    routePoints.push(riderLocation.lng + ',' + riderLocation.lat);
-
-                    // Find next incomplete location (not finished)
-                    var incompleteLocations = sortedLocations.filter(function (loc) {
-                        return !loc.isFinished;
+                const rp = [];
+                if(C.rider){
+                    // Active trip: rider -> incomplete locations
+                    rp.push(C.rider.lng+','+C.rider.lat);
+                    sorted.filter(function(l){return !l.isFinished;}).forEach(function(l){
+                        rp.push(l.lng+','+l.lat);
                     });
-
-                    // Add only incomplete locations to route
-                    incompleteLocations.forEach(function (loc) {
-                        routePoints.push(loc.lng + ',' + loc.lat);
-                    });
-                } else {
-                    // Finished trip: Show route through all locations
-                    sortedLocations.forEach(function (loc) {
-                        routePoints.push(loc.lng + ',' + loc.lat);
-                    });
+                }else{
+                    // Finished trip: all locations
+                    sorted.forEach(function(l){rp.push(l.lng+','+l.lat);});
                 }
-
-                if (routePoints.length >= 2) {
-                    var coords = routePoints.join(';');
-                    var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + coords + '?overview=full&geometries=geojson';
-
-                    fetch(osrmUrl)
-                        .then(function (response) {
-                            return response.json();
-                        })
-                        .then(function (data) {
-                            if (data.code === 'Ok' && data.routes && data.routes[0]) {
-                                var route = data.routes[0].geometry.coordinates;
-                                var routeLatLngs = route.map(function (coord) {
-                                    return [coord[1], coord[0]];
-                                });
-
-                                L.polyline(routeLatLngs, {
-                                    color: '#3B82F6',
-                                    weight: 4,
-                                    opacity: 0.7
-                                }).addTo(map);
-
-                                console.log('Route added: ' + (riderLocation ? 'rider → incomplete locations' : 'all locations'));
-                            } else {
-                                drawStraightLine();
+                if(rp.length>=2){
+                    fetch('https://router.project-osrm.org/route/v1/driving/'+rp.join(';')+'?overview=full&geometries=geojson')
+                        .then(function(r){return r.json();})
+                        .then(function(d){
+                            if(d.code==='Ok'&&d.routes&&d.routes[0]){
+                                var coords=d.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];});
+                                L.polyline(coords,{color:'#3B82F6',weight:5,opacity:0.7}).addTo(m);
+                            }else{
+                                drawFallback();
                             }
-                        })
-                        .catch(function (error) {
-                            console.error('Route error:', error);
-                            drawStraightLine();
-                        });
+                        }).catch(function(){drawFallback();});
                 }
-
-                function drawStraightLine() {
-                    var linePoints = [];
-
-                    if (riderLocation) {
-                        linePoints.push([riderLocation.lat, riderLocation.lng]);
-
-                        // Add only incomplete locations (not finished)
-                        var incompleteLocations = sortedLocations.filter(function (loc) {
-                            return !loc.isFinished;
-                        });
-                        incompleteLocations.forEach(function (loc) {
-                            linePoints.push([loc.lat, loc.lng]);
-                        });
-                    } else {
-                        // Finished trip: Show all locations
-                        sortedLocations.forEach(function (loc) {
-                            linePoints.push([loc.lat, loc.lng]);
-                        });
+                function drawFallback(){
+                    const pts = [];
+                    if(C.rider){
+                        pts.push([C.rider.lat,C.rider.lng]);
+                        sorted.filter(function(l){return !l.isFinished;}).forEach(function(l){pts.push([l.lat,l.lng]);});
+                    }else{
+                        sorted.forEach(function(l){pts.push([l.lat,l.lng]);});
                     }
-
-                    L.polyline(linePoints, {
-                        color: '#3B82F6',
-                        weight: 4,
-                        opacity: 0.7,
-                        dashArray: '10, 5'
-                    }).addTo(map);
+                    if(pts.length>=2)L.polyline(pts,{color:'#3B82F6',weight:4,opacity:0.6,dashArray:'8,8'}).addTo(m);
                 }
-
-                // Fit bounds to show all markers including rider
-                var allPoints = locations.map(function (loc) {
-                    return [loc.lat, loc.lng];
-                });
-
-                if (riderLocation) {
-                    allPoints.push([riderLocation.lat, riderLocation.lng]);
-                }
-
-                if (allPoints.length > 1) {
-                    var bounds = L.latLngBounds(allPoints);
-                    map.fitBounds(bounds, {padding: [50, 50]});
-                }
-            }, 1000);
+            }
+            setTimeout(go,300);
         })();
-    </script>
+        </script>
+    @endif
 </div>
