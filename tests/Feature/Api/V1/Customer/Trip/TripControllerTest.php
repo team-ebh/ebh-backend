@@ -20,6 +20,7 @@ use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Models\TripRequest;
 use App\Models\Vehicle;
+use App\Models\VehicleSetting;
 use App\Services\GeocodingService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -84,10 +85,30 @@ describe('V1 Customer Trip API', function () {
         $accessibilityIds = collect($accessibilityRequirements)->pluck('id')->toArray();
         expect($accessibilityIds)->toContain(AccessibilityRequirementsEnum::WHEELCHAIR_ACCESSIBLE->value)
             ->and($accessibilityIds)->toContain(AccessibilityRequirementsEnum::OXYGEN_SUPPORT->value)
-            ->and($accessibilityIds)->toContain(AccessibilityRequirementsEnum::PORTABLE_RAMP->value)
-            ->and($response->json('data.maximum_passengers'))->toBe(6);
+            ->and($accessibilityIds)->toContain(AccessibilityRequirementsEnum::PORTABLE_RAMP->value);
 
-        // Verify maximum passengers
+        // Verify maximum passengers (defaults to 6 when no passenger capacity settings exist)
+        expect($response->json('data.maximum_passengers'))->toBe(6);
+    });
+
+    it('returns maximum passengers from vehicle settings', function () {
+        // Create passenger capacity settings
+        VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_PASSENGER_CAPACITY,
+            VehicleSetting::COLUMN_CAPACITY => 4,
+            VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+        VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_PASSENGER_CAPACITY,
+            VehicleSetting::COLUMN_CAPACITY => 8,
+            VehicleSetting::COLUMN_ORDER => 2,
+        ]);
+
+        $response = get(route('v1.customers.trips.form-data'))
+            ->assertStatus(200);
+
+        // Should return the maximum capacity from settings (8)
+        expect($response->json('data.maximum_passengers'))->toBe(8);
     });
 
     it('returns correct labels for trip types', function () {
