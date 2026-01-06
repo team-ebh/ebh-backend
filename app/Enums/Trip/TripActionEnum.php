@@ -13,5 +13,7 @@ enum TripActionEnum: string
 {
     case ARRIVED = 'arrived';
     case PICKUP = 'pickup';
+    case DROP_PASSENGER = 'drop_passenger';
+    case NEXT_PICKUP = 'next_pickup';
     case COMPLETE = 'complete';
 }

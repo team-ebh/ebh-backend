@@ -93,11 +93,11 @@ describe('ROUND_TRIP_WAIT (Ride Type 3) - Complete Flow', function () {
         $response = actingAs($this->rider, 'rider')
             ->postJson(route('v1.riders.trips.requests.completed', $trip->tripRequest));
 
-        // Assert: Next action should be pickup (not complete)
+        // Assert: Next action should be next_pickup (not complete)
         $response->assertOk()
             ->assertJson([
                 'data' => [
-                    'next_action' => 'pickup',
+                    'next_action' => 'next_pickup',
                     'trip_completed' => false,
                 ],
             ]);
@@ -264,13 +264,13 @@ describe('ROUND_TRIP_WAIT (Ride Type 3) - Complete Flow', function () {
         // Step 2: Pickup at origin
         $response = actingAs($this->rider, 'rider')
             ->postJson(route('v1.riders.trips.requests.picked-up', $trip->tripRequest));
-        $response->assertOk()->assertJsonPath('data.next_action', 'complete');
+        $response->assertOk()->assertJsonPath('data.next_action', 'drop_passenger');
 
         // Step 3: Complete first destination (drop off customer)
         $response = actingAs($this->rider, 'rider')
             ->postJson(route('v1.riders.trips.requests.completed', $trip->tripRequest));
         $response->assertOk()
-            ->assertJsonPath('data.next_action', 'pickup')
+            ->assertJsonPath('data.next_action', 'next_pickup')
             ->assertJsonPath('data.trip_completed', false);
 
         // Step 4: Pickup at first destination (customer gets back in after waiting)

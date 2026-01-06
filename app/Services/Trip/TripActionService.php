@@ -64,8 +64,13 @@ readonly class TripActionService
 
         // For DESTINATION locations
         if ($currentLocation->isDestination()) {
-            // If pending, next action is 'complete'
+            // If pending, next action is 'complete' or 'drop_passenger' for ROUND_TRIP_WAIT
             if ($currentLocation->isPending()) {
+                // For ROUND_TRIP_WAIT, if this is not the last destination, use DROP_PASSENGER
+                if ($trip->isRoundTripWithWait() && ! $this->isLastLocation($trip, $currentLocation)) {
+                    return TripActionEnum::DROP_PASSENGER;
+                }
+
                 return TripActionEnum::COMPLETE;
             }
 
@@ -122,11 +127,11 @@ readonly class TripActionService
 
     /**
      * Get next action for a waiting pickup location (ROUND_TRIP_WAIT)
-     * After drop off, next action is pickup (no need for arrived, rider is already there)
+     * After drop off, next action is next_pickup (no need for arrived, rider is already there)
      */
     private function getNextActionForWaitingLocation(TripLocation $location): TripActionEnum
     {
-        return TripActionEnum::PICKUP;
+        return TripActionEnum::NEXT_PICKUP;
     }
 
     /**
@@ -191,5 +196,15 @@ readonly class TripActionService
     public function isSameLocation(TripLocation $firstLocation, TripLocation $secondLocation): bool
     {
         return $firstLocation->{TripLocation::COLUMN_ID} === $secondLocation->{TripLocation::COLUMN_ID};
+    }
+
+    /**
+     * Check if the given location is the last location in the trip
+     */
+    public function isLastLocation(Trip $trip, TripLocation $location): bool
+    {
+        $lastLocation = $this->getLastLocation($trip);
+
+        return $lastLocation && $this->isSameLocation($location, $lastLocation);
     }
 }
