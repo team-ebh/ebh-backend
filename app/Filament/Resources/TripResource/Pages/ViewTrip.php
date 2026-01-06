@@ -8,6 +8,7 @@ use App\Filament\Resources\TripResource;
 use App\Filament\Resources\TripResource\Sections\JourneySection;
 use App\Filament\Resources\TripResource\Sections\ParticipantsSection;
 use App\Filament\Resources\TripResource\Sections\PaymentSection;
+use App\Filament\Resources\TripResource\Sections\RelatedTripSection;
 use App\Filament\Resources\TripResource\Sections\TripDetailsSection;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Tabs;
@@ -38,11 +39,24 @@ class ViewTrip extends ViewRecord
             'order.payments.logs' => fn ($query) => $query->orderBy('id', 'asc'),
             'order.lastPayment:id,order_id,status',
             'order.paidPayment:id,order_id,status',
+            'scheduledReturnTrip:id,demand_trip_id,status,trip_type_id,scheduled_time',
+            'demandTrip:id,status,trip_type_id,created_at',
         ]);
     }
 
     public function infolist(Schema $schema): Schema
     {
+        $overviewSchema = [
+            TripDetailsSection::make(),
+            PaymentSection::make(),
+        ];
+
+        // Add RelatedTripSection for round trips
+        $relatedTripSection = RelatedTripSection::make($this->record);
+        if ($relatedTripSection !== null) {
+            $overviewSchema[] = $relatedTripSection;
+        }
+
         return $schema
             ->components([
                 Tabs::make('TripTabs')
@@ -53,10 +67,7 @@ class ViewTrip extends ViewRecord
                         // Tab 1: Overview
                         Tabs\Tab::make(trans('trips.admin.tabs.overview'))
                             ->icon('heroicon-o-information-circle')
-                            ->schema([
-                                TripDetailsSection::make(),
-                                PaymentSection::make(),
-                            ]),
+                            ->schema($overviewSchema),
 
                         // Tab 2: Journey
                         Tabs\Tab::make(trans('trips.admin.tabs.journey'))

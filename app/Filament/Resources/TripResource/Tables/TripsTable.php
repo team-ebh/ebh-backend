@@ -29,7 +29,14 @@ class TripsTable
         return $table
             ->modifyQueryUsing(
                 fn ($query) => $query
-                    ->where(Trip::COLUMN_STATUS, '!=', TripStatusEnum::DRAFT)
+                    ->where(function (Builder $query) {
+                        // Show all non-draft trips OR draft trips that are scheduled
+                        $query->where(Trip::COLUMN_STATUS, '!=', TripStatusEnum::DRAFT)
+                            ->orWhere(function (Builder $query) {
+                                $query->where(Trip::COLUMN_STATUS, TripStatusEnum::DRAFT)
+                                    ->where(Trip::COLUMN_TRIP_TYPE_ID, TripTypeEnum::SCHEDULED);
+                            });
+                    })
                     ->with(['customer', 'rider', 'firstOriginLocation', 'firstDestinationLocation', 'order'])
             )
             ->columns([
@@ -81,6 +88,12 @@ class TripsTable
                     ->formatStateUsing(fn ($state) => $state->getLabel())
                     ->color('info'),
 
+                TextColumn::make('ride_type')
+                    ->label(trans('trips.admin.fields.ride_type'))
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => $state->getLabel())
+                    ->color('cyan'),
+
                 TextColumn::make('vehicle_type_id')
                     ->label(trans('trips.admin.fields.vehicle_type'))
                     ->badge()
@@ -103,15 +116,7 @@ class TripsTable
             ])
             ->filters([
                 SelectFilter::make('status')
-                    ->options([
-                        TripStatusEnum::PENDING_RIDER->value => TripStatusEnum::PENDING_RIDER->getLabel(),
-                        TripStatusEnum::ACCEPTED_RIDER->value => TripStatusEnum::ACCEPTED_RIDER->getLabel(),
-                        TripStatusEnum::ARRIVED->value => TripStatusEnum::ARRIVED->getLabel(),
-                        TripStatusEnum::IN_PROGRESS->value => TripStatusEnum::IN_PROGRESS->getLabel(),
-                        TripStatusEnum::COMPLETED->value => TripStatusEnum::COMPLETED->getLabel(),
-                        TripStatusEnum::CANCELED_BY_CUSTOMER->value => TripStatusEnum::CANCELED_BY_CUSTOMER->getLabel(),
-                        TripStatusEnum::CANCELLED_BY_RIDER->value => TripStatusEnum::CANCELLED_BY_RIDER->getLabel(),
-                    ])
+                    ->options(TripStatusEnum::class)
                     ->multiple(),
 
                 SelectFilter::make('trip_type_id')

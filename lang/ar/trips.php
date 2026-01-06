@@ -97,6 +97,7 @@ return [
             'ride_type' => 'نوع الرحلة',
             'no_payment' => 'لا يوجد دفع',
             'pending' => 'قيد الانتظار',
+            'scheduled_time' => 'الوقت المجدول',
         ],
         'sections' => [
             'trip_overview' => 'نظرة عامة على الرحلة',
@@ -134,6 +135,10 @@ return [
             'trip_map' => 'خريطة الرحلة',
             'trip_map_description' => 'عرض مرئي لمواقع الرحلة وموقع السائق',
             'payments_list' => 'المدفوعات',
+            'scheduled_return_trip' => 'رحلة العودة المجدولة',
+            'scheduled_return_trip_description' => 'رحلة العودة المجدولة لهذه الرحلة ذهاب وعودة',
+            'demand_trip' => 'رحلة الطلب الأصلية',
+            'demand_trip_description' => 'رحلة الطلب الأصلية التي تنتمي إليها رحلة العودة المجدولة هذه',
         ],
         'tabs' => [
             'overview' => 'نظرة عامة',

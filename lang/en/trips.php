@@ -97,6 +97,7 @@ return [
             'ride_type' => 'Ride Type',
             'no_payment' => 'No Payment',
             'pending' => 'Pending',
+            'scheduled_time' => 'Scheduled Time',
         ],
         'sections' => [
             'trip_overview' => 'Trip Overview',
@@ -134,6 +135,10 @@ return [
             'trip_map' => 'Trip Map',
             'trip_map_description' => 'Visual representation of trip locations and rider position',
             'payments_list' => 'Payments',
+            'scheduled_return_trip' => 'Scheduled Return Trip',
+            'scheduled_return_trip_description' => 'The scheduled return trip for this round trip',
+            'demand_trip' => 'Original Demand Trip',
+            'demand_trip_description' => 'The original demand trip this scheduled return belongs to',
         ],
         'tabs' => [
             'overview' => 'Overview',
