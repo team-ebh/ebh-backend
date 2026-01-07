@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Customer\Trip;
 
+use App\Enums\Setting\SettingEnum;
 use App\Enums\Trip\RideTypeEnum;
+use App\Models\Setting;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -90,7 +92,7 @@ class ChangeRideTypeRequest extends FormRequest
 
     public function messages(): array
     {
-        $minReturnTimeMinutes = config('app_settings.customer.min_return_time_minutes', 60);
+        $minReturnTimeMinutes = Setting::get(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES);
 
         return [
             'ride_type_id.required' => trans('validations.trips.ride_type_id.required'),
@@ -120,7 +122,7 @@ class ChangeRideTypeRequest extends FormRequest
      */
     protected function getMinReturnTimeTimestamp(): int
     {
-        $minReturnTimeMinutes = config('app_settings.customer.min_return_time_minutes', 60);
+        $minReturnTimeMinutes = (int) Setting::get(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES);
 
         return now()->addMinutes($minReturnTimeMinutes)->timestamp;
     }

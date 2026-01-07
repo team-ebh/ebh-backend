@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Setting\SettingEnum;
 use App\Models\Setting;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -21,7 +22,7 @@ return new class extends Migration
 
         // Update existing companies: if they have a commission_rate > 0, mark as custom
         // Otherwise set to default rate
-        $defaultRate = Setting::getDefaultCommissionRate();
+        $defaultRate = Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE);
 
         DB::table('companies')
             ->whereNotNull('commission_rate')

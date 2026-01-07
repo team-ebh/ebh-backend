@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Pipelines\Rider\Trip\CompleteTrip;
 
+use App\Enums\Setting\SettingEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Events\Socket\Customer\TripCompletedEvent;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
@@ -93,7 +94,7 @@ readonly class FinalizeAndCalculatePipe
         $rider = $trip->rider()->with('company')->first();
 
         if (! $rider) {
-            return Setting::getDefaultCommissionRate();
+            return (float) Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE);
         }
 
         $company = $rider->company;
@@ -102,6 +103,6 @@ readonly class FinalizeAndCalculatePipe
             return (float) $company->{Company::COLUMN_COMMISSION_RATE};
         }
 
-        return Setting::getDefaultCommissionRate();
+        return (float) Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE);
     }
 }

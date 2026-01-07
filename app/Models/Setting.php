@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Setting\SettingEnum;
 use App\Traits\Model\HasDefaultColumnModelTrait;
 use App\Traits\Model\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
@@ -21,17 +22,7 @@ class Setting extends Model
     public const string COLUMN_GROUP = 'group';
 
     /**
-     * Setting Keys
-     */
-    public const string KEY_DEFAULT_COMMISSION_RATE = 'default_commission_rate';
-
-    /**
-     * Setting Groups
-     */
-    public const string GROUP_COMMISSION = 'commission';
-
-    /**
-     * Cache Keys
+     * Cache configuration
      */
     private const string CACHE_PREFIX = 'settings:';
 
@@ -42,52 +33,39 @@ class Setting extends Model
     ];
 
     /**
-     * Get a setting value by key
+     * Get a setting value by enum
      */
-    public static function getValue(string $key, mixed $default = null): mixed
+    public static function get(SettingEnum $setting): int | float | string | bool
     {
-        $cacheKey = self::CACHE_PREFIX . $key;
+        $cacheKey = self::CACHE_PREFIX . $setting->value;
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($key, $default) {
-            $setting = self::query()->where(self::COLUMN_KEY, $key)->first();
-
-            return $setting ? $setting->{self::COLUMN_VALUE} : $default;
+        $value = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($setting) {
+            return self::query()->where(self::COLUMN_KEY, $setting->value)->first()?->{self::COLUMN_VALUE};
         });
+
+        if ($value === null) {
+            return $setting->default();
+        }
+
+        return $setting->cast($value);
     }
 
     /**
-     * Set a setting value
+     * Set a setting value by enum
      */
-    public static function setValue(string $key, mixed $value, string $group = 'general'): Model
+    public static function set(SettingEnum $setting, int | float | string | bool $value): Model
     {
-        $setting = self::query()->updateOrCreate(
-            [self::COLUMN_KEY => $key],
+        $record = self::query()->updateOrCreate(
+            [self::COLUMN_KEY => $setting->value],
             [
                 self::COLUMN_VALUE => $value,
-                self::COLUMN_GROUP => $group,
+                self::COLUMN_GROUP => $setting->group(),
             ]
         );
 
-        // Clear cache
-        Cache::forget(self::CACHE_PREFIX . $key);
+        Cache::forget(self::CACHE_PREFIX . $setting->value);
 
-        return $setting;
-    }
-
-    /**
-     * Get default commission rate
-     */
-    public static function getDefaultCommissionRate(): float
-    {
-        return (float) self::getValue(self::KEY_DEFAULT_COMMISSION_RATE, 15.00);
-    }
-
-    /**
-     * Set default commission rate
-     */
-    public static function setDefaultCommissionRate(float $rate): Model
-    {
-        return self::setValue(self::KEY_DEFAULT_COMMISSION_RATE, $rate, self::GROUP_COMMISSION);
+        return $record;
     }
 
     /**

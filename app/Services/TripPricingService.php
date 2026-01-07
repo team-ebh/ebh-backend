@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Setting\SettingEnum;
 use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
+use App\Models\Setting;
 use App\Models\TripLocation;
 use App\Models\TripLocationStatusLog;
 use Illuminate\Support\Collection;
@@ -32,11 +34,20 @@ class TripPricingService
     private const float PER_KM_RATE = 0.500; // Rate per kilometer in KWD
 
     /**
-     * Waiting time configuration
+     * Get waiting time rate from database settings
      */
-    private const float WAITING_TIME_RATE = 2.500; // KWD per 30 minutes
+    private function getWaitingTimeRate(): float
+    {
+        return (float) Setting::get(SettingEnum::WAITING_TIME_RATE);
+    }
 
-    private const int WAITING_TIME_INTERVAL_MINUTES = 30;
+    /**
+     * Get waiting time interval from database settings
+     */
+    private function getWaitingTimeIntervalMinutes(): int
+    {
+        return (int) Setting::get(SettingEnum::WAITING_TIME_INTERVAL_MINUTES);
+    }
 
     /**
      * Calculate base fare from distance
@@ -88,9 +99,10 @@ class TripPricingService
     /**
      * Calculate waiting time charge
      *
-     * Charges for each COMPLETE 30-minute interval only.
-     * Example: 31-59 minutes = 1 complete interval = 2.500 KWD
-     *          60-89 minutes = 2 complete intervals = 5.000 KWD
+     * Charges for each COMPLETE interval only (based on database settings).
+     * Example with 30-min interval and 2.500 KWD rate:
+     *   31-59 minutes = 1 complete interval = 2.500 KWD
+     *   60-89 minutes = 2 complete intervals = 5.000 KWD
      *
      * @return float|null Returns null if no waiting time, float if waiting time exists
      */
@@ -100,16 +112,18 @@ class TripPricingService
             return null;
         }
 
-        // Use floor to charge only for COMPLETE intervals
-        // Example: 31 min = floor(31/30) = 1 interval = 2.500 KWD
-        $intervals = floor($returnTimeMinutes / self::WAITING_TIME_INTERVAL_MINUTES);
+        $intervalMinutes = $this->getWaitingTimeIntervalMinutes();
+        $rate = $this->getWaitingTimeRate();
 
-        // If no complete intervals yet, return null (first 29 minutes free)
+        // Use floor to charge only for COMPLETE intervals
+        $intervals = floor($returnTimeMinutes / $intervalMinutes);
+
+        // If no complete intervals yet, return null
         if ($intervals <= 0) {
             return null;
         }
 
-        return round($intervals * self::WAITING_TIME_RATE, 3);
+        return round($intervals * $rate, 3);
     }
 
     /**
@@ -335,8 +349,8 @@ class TripPricingService
     public function getWaitingTimeConfig(): array
     {
         return [
-            'price' => priceFormat(self::WAITING_TIME_RATE) . ' ' . CurrencyEnum::KWD->getLabel(),
-            'time' => self::WAITING_TIME_INTERVAL_MINUTES . ' ' . trans('trips.api.time_units.minutes'),
+            'price' => priceFormat($this->getWaitingTimeRate()) . ' ' . CurrencyEnum::KWD->getLabel(),
+            'time' => $this->getWaitingTimeIntervalMinutes() . ' ' . trans('trips.api.time_units.minutes'),
         ];
     }
 

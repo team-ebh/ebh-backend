@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Pages\Widgets;
 
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Setting\SettingEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Models\Company;
 use App\Models\Setting;
@@ -65,7 +66,7 @@ class CommissionStatsWidget extends BaseWidget
     private function buildAverageRateStat(): Stat
     {
         $avgRate = Company::query()->avg(Company::COLUMN_COMMISSION_RATE)
-            ?? Setting::getDefaultCommissionRate();
+            ?? Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE);
 
         return Stat::make(
             trans('commission_settings.admin.stats.avg_rate'),

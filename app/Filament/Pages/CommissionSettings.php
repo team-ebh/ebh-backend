@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Setting\SettingEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Filament\Pages\Widgets\CommissionStatsWidget;
 use App\Models\Company;
@@ -42,7 +43,7 @@ class CommissionSettings extends Page implements HasTable
     public function mount(): void
     {
         $this->form->fill([
-            'default_commission_rate' => Setting::getDefaultCommissionRate(),
+            'default_commission_rate' => Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE),
         ]);
     }
 
@@ -124,7 +125,7 @@ class CommissionSettings extends Page implements HasTable
                         Radio::make('rate_type')
                             ->label(trans('commission_settings.admin.fields.rate_type'))
                             ->options([
-                                'default' => trans('commission_settings.admin.fields.rate_type_default', ['rate' => Setting::getDefaultCommissionRate() . '%']),
+                                'default' => trans('commission_settings.admin.fields.rate_type_default', ['rate' => Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE) . '%']),
                                 'custom' => trans('commission_settings.admin.fields.rate_type_custom'),
                             ])
                             ->default(fn (Company $record): string => $record->hasCustomRate() ? 'custom' : 'default')
@@ -146,7 +147,7 @@ class CommissionSettings extends Page implements HasTable
                     ->action(function (Company $record, array $data): void {
                         if ($data['rate_type'] === 'default') {
                             $record->update([
-                                Company::COLUMN_COMMISSION_RATE => Setting::getDefaultCommissionRate(),
+                                Company::COLUMN_COMMISSION_RATE => Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE),
                                 Company::COLUMN_IS_CUSTOM_RATE => false,
                             ]);
                         } else {
@@ -189,7 +190,7 @@ class CommissionSettings extends Page implements HasTable
         $data = $this->form->getState();
 
         try {
-            Setting::setDefaultCommissionRate((float) $data['default_commission_rate']);
+            Setting::set(SettingEnum::DEFAULT_COMMISSION_RATE, (float) $data['default_commission_rate']);
 
             // Update all companies using default rate (using each to trigger activity log)
             Company::query()
