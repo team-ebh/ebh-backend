@@ -91,6 +91,7 @@ return [
             'required' => 'Return time is required.',
             'integer' => 'Return time must be a valid timestamp.',
             'min' => 'Return time must be in the future.',
+            'min_minutes' => 'Return time must be at least :minutes minutes from now.',
             'after' => 'Return time must be in the future.',
         ],
         'payment_method' => [

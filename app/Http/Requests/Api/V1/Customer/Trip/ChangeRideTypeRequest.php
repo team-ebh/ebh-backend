@@ -83,20 +83,22 @@ class ChangeRideTypeRequest extends FormRequest
             'return_time' => [
                 $isRoundTrip ? 'required' : 'nullable',
                 'integer',
-                'min:' . now()->timestamp, // Must be in the future
+                'min:' . $this->getMinReturnTimeTimestamp(),
             ],
         ];
     }
 
     public function messages(): array
     {
+        $minReturnTimeMinutes = config('app_settings.customer.min_return_time_minutes', 60);
+
         return [
             'ride_type_id.required' => trans('validations.trips.ride_type_id.required'),
             'ride_type_id.integer' => trans('validations.trips.ride_type_id.integer'),
             'ride_type_id.enum' => trans('validations.trips.ride_type_id.enum'),
             'return_time.required' => trans('validations.trips.return_time.required'),
             'return_time.integer' => trans('validations.trips.return_time.integer'),
-            'return_time.min' => trans('validations.trips.return_time.min'),
+            'return_time.min' => trans('validations.trips.return_time.min_minutes', ['minutes' => $minReturnTimeMinutes]),
             'destination_location_title.required' => trans('validations.trips.destination_location_title.required'),
             'destination_location_title.string' => trans('validations.trips.destination_location_title.string'),
             'destination_location_title.max' => trans('validations.trips.destination_location_title.max'),
@@ -111,5 +113,15 @@ class ChangeRideTypeRequest extends FormRequest
             'destination_longitude.min' => trans('validations.trips.destination_longitude.min'),
             'destination_longitude.max' => trans('validations.trips.destination_longitude.max'),
         ];
+    }
+
+    /**
+     * Get the minimum return time timestamp based on configuration
+     */
+    protected function getMinReturnTimeTimestamp(): int
+    {
+        $minReturnTimeMinutes = config('app_settings.customer.min_return_time_minutes', 60);
+
+        return now()->addMinutes($minReturnTimeMinutes)->timestamp;
     }
 }

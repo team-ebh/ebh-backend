@@ -54,6 +54,13 @@ return [
          * How often to poll the server for "arriving at" time updates
          */
         'arriving_at_poll_interval_seconds' => env('CUSTOMER_ARRIVING_AT_POLL_INTERVAL_SECONDS', 60),
+
+        /**
+         * Minimum return time in minutes for round trips
+         * The minimum time (in minutes) that must pass before a customer can schedule their return pickup
+         * For example: if set to 60, customer cannot set return_time less than 60 minutes from now
+         */
+        'min_return_time_minutes' => env('CUSTOMER_MIN_RETURN_TIME_MINUTES', 60),
     ],
 
 ];
