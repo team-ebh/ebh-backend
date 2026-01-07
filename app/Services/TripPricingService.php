@@ -88,6 +88,10 @@ class TripPricingService
     /**
      * Calculate waiting time charge
      *
+     * Charges for each COMPLETE 30-minute interval only.
+     * Example: 31-59 minutes = 1 complete interval = 2.500 KWD
+     *          60-89 minutes = 2 complete intervals = 5.000 KWD
+     *
      * @return float|null Returns null if no waiting time, float if waiting time exists
      */
     public function calculateWaitingCharge(?int $returnTimeMinutes): ?float
@@ -96,7 +100,14 @@ class TripPricingService
             return null;
         }
 
-        $intervals = ceil($returnTimeMinutes / self::WAITING_TIME_INTERVAL_MINUTES);
+        // Use floor to charge only for COMPLETE intervals
+        // Example: 31 min = floor(31/30) = 1 interval = 2.500 KWD
+        $intervals = floor($returnTimeMinutes / self::WAITING_TIME_INTERVAL_MINUTES);
+
+        // If no complete intervals yet, return null (first 29 minutes free)
+        if ($intervals <= 0) {
+            return null;
+        }
 
         return round($intervals * self::WAITING_TIME_RATE, 3);
     }
