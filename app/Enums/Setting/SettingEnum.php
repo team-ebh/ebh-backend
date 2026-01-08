@@ -23,6 +23,9 @@ enum SettingEnum: string
     case WAITING_TIME_RATE = 'waiting_time_rate';
     case WAITING_TIME_INTERVAL_MINUTES = 'waiting_time_interval_minutes';
 
+    // Scheduling
+    case SCHEDULED_TRIP_SEARCH_START_MINUTES = 'scheduled_trip_search_start_minutes';
+
     public function group(): string
     {
         return match ($this) {
@@ -38,6 +41,8 @@ enum SettingEnum: string
 
             self::WAITING_TIME_RATE,
             self::WAITING_TIME_INTERVAL_MINUTES => 'pricing',
+
+            self::SCHEDULED_TRIP_SEARCH_START_MINUTES => 'scheduling',
         };
     }
 
@@ -52,6 +57,8 @@ enum SettingEnum: string
 
             self::WAITING_TIME_RATE => 2.500,
             self::WAITING_TIME_INTERVAL_MINUTES => 30,
+
+            self::SCHEDULED_TRIP_SEARCH_START_MINUTES => 5,
         };
     }
 
@@ -67,7 +74,8 @@ enum SettingEnum: string
             self::RIDER_ARRIVING_AT_POLL_INTERVAL,
             self::CUSTOMER_ARRIVING_AT_POLL_INTERVAL,
             self::CUSTOMER_MIN_RETURN_TIME_MINUTES,
-            self::WAITING_TIME_INTERVAL_MINUTES => 'int',
+            self::WAITING_TIME_INTERVAL_MINUTES,
+            self::SCHEDULED_TRIP_SEARCH_START_MINUTES => 'int',
         };
     }
 

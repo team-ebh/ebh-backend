@@ -36,6 +36,10 @@ class AppSettings extends Page implements HasForms
             // Pricing Settings
             'waiting_time_rate' => Setting::get(SettingEnum::WAITING_TIME_RATE),
             'waiting_time_interval_minutes' => Setting::get(SettingEnum::WAITING_TIME_INTERVAL_MINUTES),
+
+            // Scheduling Settings
+            'scheduled_trip_search_start_minutes' => Setting::get(SettingEnum::SCHEDULED_TRIP_SEARCH_START_MINUTES),
+            'customer_min_return_time_minutes' => Setting::get(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES),
         ]);
     }
 
@@ -73,6 +77,34 @@ class AppSettings extends Page implements HasForms
                                     ])
                                     ->columns(2),
                             ]),
+
+                        Tabs\Tab::make('scheduling')
+                            ->label(trans('app_settings.admin.tabs.scheduling'))
+                            ->icon('heroicon-o-clock')
+                            ->schema([
+                                SchemaSection::make(trans('app_settings.admin.sections.scheduling.title'))
+                                    ->description(trans('app_settings.admin.sections.scheduling.description'))
+                                    ->schema([
+                                        TextInput::make('scheduled_trip_search_start_minutes')
+                                            ->label(trans('app_settings.admin.fields.scheduled_trip_search_start_minutes'))
+                                            ->helperText(trans('app_settings.admin.helpers.scheduled_trip_search_start_minutes'))
+                                            ->required()
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->maxValue(60)
+                                            ->suffix(trans('app_settings.admin.units.minutes')),
+
+                                        TextInput::make('customer_min_return_time_minutes')
+                                            ->label(trans('app_settings.admin.fields.customer_min_return_time_minutes'))
+                                            ->helperText(trans('app_settings.admin.helpers.customer_min_return_time_minutes'))
+                                            ->required()
+                                            ->numeric()
+                                            ->minValue(15)
+                                            ->maxValue(480)
+                                            ->suffix(trans('app_settings.admin.units.minutes')),
+                                    ])
+                                    ->columns(2),
+                            ]),
                     ])
                     ->columnSpanFull(),
             ])
@@ -98,6 +130,10 @@ class AppSettings extends Page implements HasForms
             // Pricing Settings
             Setting::set(SettingEnum::WAITING_TIME_RATE, (float) $data['waiting_time_rate']);
             Setting::set(SettingEnum::WAITING_TIME_INTERVAL_MINUTES, (int) $data['waiting_time_interval_minutes']);
+
+            // Scheduling Settings
+            Setting::set(SettingEnum::SCHEDULED_TRIP_SEARCH_START_MINUTES, (int) $data['scheduled_trip_search_start_minutes']);
+            Setting::set(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES, (int) $data['customer_min_return_time_minutes']);
 
             Notification::make()
                 ->success()

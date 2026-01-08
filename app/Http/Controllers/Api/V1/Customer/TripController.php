@@ -92,8 +92,12 @@ class TripController extends Controller
     /**
      * Confirm trip
      *
-     * Confirms the trip and changes status to CONFIRMED (searching for taxi).
-     * After confirmation, customer should poll getTripStatus endpoint to track the driver.
+     * Confirms the trip based on its type:
+     * - RIDE_NOW: Changes status to PENDING_RIDER and starts searching for rider immediately
+     * - SCHEDULED: Creates order but keeps status as DRAFT, dispatches job to process at scheduled time
+     *
+     * For RIDE_NOW trips: ride_type_id is required with destination fields for round trips.
+     * For SCHEDULED trips: ride_type_id is optional (defaults to ONE_WAY).
      *
      * @authenticated
      *
