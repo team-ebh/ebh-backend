@@ -42,4 +42,10 @@ interface TripRepositoryInterface
     public function createDemandTrip(Trip $sourceTrip, array $originLocation, array $destinationLocation, ?int $scheduledTime, ?float $baseFare = null, ?float $roundTripPrice = null, ?float $accessibilityCost = null, ?float $totalPrice = null): Trip;
 
     public function deleteDraftTrips(int $customerId): void;
+
+    public function getUpcomingTrips(int $customerId): Collection;
+
+    public function getPastTrips(int $customerId): Collection;
+
+    public function getTripWithDetails(int $tripId, int $customerId): ?Trip;
 }

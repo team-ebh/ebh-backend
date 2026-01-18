@@ -333,6 +333,16 @@ return [
             TripStatusEnum::CANCELED_BY_CUSTOMER->name => 'ملغاة من قبل العميل',
             TripStatusEnum::CANCELLED_BY_RIDER->name => 'ملغاة من قبل السائق',
         ],
+        'trip_statuses_simple' => [
+            TripStatusEnum::DRAFT->name => 'مسودة',
+            TripStatusEnum::PENDING_RIDER->name => 'قيد الانتظار',
+            TripStatusEnum::ACCEPTED_RIDER->name => 'مقبولة',
+            TripStatusEnum::ARRIVED->name => 'وصل',
+            TripStatusEnum::IN_PROGRESS->name => 'قيد التنفيذ',
+            TripStatusEnum::COMPLETED->name => 'مكتملة',
+            TripStatusEnum::CANCELED_BY_CUSTOMER->name => 'ملغاة',
+            TripStatusEnum::CANCELLED_BY_RIDER->name => 'ملغاة',
+        ],
         'trip_request_statuses' => [
             TripRequestStatusEnum::PENDING->name => 'قيد الانتظار',
             TripRequestStatusEnum::ACCEPTED->name => 'مقبول',
@@ -365,6 +375,7 @@ return [
             'accessibility_services' => 'خدمات إمكانية الوصول',
             'to_be_calculated' => 'سيتم حسابها',
             'included' => 'مشمول',
+            'total' => 'الإجمالي',
         ],
         'exceptions' => [
             'trip_not_pending' => 'لا يمكن تأكيد هذه الرحلة. يمكن فقط تأكيد الرحلات المسودة.',

@@ -333,6 +333,16 @@ return [
             TripStatusEnum::CANCELED_BY_CUSTOMER->name => 'Cancelled by Customer',
             TripStatusEnum::CANCELLED_BY_RIDER->name => 'Cancelled by Rider',
         ],
+        'trip_statuses_simple' => [
+            TripStatusEnum::DRAFT->name => 'Draft',
+            TripStatusEnum::PENDING_RIDER->name => 'Pending',
+            TripStatusEnum::ACCEPTED_RIDER->name => 'Accepted',
+            TripStatusEnum::ARRIVED->name => 'Arrived',
+            TripStatusEnum::IN_PROGRESS->name => 'In Progress',
+            TripStatusEnum::COMPLETED->name => 'Completed',
+            TripStatusEnum::CANCELED_BY_CUSTOMER->name => 'Cancelled',
+            TripStatusEnum::CANCELLED_BY_RIDER->name => 'Cancelled',
+        ],
         'trip_request_statuses' => [
             TripRequestStatusEnum::PENDING->name => 'Pending',
             TripRequestStatusEnum::ACCEPTED->name => 'Accepted',
@@ -365,6 +375,7 @@ return [
             'accessibility_services' => 'Accessibility Services',
             'to_be_calculated' => 'To be calculated',
             'included' => 'Included',
+            'total' => 'Total',
         ],
         'exceptions' => [
             'trip_not_pending' => 'This trip cannot be confirmed. Only draft trips can be confirmed.',

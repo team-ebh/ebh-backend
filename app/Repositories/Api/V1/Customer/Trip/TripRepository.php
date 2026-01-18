@@ -278,4 +278,54 @@ class TripRepository implements TripRepositoryInterface
             ->where(Trip::COLUMN_TRIP_TYPE_ID, '!=', TripTypeEnum::SCHEDULED)
             ->delete();
     }
+
+    public function getUpcomingTrips(int $customerId): Collection
+    {
+        // Get draft scheduled trips (confirmed scheduled trips waiting for processing)
+        return Trip::query()
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->where(Trip::COLUMN_STATUS, TripStatusEnum::DRAFT)
+            ->where(Trip::COLUMN_TRIP_TYPE_ID, TripTypeEnum::SCHEDULED)
+            ->whereNotNull(Trip::COLUMN_SCHEDULED_TIME)
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence',
+                'rider:id,full_name,phone_number',
+                'rider.accessibilityCertifications:id,rider_id,certification_type',
+            ])
+            ->orderBy(Trip::COLUMN_SCHEDULED_TIME)
+            ->get();
+    }
+
+    public function getPastTrips(int $customerId): Collection
+    {
+        // Get completed and cancelled trips
+        return Trip::query()
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->whereIn(Trip::COLUMN_STATUS, [
+                TripStatusEnum::COMPLETED,
+                TripStatusEnum::CANCELED_BY_CUSTOMER,
+                TripStatusEnum::CANCELLED_BY_RIDER,
+            ])
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence',
+                'rider:id,full_name,phone_number',
+                'rider.accessibilityCertifications:id,rider_id,certification_type',
+            ])
+            ->orderByDesc(Trip::COLUMN_ID)
+            ->get();
+    }
+
+    public function getTripWithDetails(int $tripId, int $customerId): ?Trip
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_ID, $tripId)
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence',
+                'accessibility',
+                'rider:id,full_name,phone_number',
+                'rider.accessibilityCertifications:id,rider_id,certification_type',
+            ])
+            ->first();
+    }
 }
