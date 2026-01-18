@@ -379,6 +379,7 @@ return [
             'trip_status_cannot_be_checked' => 'Trip status cannot be checked. Status checking is not available for draft, cancelled, or completed trips.',
             'trip_not_found' => 'No active trip found for payment.',
             'trip_payment_not_allowed' => 'Payment is not allowed for this trip.',
+            'scheduled_trip_cannot_change_ride_type' => 'Ride type cannot be changed for scheduled trips.',
         ],
     ],
     'not_your_trip' => 'You are not authorized to access this trip.',

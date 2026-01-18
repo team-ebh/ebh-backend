@@ -9,46 +9,35 @@ return [
         'page_heading' => 'إعدادات التطبيق',
 
         'tabs' => [
-            'rider' => 'إعدادات السائق',
-            'customer' => 'إعدادات العميل',
             'pricing' => 'إعدادات التسعير',
+            'scheduling' => 'إعدادات الجدولة',
         ],
 
         'sections' => [
-            'rider' => [
-                'title' => 'إعدادات تطبيق السائق',
-                'description' => 'تكوين إعدادات تطبيق السائق المحمول',
-            ],
-            'customer' => [
-                'title' => 'إعدادات تطبيق العميل',
-                'description' => 'تكوين إعدادات تطبيق العميل المحمول',
-            ],
             'pricing' => [
                 'title' => 'تسعير وقت الانتظار',
                 'description' => 'تكوين تسعير وقت الانتظار لرحلات الذهاب والعودة مع الانتظار',
             ],
+            'scheduling' => [
+                'title' => 'جدولة الرحلات',
+                'description' => 'تكوين إعدادات الرحلات المجدولة',
+            ],
         ],
 
         'fields' => [
-            'rider_trip_request_timeout_seconds' => 'مهلة طلب الرحلة',
-            'rider_location_update_interval_online' => 'فترة تحديث الموقع (متصل)',
-            'rider_location_update_interval_busy' => 'فترة تحديث الموقع (مشغول)',
-            'rider_arriving_at_poll_interval' => 'فترة استعلام وقت الوصول',
-            'customer_arriving_at_poll_interval' => 'فترة استعلام وقت الوصول',
-            'customer_min_return_time_minutes' => 'الحد الأدنى لوقت العودة',
             'waiting_time_rate' => 'سعر وقت الانتظار',
             'waiting_time_interval_minutes' => 'فترة وقت الانتظار',
+            'scheduled_trip_search_start_minutes' => 'وقت بدء البحث',
+            'customer_min_return_time_minutes' => 'الحد الأدنى لوقت العودة',
+            'customer_min_schedule_time_minutes' => 'الحد الأدنى لوقت الجدولة',
         ],
 
         'helpers' => [
-            'rider_trip_request_timeout_seconds' => 'مدة صلاحية طلب الرحلة قبل انتهاء الصلاحية (10-300 ثانية)',
-            'rider_location_update_interval_online' => 'عدد مرات إرسال تحديثات الموقع للسائقين المتصلين (10-300 ثانية)',
-            'rider_location_update_interval_busy' => 'عدد مرات إرسال تحديثات الموقع للسائقين المشغولين (5-120 ثانية)',
-            'rider_arriving_at_poll_interval' => 'عدد مرات الاستعلام عن تحديثات وقت الوصول (10-300 ثانية)',
-            'customer_arriving_at_poll_interval' => 'عدد مرات الاستعلام عن تحديثات وقت الوصول (10-300 ثانية)',
-            'customer_min_return_time_minutes' => 'الحد الأدنى للوقت قبل أن يتمكن العميل من جدولة العودة (15-480 دقيقة)',
             'waiting_time_rate' => 'السعر لكل فترة انتظار (0.100-50.000 دينار كويتي)',
             'waiting_time_interval_minutes' => 'مدة كل فترة انتظار (5-120 دقيقة)',
+            'scheduled_trip_search_start_minutes' => 'كم دقيقة قبل الموعد المحدد لبدء البحث عن سائق (1-60 دقيقة)',
+            'customer_min_return_time_minutes' => 'الحد الأدنى للوقت قبل أن يتمكن العميل من جدولة العودة (15-480 دقيقة)',
+            'customer_min_schedule_time_minutes' => 'الحد الأدنى للوقت المسبق الذي يمكن للعميل جدولة رحلة فيه (5-1440 دقيقة)',
         ],
 
         'units' => [

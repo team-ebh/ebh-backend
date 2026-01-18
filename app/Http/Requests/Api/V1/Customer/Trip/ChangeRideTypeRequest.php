@@ -13,7 +13,8 @@ use Illuminate\Validation\Rule;
 /**
  * Change Ride Type Request
  *
- * Validates ride type change and pricing calculation request data
+ * Validates ride type change and pricing calculation request data.
+ * Note: Business logic validation (e.g., scheduled trips not allowed) is handled in ValidateTripPipe.
  */
 class ChangeRideTypeRequest extends FormRequest
 {

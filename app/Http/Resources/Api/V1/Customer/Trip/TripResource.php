@@ -77,11 +77,14 @@ class TripResource extends JsonResource
             ),
 
             /**
-             * Ride types information
+             * Ride types information (only shown for RIDE_NOW trips)
              *
-             * @var AnonymousResourceCollection<RideTypeResource>
+             * @var AnonymousResourceCollection<RideTypeResource>|null
              */
-            'ride_types' => RideTypeResource::collection(RideTypeEnum::cases()),
+            'ride_types' => $this->when(
+                ! $trip->isScheduledTripType(),
+                fn () => RideTypeResource::collection(RideTypeEnum::cases())
+            ),
 
             /**
              * Payment methods information

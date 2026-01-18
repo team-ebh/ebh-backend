@@ -12,6 +12,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *
  * @property int $arriving_at_poll_interval_seconds
  * @property int $min_return_time_minutes
+ * @property int $min_schedule_time_minutes
  */
 class CustomerSettingsResource extends JsonResource
 {
@@ -44,6 +45,17 @@ class CustomerSettingsResource extends JsonResource
              * @example 60
              */
             'min_return_time_minutes' => $this->resource['min_return_time_minutes'],
+
+            /**
+             * Minimum schedule time in minutes
+             *
+             * The minimum time in advance (in minutes) that a customer can schedule a trip (5-1440 minutes)
+             *
+             * @var int
+             *
+             * @example 30
+             */
+            'min_schedule_time_minutes' => $this->resource['min_schedule_time_minutes'],
         ];
     }
 }

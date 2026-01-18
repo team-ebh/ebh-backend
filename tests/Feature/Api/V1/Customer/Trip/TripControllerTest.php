@@ -679,7 +679,7 @@ describe('Trip Store API', function () {
             'schedule_date_time' => -1,
         ])->assertStatus(422)
             ->assertJsonPath('meta.errors.0.field', 'schedule_date_time')
-            ->assertJsonPath('meta.errors.0.messages.0', trans('validations.trips.schedule_date_time.min'));
+            ->assertJsonPath('meta.errors.0.messages.0', trans('validations.trips.schedule_date_time.min_minutes', ['minutes' => 30]));
     });
 });
 
@@ -1228,6 +1228,52 @@ describe('Change Ride Type API', function () {
                 ],
             ]);
     });
+
+    it('cannot change ride type for scheduled trip', function () {
+        // Create a scheduled trip
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+            'scheduled_time' => now()->addHours(2),
+        ]);
+
+        // Create trip locations
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Origin',
+            TripLocation::COLUMN_LATITUDE => 29.37694,
+            TripLocation::COLUMN_LONGITUDE => 47.98306,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_SEQUENCE => 1,
+        ]);
+
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Destination',
+            TripLocation::COLUMN_LATITUDE => 29.3117,
+            TripLocation::COLUMN_LONGITUDE => 47.4818,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_SEQUENCE => 2,
+        ]);
+
+        // Try to change ride type - should fail for scheduled trips
+        $response = postJson(route('v1.customers.trips.change-ride-type', $trip), [
+            'ride_type_id' => RideTypeEnum::ROUND_TRIP->value,
+            'destination_location_title' => 'Return Location',
+            'destination_location_sub_title' => 'Sub Title',
+            'destination_latitude' => 29.3759,
+            'destination_longitude' => 47.9774,
+            'return_time' => now()->addHours(3)->timestamp,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('meta.message', trans('trips.api.exceptions.scheduled_trip_cannot_change_ride_type'));
+    });
 });
 
 describe('Confirm Trip API', function () {
@@ -1638,7 +1684,9 @@ describe('Confirm Trip API', function () {
             ]);
     });
 
-    it('cannot confirm scheduled trip', function () {
+    it('can confirm scheduled trip with only payment method', function () {
+        Queue::fake();
+
         // Create a scheduled trip
         $trip = Trip::create([
             'customer_id' => $this->customer->id,
@@ -1662,18 +1710,34 @@ describe('Confirm Trip API', function () {
             'sequence' => 1,
         ]);
 
-        // Try to confirm the scheduled trip - should fail
+        // Add destination location
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Destination Location',
+            'latitude' => 29.3859,
+            'longitude' => 47.9874,
+            'type' => TripLocationTypeEnum::DESTINATION->value,
+            'sequence' => 2,
+        ]);
+
+        // Confirm the scheduled trip - only payment_method required
         $response = postJson(route('v1.customers.trips.confirm', $trip), [
-            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
         ]);
 
-        $response->assertStatus(406)
-            ->assertJson([
-                'meta' => [
-                    'message' => trans('trips.api.exceptions.scheduled_trip_cannot_be_confirmed'),
-                ],
-            ]);
+        $response->assertStatus(200);
+
+        // Verify trip status is still DRAFT (job will process at scheduled time)
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::DRAFT);
+
+        // Verify order was created
+        expect($trip->order_id)->not->toBeNull();
+
+        // Verify ProcessScheduledTripJob was dispatched with delay
+        Queue::assertPushed(\App\Jobs\ProcessScheduledTripJob::class, function ($job) use ($trip) {
+            return $job->tripId === $trip->id;
+        });
     });
 
     it('cannot confirm trip with mismatched ride type', function () {

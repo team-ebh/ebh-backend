@@ -54,7 +54,6 @@ class TechnicalSettings extends Page implements HasForms
 
             // Customer Settings
             'customer_arriving_at_poll_interval' => Setting::get(SettingEnum::CUSTOMER_ARRIVING_AT_POLL_INTERVAL),
-            'customer_min_return_time_minutes' => Setting::get(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES),
         ]);
     }
 
@@ -125,17 +124,8 @@ class TechnicalSettings extends Page implements HasForms
                                             ->minValue(10)
                                             ->maxValue(300)
                                             ->suffix(trans('technical_settings.admin.units.seconds')),
-
-                                        TextInput::make('customer_min_return_time_minutes')
-                                            ->label(trans('technical_settings.admin.fields.customer_min_return_time_minutes'))
-                                            ->helperText(trans('technical_settings.admin.helpers.customer_min_return_time_minutes'))
-                                            ->required()
-                                            ->numeric()
-                                            ->minValue(15)
-                                            ->maxValue(480)
-                                            ->suffix(trans('technical_settings.admin.units.minutes')),
                                     ])
-                                    ->columns(2),
+                                    ->columns(1),
                             ]),
                     ])
                     ->columnSpanFull(),
@@ -167,7 +157,6 @@ class TechnicalSettings extends Page implements HasForms
 
             // Customer Settings
             Setting::set(SettingEnum::CUSTOMER_ARRIVING_AT_POLL_INTERVAL, (int) $data['customer_arriving_at_poll_interval']);
-            Setting::set(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES, (int) $data['customer_min_return_time_minutes']);
 
             Notification::make()
                 ->success()

@@ -9,46 +9,35 @@ return [
         'page_heading' => 'App Settings',
 
         'tabs' => [
-            'rider' => 'Rider Settings',
-            'customer' => 'Customer Settings',
             'pricing' => 'Pricing Settings',
+            'scheduling' => 'Scheduling Settings',
         ],
 
         'sections' => [
-            'rider' => [
-                'title' => 'Rider App Configuration',
-                'description' => 'Configure settings for the rider mobile application',
-            ],
-            'customer' => [
-                'title' => 'Customer App Configuration',
-                'description' => 'Configure settings for the customer mobile application',
-            ],
             'pricing' => [
                 'title' => 'Waiting Time Pricing',
                 'description' => 'Configure waiting time pricing for ROUND_TRIP_WAIT rides',
             ],
+            'scheduling' => [
+                'title' => 'Trip Scheduling',
+                'description' => 'Configure settings for scheduled trips',
+            ],
         ],
 
         'fields' => [
-            'rider_trip_request_timeout_seconds' => 'Trip Request Timeout',
-            'rider_location_update_interval_online' => 'Location Update Interval (Online)',
-            'rider_location_update_interval_busy' => 'Location Update Interval (Busy)',
-            'rider_arriving_at_poll_interval' => 'Arriving At Poll Interval',
-            'customer_arriving_at_poll_interval' => 'Arriving At Poll Interval',
-            'customer_min_return_time_minutes' => 'Minimum Return Time',
             'waiting_time_rate' => 'Waiting Time Rate',
             'waiting_time_interval_minutes' => 'Waiting Time Interval',
+            'scheduled_trip_search_start_minutes' => 'Search Start Time',
+            'customer_min_return_time_minutes' => 'Minimum Return Time',
+            'customer_min_schedule_time_minutes' => 'Minimum Schedule Time',
         ],
 
         'helpers' => [
-            'rider_trip_request_timeout_seconds' => 'How long a trip request remains valid before expiring (10-300 seconds)',
-            'rider_location_update_interval_online' => 'How often online (idle) riders should send location updates (10-300 seconds)',
-            'rider_location_update_interval_busy' => 'How often busy riders should send location updates (5-120 seconds)',
-            'rider_arriving_at_poll_interval' => 'How often to poll for "arriving at" time updates (10-300 seconds)',
-            'customer_arriving_at_poll_interval' => 'How often to poll for "arriving at" time updates (10-300 seconds)',
-            'customer_min_return_time_minutes' => 'Minimum time before customer can schedule return pickup (15-480 minutes)',
             'waiting_time_rate' => 'Price per waiting time interval (0.100-50.000 KWD)',
             'waiting_time_interval_minutes' => 'Duration of each waiting time interval (5-120 minutes)',
+            'scheduled_trip_search_start_minutes' => 'How many minutes before scheduled time to start searching for a rider (1-60 minutes)',
+            'customer_min_return_time_minutes' => 'Minimum time before customer can schedule return pickup (15-480 minutes)',
+            'customer_min_schedule_time_minutes' => 'Minimum time in advance that a customer can schedule a trip (5-1440 minutes)',
         ],
 
         'units' => [

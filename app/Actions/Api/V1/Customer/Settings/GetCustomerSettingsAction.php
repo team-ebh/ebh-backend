@@ -17,13 +17,14 @@ readonly class GetCustomerSettingsAction
     /**
      * Execute the action
      *
-     * @return array{arriving_at_poll_interval_seconds: int, min_return_time_minutes: int}
+     * @return array{arriving_at_poll_interval_seconds: int, min_return_time_minutes: int, min_schedule_time_minutes: int}
      */
     public function __invoke(): array
     {
         return [
             'arriving_at_poll_interval_seconds' => Setting::get(SettingEnum::CUSTOMER_ARRIVING_AT_POLL_INTERVAL),
             'min_return_time_minutes' => Setting::get(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES),
+            'min_schedule_time_minutes' => Setting::get(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES),
         ];
     }
 }
