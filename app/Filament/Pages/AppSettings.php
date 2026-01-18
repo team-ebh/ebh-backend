@@ -40,6 +40,7 @@ class AppSettings extends Page implements HasForms
             // Scheduling Settings
             'scheduled_trip_search_start_minutes' => Setting::get(SettingEnum::SCHEDULED_TRIP_SEARCH_START_MINUTES),
             'customer_min_return_time_minutes' => Setting::get(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES),
+            'customer_min_schedule_time_minutes' => Setting::get(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES),
         ]);
     }
 
@@ -102,6 +103,15 @@ class AppSettings extends Page implements HasForms
                                             ->minValue(15)
                                             ->maxValue(480)
                                             ->suffix(trans('app_settings.admin.units.minutes')),
+
+                                        TextInput::make('customer_min_schedule_time_minutes')
+                                            ->label(trans('app_settings.admin.fields.customer_min_schedule_time_minutes'))
+                                            ->helperText(trans('app_settings.admin.helpers.customer_min_schedule_time_minutes'))
+                                            ->required()
+                                            ->numeric()
+                                            ->minValue(5)
+                                            ->maxValue(1440)
+                                            ->suffix(trans('app_settings.admin.units.minutes')),
                                     ])
                                     ->columns(2),
                             ]),
@@ -134,6 +144,7 @@ class AppSettings extends Page implements HasForms
             // Scheduling Settings
             Setting::set(SettingEnum::SCHEDULED_TRIP_SEARCH_START_MINUTES, (int) $data['scheduled_trip_search_start_minutes']);
             Setting::set(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES, (int) $data['customer_min_return_time_minutes']);
+            Setting::set(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES, (int) $data['customer_min_schedule_time_minutes']);
 
             Notification::make()
                 ->success()

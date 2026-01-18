@@ -81,6 +81,7 @@ return [
             'required' => 'Schedule date time is required for scheduled trips.',
             'integer' => 'Schedule date time must be a valid timestamp.',
             'min' => 'Schedule date time must be a valid timestamp.',
+            'min_minutes' => 'Schedule date time must be at least :minutes minutes from now.',
         ],
         'ride_type_id' => [
             'required' => 'Ride type is required.',

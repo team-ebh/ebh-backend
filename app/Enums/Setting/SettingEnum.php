@@ -18,6 +18,7 @@ enum SettingEnum: string
     // Customer
     case CUSTOMER_ARRIVING_AT_POLL_INTERVAL = 'customer_arriving_at_poll_interval';
     case CUSTOMER_MIN_RETURN_TIME_MINUTES = 'customer_min_return_time_minutes';
+    case CUSTOMER_MIN_SCHEDULE_TIME_MINUTES = 'customer_min_schedule_time_minutes';
 
     // Pricing
     case WAITING_TIME_RATE = 'waiting_time_rate';
@@ -37,7 +38,8 @@ enum SettingEnum: string
             self::RIDER_ARRIVING_AT_POLL_INTERVAL => 'rider',
 
             self::CUSTOMER_ARRIVING_AT_POLL_INTERVAL,
-            self::CUSTOMER_MIN_RETURN_TIME_MINUTES => 'customer',
+            self::CUSTOMER_MIN_RETURN_TIME_MINUTES,
+            self::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES => 'customer',
 
             self::WAITING_TIME_RATE,
             self::WAITING_TIME_INTERVAL_MINUTES => 'pricing',
@@ -54,6 +56,7 @@ enum SettingEnum: string
             self::RIDER_TRIP_REQUEST_TIMEOUT_SECONDS, self::RIDER_LOCATION_UPDATE_INTERVAL_ONLINE => 45,
             self::RIDER_LOCATION_UPDATE_INTERVAL_BUSY => 15,
             self::RIDER_ARRIVING_AT_POLL_INTERVAL, self::CUSTOMER_ARRIVING_AT_POLL_INTERVAL, self::CUSTOMER_MIN_RETURN_TIME_MINUTES => 60,
+            self::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES => 30,
 
             self::WAITING_TIME_RATE => 2.500,
             self::WAITING_TIME_INTERVAL_MINUTES => 30,
@@ -74,6 +77,7 @@ enum SettingEnum: string
             self::RIDER_ARRIVING_AT_POLL_INTERVAL,
             self::CUSTOMER_ARRIVING_AT_POLL_INTERVAL,
             self::CUSTOMER_MIN_RETURN_TIME_MINUTES,
+            self::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES,
             self::WAITING_TIME_INTERVAL_MINUTES,
             self::SCHEDULED_TRIP_SEARCH_START_MINUTES => 'int',
         };

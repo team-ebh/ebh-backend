@@ -29,6 +29,7 @@ return [
             'waiting_time_interval_minutes' => 'Waiting Time Interval',
             'scheduled_trip_search_start_minutes' => 'Search Start Time',
             'customer_min_return_time_minutes' => 'Minimum Return Time',
+            'customer_min_schedule_time_minutes' => 'Minimum Schedule Time',
         ],
 
         'helpers' => [
@@ -36,6 +37,7 @@ return [
             'waiting_time_interval_minutes' => 'Duration of each waiting time interval (5-120 minutes)',
             'scheduled_trip_search_start_minutes' => 'How many minutes before scheduled time to start searching for a rider (1-60 minutes)',
             'customer_min_return_time_minutes' => 'Minimum time before customer can schedule return pickup (15-480 minutes)',
+            'customer_min_schedule_time_minutes' => 'Minimum time in advance that a customer can schedule a trip (5-1440 minutes)',
         ],
 
         'units' => [

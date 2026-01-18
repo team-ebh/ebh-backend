@@ -679,7 +679,7 @@ describe('Trip Store API', function () {
             'schedule_date_time' => -1,
         ])->assertStatus(422)
             ->assertJsonPath('meta.errors.0.field', 'schedule_date_time')
-            ->assertJsonPath('meta.errors.0.messages.0', trans('validations.trips.schedule_date_time.min'));
+            ->assertJsonPath('meta.errors.0.messages.0', trans('validations.trips.schedule_date_time.min_minutes', ['minutes' => 30]));
     });
 });
 

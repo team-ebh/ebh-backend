@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Customer\Trip;
 
+use App\Enums\Setting\SettingEnum;
 use App\Enums\Trip\AccessibilityRequirementsEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
+use App\Models\Setting;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -100,10 +102,20 @@ class TripStoreRequest extends FormRequest
             'schedule_date_time' => [
                 'nullable',
                 'integer',
-                'min:0',
+                'min:' . $this->getMinScheduleTimestamp(),
                 Rule::requiredIf(fn () => (int) $this->input('trip_type_id') === TripTypeEnum::SCHEDULED->value),
             ],
         ];
+    }
+
+    /**
+     * Get minimum schedule timestamp based on setting.
+     */
+    private function getMinScheduleTimestamp(): int
+    {
+        $minScheduleMinutes = (int) Setting::get(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES);
+
+        return now()->addMinutes($minScheduleMinutes)->timestamp;
     }
 
     public function messages(): array
@@ -159,7 +171,9 @@ class TripStoreRequest extends FormRequest
             // Schedule date time
             'schedule_date_time.required' => trans('validations.trips.schedule_date_time.required'),
             'schedule_date_time.integer' => trans('validations.trips.schedule_date_time.integer'),
-            'schedule_date_time.min' => trans('validations.trips.schedule_date_time.min'),
+            'schedule_date_time.min' => trans('validations.trips.schedule_date_time.min_minutes', [
+                'minutes' => (int) Setting::get(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES),
+            ]),
         ];
     }
 }
