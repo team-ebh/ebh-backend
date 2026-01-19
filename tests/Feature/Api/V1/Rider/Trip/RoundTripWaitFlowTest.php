@@ -11,11 +11,15 @@ use App\Enums\Trip\TripRequestStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
+use App\Events\Socket\Customer\TripNextDropOffEvent;
+use App\Events\Socket\Customer\TripNextPickUpEvent;
+use App\Events\Socket\Customer\TripPickedUpEvent;
 use App\Models\Customer;
 use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Models\TripRequest;
+use Illuminate\Support\Facades\Event;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
@@ -544,5 +548,179 @@ describe('ROUND_TRIP (Ride Type 2) - Two Destinations Flow', function () {
             'id' => $trip->id,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
+    });
+});
+
+describe('ROUND_TRIP_WAIT - Socket Events', function () {
+    test('TripNextDropOffEvent is dispatched when completing intermediate destination in ROUND_TRIP_WAIT', function () {
+        Event::fake([TripNextDropOffEvent::class]);
+
+        // Setup: Origin is picked up, Destination 1 is pending, Destination 2 is pending
+        $trip = ($this->createRoundTripWaitTrip)([], [
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PICKED_UP->value,
+                TripLocation::COLUMN_LATITUDE => 29.3759,
+                TripLocation::COLUMN_LONGITUDE => 47.9774,
+                TripLocation::COLUMN_SEQUENCE => 1,
+            ],
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+                TripLocation::COLUMN_LATITUDE => 29.3900,
+                TripLocation::COLUMN_LONGITUDE => 47.9900,
+                TripLocation::COLUMN_SEQUENCE => 2,
+            ],
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+                TripLocation::COLUMN_LATITUDE => 29.3759,
+                TripLocation::COLUMN_LONGITUDE => 47.9774,
+                TripLocation::COLUMN_SEQUENCE => 3,
+            ],
+        ]);
+
+        // Action: Complete first destination (drop off customer at intermediate destination)
+        actingAs($this->rider, 'rider')
+            ->postJson(route('v1.riders.trips.requests.completed', $trip->tripRequest))
+            ->assertOk()
+            ->assertJsonPath('data.next_action', 'next_pickup');
+
+        // Assert: TripNextDropOffEvent should be dispatched with correct data
+        Event::assertDispatched(TripNextDropOffEvent::class, function ($event) use ($trip) {
+            return $event->customerId === $trip->{Trip::COLUMN_CUSTOMER_ID}
+                && $event->tripId === $trip->{Trip::COLUMN_ID}
+                && $event->riderId === $this->rider->{Rider::COLUMN_ID};
+        });
+    });
+
+    test('TripNextDropOffEvent is NOT dispatched when completing final destination in ROUND_TRIP_WAIT', function () {
+        Event::fake([TripNextDropOffEvent::class]);
+
+        // Setup: Origin picked up, Destination 1 dropped off, Destination 2 picked up (on the way to final)
+        $trip = ($this->createRoundTripWaitTrip)([], [
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PICKED_UP->value,
+                TripLocation::COLUMN_LATITUDE => 29.3759,
+                TripLocation::COLUMN_LONGITUDE => 47.9774,
+                TripLocation::COLUMN_SEQUENCE => 1,
+            ],
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::DROPPED_OFF->value,
+                TripLocation::COLUMN_LATITUDE => 29.3900,
+                TripLocation::COLUMN_LONGITUDE => 47.9900,
+                TripLocation::COLUMN_SEQUENCE => 2,
+            ],
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PICKED_UP->value,
+                TripLocation::COLUMN_LATITUDE => 29.3759,
+                TripLocation::COLUMN_LONGITUDE => 47.9774,
+                TripLocation::COLUMN_SEQUENCE => 3,
+            ],
+        ]);
+
+        // Action: Complete final destination
+        actingAs($this->rider, 'rider')
+            ->postJson(route('v1.riders.trips.requests.completed', $trip->tripRequest))
+            ->assertOk()
+            ->assertJsonPath('data.trip_completed', true);
+
+        // Assert: TripNextDropOffEvent should NOT be dispatched for final destination
+        Event::assertNotDispatched(TripNextDropOffEvent::class);
+    });
+
+    test('TripNextPickUpEvent is dispatched when picking up passenger at dropped off destination in ROUND_TRIP_WAIT', function () {
+        Event::fake([TripNextPickUpEvent::class, TripPickedUpEvent::class]);
+
+        // Setup: Origin is picked up, Destination 1 is dropped off (waiting), Destination 2 is pending
+        $trip = ($this->createRoundTripWaitTrip)([], [
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PICKED_UP->value,
+                TripLocation::COLUMN_LATITUDE => 29.3759,
+                TripLocation::COLUMN_LONGITUDE => 47.9774,
+                TripLocation::COLUMN_SEQUENCE => 1,
+            ],
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::DROPPED_OFF->value,
+                TripLocation::COLUMN_LATITUDE => 29.3900,
+                TripLocation::COLUMN_LONGITUDE => 47.9900,
+                TripLocation::COLUMN_SEQUENCE => 2,
+            ],
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+                TripLocation::COLUMN_LATITUDE => 29.3759,
+                TripLocation::COLUMN_LONGITUDE => 47.9774,
+                TripLocation::COLUMN_SEQUENCE => 3,
+            ],
+        ]);
+
+        // Action: Pickup passenger at dropped off destination
+        actingAs($this->rider, 'rider')
+            ->postJson(route('v1.riders.trips.requests.picked-up', $trip->tripRequest))
+            ->assertOk()
+            ->assertJsonPath('data.next_action', 'complete');
+
+        // Assert: TripNextPickUpEvent should be dispatched with correct data
+        Event::assertDispatched(TripNextPickUpEvent::class, function ($event) use ($trip) {
+            return $event->customerId === $trip->{Trip::COLUMN_CUSTOMER_ID}
+                && $event->tripId === $trip->{Trip::COLUMN_ID}
+                && $event->riderId === $this->rider->{Rider::COLUMN_ID}
+                && $event->locationSequence === 3;
+        });
+
+        // Assert: Standard TripPickedUpEvent should NOT be dispatched for intermediate pickup
+        Event::assertNotDispatched(TripPickedUpEvent::class);
+    });
+
+    test('TripPickedUpEvent is dispatched for standard pickup at origin (not TripNextPickUpEvent)', function () {
+        Event::fake([TripNextPickUpEvent::class, TripPickedUpEvent::class]);
+
+        // Setup: ROUND_TRIP_WAIT with all locations pending (starting fresh after accept)
+        $trip = ($this->createRoundTripWaitTrip)([
+            Trip::COLUMN_STATUS => TripStatusEnum::ARRIVED->value,
+        ], [
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::ARRIVED->value,
+                TripLocation::COLUMN_LATITUDE => 29.3759,
+                TripLocation::COLUMN_LONGITUDE => 47.9774,
+                TripLocation::COLUMN_SEQUENCE => 1,
+            ],
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+                TripLocation::COLUMN_LATITUDE => 29.3900,
+                TripLocation::COLUMN_LONGITUDE => 47.9900,
+                TripLocation::COLUMN_SEQUENCE => 2,
+            ],
+            [
+                TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
+                TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+                TripLocation::COLUMN_LATITUDE => 29.3759,
+                TripLocation::COLUMN_LONGITUDE => 47.9774,
+                TripLocation::COLUMN_SEQUENCE => 3,
+            ],
+        ]);
+
+        // Action: Pickup at origin (standard pickup)
+        actingAs($this->rider, 'rider')
+            ->postJson(route('v1.riders.trips.requests.picked-up', $trip->tripRequest))
+            ->assertOk();
+
+        // Assert: Standard TripPickedUpEvent should be dispatched for origin pickup
+        Event::assertDispatched(TripPickedUpEvent::class, function ($event) use ($trip) {
+            return $event->customerId === $trip->{Trip::COLUMN_CUSTOMER_ID}
+                && $event->tripId === $trip->{Trip::COLUMN_ID}
+                && $event->riderId === $this->rider->{Rider::COLUMN_ID};
+        });
+
+        // Assert: TripNextPickUpEvent should NOT be dispatched for origin pickup
+        Event::assertNotDispatched(TripNextPickUpEvent::class);
     });
 });

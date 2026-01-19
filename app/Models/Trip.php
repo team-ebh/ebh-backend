@@ -49,6 +49,8 @@ class Trip extends Model
 
     public const string COLUMN_WAITING_TIME = 'waiting_time';
 
+    public const string COLUMN_WAITING_TIME_CONFIG = 'waiting_time_config';
+
     public const string COLUMN_TOTAL_PRICE = 'total_price';
 
     public const string COLUMN_COMMISSION_RATE = 'commission_rate';
@@ -74,6 +76,7 @@ class Trip extends Model
             self::COLUMN_SCHEDULED_TIME => 'datetime',
             self::COLUMN_COMMISSION_RATE => 'decimal:2',
             self::COLUMN_COMMISSION_AMOUNT => 'decimal:3',
+            self::COLUMN_WAITING_TIME_CONFIG => 'array',
         ];
     }
 

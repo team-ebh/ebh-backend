@@ -19,7 +19,8 @@ arch()->preset()->laravel()->ignoring([
     'App\Http\Controllers\Api\V1\Rider\TripController', // Allow custom methods in Rider TripController
     'App\Http\Controllers\Api\V1\Rider\AuthController', // Allow custom methods in Rider AuthController
     'App\Http\Controllers\Api\V1\Rider\RiderController', // Allow custom methods in RiderController
-    'App\Http\Controllers\Api\V1\Customer\CustomerController', // Allow custom methods in RiderController
+    'App\Http\Controllers\Api\V1\Customer\CustomerController', // Allow custom methods in CustomerController
+    'App\Http\Controllers\Api\V1\Customer\HistoryTripController', // Allow custom methods in HistoryTripController
     'App\Http\Controllers\Api\V1\TestSocketController', // Allow custom methods in TestSocketController
     'App\Events\Socket\Customer\TripSearchingForRiderEvent', // Uses custom resource for broadcasting
     'App\Events\Socket\Rider\NewTripRequestEvent', // Uses custom resource for broadcasting
