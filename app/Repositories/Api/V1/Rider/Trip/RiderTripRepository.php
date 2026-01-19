@@ -175,22 +175,31 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     }
 
     /**
-     * Update trip waiting time and price
+     * Update trip waiting time, price, and config
+     *
+     * @param  Trip  $trip  The trip to update
+     * @param  int  $waitingTime  The waiting time in minutes
+     * @param  float|null  $waitingPrice  The waiting price (null if below minimum interval)
+     * @param  array  $waitingTimeConfig  The config used for calculation (rate, interval)
      */
-    public function updateTripWaitingTimeAndPrice(Trip $trip, int $waitingTime, float $waitingPrice): void
+    public function updateTripWaitingTimeAndPrice(Trip $trip, int $waitingTime, ?float $waitingPrice, array $waitingTimeConfig): void
     {
         $currentTotalPrice = $trip->{Trip::COLUMN_TOTAL_PRICE} ?? 0.0;
 
         $trip->update([
             Trip::COLUMN_WAITING_TIME => $waitingTime,
             Trip::COLUMN_WAITING_PRICE => $waitingPrice,
-            Trip::COLUMN_TOTAL_PRICE => $currentTotalPrice + $waitingPrice,
+            Trip::COLUMN_WAITING_TIME_CONFIG => $waitingTimeConfig,
+            Trip::COLUMN_TOTAL_PRICE => $waitingPrice !== null ? $currentTotalPrice + $waitingPrice : $currentTotalPrice,
         ]);
     }
 
     /**
      * Calculate and update waiting time for ROUND_TRIP_WAIT trips
      * Returns true if waiting time was calculated and updated, false otherwise
+     *
+     * Note: Waiting time is ALWAYS persisted if calculated (even if below minimum interval).
+     * Waiting price is only set when waiting time exceeds the minimum interval.
      */
     public function calculateAndUpdateWaitingTime(Trip $trip): bool
     {
@@ -205,19 +214,18 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
         // Calculate actual waiting time from status logs
         $waitingTimeMinutes = $this->tripPricingService->calculateActualWaitingTime($trip->locations);
 
-        if ($waitingTimeMinutes === null || $waitingTimeMinutes <= 0) {
+        if ($waitingTimeMinutes === null || $waitingTimeMinutes < 0) {
             return false;
         }
 
-        // Calculate waiting charge
+        // Get the config values used for calculation
+        $waitingTimeConfig = $this->tripPricingService->getWaitingTimeConfigRaw();
+
+        // Calculate waiting charge (will be null if below minimum interval)
         $waitingCharge = $this->tripPricingService->calculateWaitingCharge($waitingTimeMinutes);
 
-        if ($waitingCharge === null || $waitingCharge <= 0) {
-            return false;
-        }
-
-        // Update trip with waiting time and price
-        $this->updateTripWaitingTimeAndPrice($trip, $waitingTimeMinutes, $waitingCharge);
+        // Update trip with waiting time, price (may be null), and config
+        $this->updateTripWaitingTimeAndPrice($trip, $waitingTimeMinutes, $waitingCharge, $waitingTimeConfig);
 
         return true;
     }

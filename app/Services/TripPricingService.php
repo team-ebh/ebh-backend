@@ -344,13 +344,24 @@ class TripPricingService
     }
 
     /**
-     * Get waiting time configuration
+     * Get waiting time configuration (formatted for display)
      */
     public function getWaitingTimeConfig(): array
     {
         return [
             'price' => priceFormat($this->getWaitingTimeRate()) . ' ' . CurrencyEnum::KWD->getLabel(),
             'time' => $this->getWaitingTimeIntervalMinutes() . ' ' . trans('trips.api.time_units.minutes'),
+        ];
+    }
+
+    /**
+     * Get waiting time configuration (raw values for storage)
+     */
+    public function getWaitingTimeConfigRaw(): array
+    {
+        return [
+            'rate' => $this->getWaitingTimeRate(),
+            'interval_minutes' => $this->getWaitingTimeIntervalMinutes(),
         ];
     }
 
