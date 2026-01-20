@@ -282,7 +282,7 @@ class TripRepository implements TripRepositoryInterface
                 'locations:id,trip_id,location_title,location_sub_title,type,sequence',
             ])
             ->orderBy(Trip::COLUMN_SCHEDULED_TIME)
-            ->cursorPaginate();
+            ->cursorPaginate(5);
     }
 
     public function getPastTrips(int $customerId): CursorPaginator
@@ -305,7 +305,7 @@ class TripRepository implements TripRepositoryInterface
                 'rider.vehicle.carModel:id,name,name_ar',
             ])
             ->orderByDesc(Trip::COLUMN_ID)
-            ->cursorPaginate();
+            ->cursorPaginate(5);
     }
 
     public function getUpcomingTripWithDetails(int $tripId, int $customerId): ?Trip
