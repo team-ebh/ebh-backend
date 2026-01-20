@@ -30,6 +30,7 @@ return [
             'scheduled_trip_search_start_minutes' => 'وقت بدء البحث',
             'customer_min_return_time_minutes' => 'الحد الأدنى لوقت العودة',
             'customer_min_schedule_time_minutes' => 'الحد الأدنى لوقت الجدولة',
+            'customer_max_schedule_time_days' => 'الحد الأقصى لوقت الجدولة',
         ],
 
         'helpers' => [
@@ -38,11 +39,17 @@ return [
             'scheduled_trip_search_start_minutes' => 'كم دقيقة قبل الموعد المحدد لبدء البحث عن سائق (1-60 دقيقة)',
             'customer_min_return_time_minutes' => 'الحد الأدنى للوقت قبل أن يتمكن العميل من جدولة العودة (15-480 دقيقة)',
             'customer_min_schedule_time_minutes' => 'الحد الأدنى للوقت المسبق الذي يمكن للعميل جدولة رحلة فيه (5-1440 دقيقة)',
+            'customer_max_schedule_time_days' => 'الحد الأقصى للوقت المسبق الذي يمكن للعميل جدولة رحلة فيه (1-365 يوم). اتركه فارغًا لعدم وجود حد.',
+        ],
+
+        'placeholders' => [
+            'no_limit' => 'بدون حد',
         ],
 
         'units' => [
             'seconds' => 'ثانية',
             'minutes' => 'دقيقة',
+            'days' => 'يوم',
         ],
 
         'actions' => [

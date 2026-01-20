@@ -30,6 +30,7 @@ return [
             'scheduled_trip_search_start_minutes' => 'Search Start Time',
             'customer_min_return_time_minutes' => 'Minimum Return Time',
             'customer_min_schedule_time_minutes' => 'Minimum Schedule Time',
+            'customer_max_schedule_time_days' => 'Maximum Schedule Time',
         ],
 
         'helpers' => [
@@ -38,11 +39,17 @@ return [
             'scheduled_trip_search_start_minutes' => 'How many minutes before scheduled time to start searching for a rider (1-60 minutes)',
             'customer_min_return_time_minutes' => 'Minimum time before customer can schedule return pickup (15-480 minutes)',
             'customer_min_schedule_time_minutes' => 'Minimum time in advance that a customer can schedule a trip (5-1440 minutes)',
+            'customer_max_schedule_time_days' => 'Maximum time in advance that a customer can schedule a trip (1-365 days). Leave empty for no limit.',
+        ],
+
+        'placeholders' => [
+            'no_limit' => 'No limit',
         ],
 
         'units' => [
             'seconds' => 'seconds',
             'minutes' => 'minutes',
+            'days' => 'days',
         ],
 
         'actions' => [

@@ -41,6 +41,7 @@ class AppSettings extends Page implements HasForms
             'scheduled_trip_search_start_minutes' => Setting::get(SettingEnum::SCHEDULED_TRIP_SEARCH_START_MINUTES),
             'customer_min_return_time_minutes' => Setting::get(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES),
             'customer_min_schedule_time_minutes' => Setting::get(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES),
+            'customer_max_schedule_time_days' => Setting::getNullable(SettingEnum::CUSTOMER_MAX_SCHEDULE_TIME_DAYS),
         ]);
     }
 
@@ -112,6 +113,15 @@ class AppSettings extends Page implements HasForms
                                             ->minValue(5)
                                             ->maxValue(1440)
                                             ->suffix(trans('app_settings.admin.units.minutes')),
+
+                                        TextInput::make('customer_max_schedule_time_days')
+                                            ->label(trans('app_settings.admin.fields.customer_max_schedule_time_days'))
+                                            ->helperText(trans('app_settings.admin.helpers.customer_max_schedule_time_days'))
+                                            ->placeholder(trans('app_settings.admin.placeholders.no_limit'))
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->maxValue(365)
+                                            ->suffix(trans('app_settings.admin.units.days')),
                                     ])
                                     ->columns(2),
                             ]),
@@ -145,6 +155,13 @@ class AppSettings extends Page implements HasForms
             Setting::set(SettingEnum::SCHEDULED_TRIP_SEARCH_START_MINUTES, (int) $data['scheduled_trip_search_start_minutes']);
             Setting::set(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES, (int) $data['customer_min_return_time_minutes']);
             Setting::set(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES, (int) $data['customer_min_schedule_time_minutes']);
+
+            // Nullable settings - remove if empty, otherwise save
+            if (empty($data['customer_max_schedule_time_days'])) {
+                Setting::remove(SettingEnum::CUSTOMER_MAX_SCHEDULE_TIME_DAYS);
+            } else {
+                Setting::set(SettingEnum::CUSTOMER_MAX_SCHEDULE_TIME_DAYS, (int) $data['customer_max_schedule_time_days']);
+            }
 
             Notification::make()
                 ->success()
