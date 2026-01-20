@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Customer;
 
-use App\Actions\Api\V1\Customer\Trip\History\GetTripDetailsAction;
-use App\Actions\Api\V1\Customer\Trip\History\GetTripsHistoryAction;
-use App\DTOs\Api\V1\Customer\Trip\History\TripHistoryDTO;
+use App\Actions\Api\V1\Customer\Trip\History\GetPastTripDetailsAction;
+use App\Actions\Api\V1\Customer\Trip\History\GetPastTripsAction;
+use App\Actions\Api\V1\Customer\Trip\History\GetUpcomingTripDetailsAction;
+use App\Actions\Api\V1\Customer\Trip\History\GetUpcomingTripsAction;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\Customer\Trip\History\TripHistoryRequest;
-use App\Http\Resources\Api\V1\Customer\Trip\History\TripDetailsResource;
-use App\Http\Resources\Api\V1\Customer\Trip\History\TripHistoryResource;
+use App\Http\Resources\Api\V1\Customer\Trip\History\HistoryPastTripListResource;
+use App\Http\Resources\Api\V1\Customer\Trip\History\HistoryUpcomingTripListResource;
+use App\Http\Resources\Api\V1\Customer\Trip\History\PastTripDetailsResource;
+use App\Http\Resources\Api\V1\Customer\Trip\History\UpcomingTripDetailsResource;
 use App\Models\Trip;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
  * @tags Trip History
@@ -20,45 +21,69 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class HistoryTripController extends Controller
 {
     /**
-     * Get trip history
+     * Get upcoming trips list
      *
-     * Returns trips based on type:
-     * - upcoming: Scheduled draft trips (confirmed but not yet processed)
-     * - past: Completed and cancelled trips
+     * Returns scheduled draft trips (confirmed but not yet processed)
      *
      * @authenticated
      */
-    public function trips(
-        TripHistoryRequest $request,
-        TripHistoryDTO $dto,
-        GetTripsHistoryAction $action
-    ): AnonymousResourceCollection {
-        $dto->getDataFromRequest($request);
-        $trips = $action($dto);
-
-        return TripHistoryResource::collection(
-            $trips->map(fn (Trip $trip) => new TripHistoryResource($trip, $dto->type))
-        );
+    public function upcomingTrips(GetUpcomingTripsAction $action): HistoryUpcomingTripListResource
+    {
+        return new HistoryUpcomingTripListResource($action(auth('customer')->id()));
     }
 
     /**
-     * Get trip details
+     * Get upcoming trip details
      *
-     * Returns detailed information about a specific trip including:
-     * - Price breakdown (base fare, round trip fee, waiting charge, accessibility, total)
-     * - Ride details (ride type, passenger count, waiting time)
-     * - Accessibility requirements selected for the trip
-     * - Rider information (if assigned)
-     * - Location details
+     * Returns detailed information about a specific upcoming trip including:
+     * - Scheduled time
+     * - Trip type
+     * - Locations
+     * - Price breakdown
+     * - Ride type and passenger count
+     * - Accessibility requirements
+     * - Waiting time (if applicable)
      *
      * @authenticated
      *
      * @throws \Throwable
      */
-    public function details(Trip $trip, GetTripDetailsAction $action): TripDetailsResource
+    public function upcomingDetails(Trip $trip, GetUpcomingTripDetailsAction $action): UpcomingTripDetailsResource
     {
-        $customerId = auth('customer')->id();
+        return new UpcomingTripDetailsResource($action($trip->id, auth('customer')->id()));
+    }
 
-        return new TripDetailsResource($action($trip->id, $customerId));
+    /**
+     * Get past trips list
+     *
+     * Returns completed and canceled trips with rider information
+     *
+     * @authenticated
+     */
+    public function pastTrips(GetPastTripsAction $action): HistoryPastTripListResource
+    {
+        return new HistoryPastTripListResource($action(auth('customer')->id()));
+    }
+
+    /**
+     * Get past trip details
+     *
+     * Returns detailed information about a specific past trip including:
+     * - Rider information
+     * - Vehicle plate number
+     * - Trip type
+     * - Locations
+     * - Price breakdown
+     * - Ride type and passenger count
+     * - Accessibility requirements
+     * - Waiting time (if applicable)
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function pastDetails(Trip $trip, GetPastTripDetailsAction $action): PastTripDetailsResource
+    {
+        return new PastTripDetailsResource($action($trip->id, auth('customer')->id()));
     }
 }

@@ -12,11 +12,11 @@ use App\Enums\Trip\TripLocationTypeEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
-use App\Models\Order;
 use App\Models\Trip;
 use App\Models\TripAccessibility;
 use App\Models\TripLocation;
 use Carbon\Carbon;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class TripRepository implements TripRepositoryInterface
@@ -199,16 +199,6 @@ class TripRepository implements TripRepositoryInterface
         ]);
     }
 
-    public function deleteAdditionalDestinations(Trip $trip): void
-    {
-        // Delete all destination locations except the first one (sequence 2)
-        TripLocation::query()
-            ->where(TripLocation::COLUMN_TRIP_ID, $trip->{Trip::COLUMN_ID})
-            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)
-            ->where(TripLocation::COLUMN_SEQUENCE, '>', 2)
-            ->delete();
-    }
-
     public function createDemandTrip(Trip $sourceTrip, array $originLocation, array $destinationLocation, ?int $scheduledTime, ?float $baseFare = null, ?float $roundTripPrice = null, ?float $accessibilityCost = null, ?float $totalPrice = null): Trip
     {
         // Create demand trip with SCHEDULED type
@@ -279,26 +269,25 @@ class TripRepository implements TripRepositoryInterface
             ->delete();
     }
 
-    public function getUpcomingTrips(int $customerId): Collection
+    public function getUpcomingTrips(int $customerId): CursorPaginator
     {
         // Get draft scheduled trips (confirmed scheduled trips waiting for processing)
         return Trip::query()
             ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
             ->where(Trip::COLUMN_STATUS, TripStatusEnum::DRAFT)
             ->where(Trip::COLUMN_TRIP_TYPE_ID, TripTypeEnum::SCHEDULED)
+            ->whereNotNull(Trip::COLUMN_ORDER_ID)
             ->whereNotNull(Trip::COLUMN_SCHEDULED_TIME)
             ->with([
-                'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence',
-                'rider:id,full_name,phone_number',
-                'rider.accessibilityCertifications:id,rider_id,certification_type',
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
             ])
             ->orderBy(Trip::COLUMN_SCHEDULED_TIME)
-            ->get();
+            ->cursorPaginate();
     }
 
-    public function getPastTrips(int $customerId): Collection
+    public function getPastTrips(int $customerId): CursorPaginator
     {
-        // Get completed and cancelled trips
+        // Get completed and canceled trips
         return Trip::query()
             ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
             ->whereIn(Trip::COLUMN_STATUS, [
@@ -306,13 +295,51 @@ class TripRepository implements TripRepositoryInterface
                 TripStatusEnum::CANCELED_BY_CUSTOMER,
                 TripStatusEnum::CANCELLED_BY_RIDER,
             ])
+            ->whereNotNull(Trip::COLUMN_RIDER_ID)
             ->with([
-                'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence',
-                'rider:id,full_name,phone_number',
-                'rider.accessibilityCertifications:id,rider_id,certification_type',
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+                'rider:id,full_name',
+                'rider:media',
+                'rider.vehicle:id,rider_id,car_make_id,car_model_id,plate_number',
+                'rider.vehicle.carMake:id,name,name_ar',
+                'rider.vehicle.carModel:id,name,name_ar',
             ])
             ->orderByDesc(Trip::COLUMN_ID)
-            ->get();
+            ->cursorPaginate();
+    }
+
+    public function getUpcomingTripWithDetails(int $tripId, int $customerId): ?Trip
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_ID, $tripId)
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->where(Trip::COLUMN_STATUS, TripStatusEnum::DRAFT)
+            ->where(Trip::COLUMN_TRIP_TYPE_ID, TripTypeEnum::SCHEDULED)
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+                'accessibility',
+            ])
+            ->first();
+    }
+
+    public function getPastTripWithDetails(int $tripId, int $customerId): ?Trip
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_ID, $tripId)
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->whereIn(Trip::COLUMN_STATUS, [
+                TripStatusEnum::COMPLETED,
+                TripStatusEnum::CANCELED_BY_CUSTOMER,
+                TripStatusEnum::CANCELLED_BY_RIDER,
+            ])
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+                'accessibility',
+                'rider:id,full_name,phone_number',
+                'rider.accessibilityCertifications:id,rider_id,certification_type',
+                'rider.vehicle:id,rider_id,plate_number',
+            ])
+            ->first();
     }
 
     public function getTripWithDetails(int $tripId, int $customerId): ?Trip

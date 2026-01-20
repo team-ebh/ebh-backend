@@ -53,4 +53,12 @@ class Vehicle extends Model
             ]);
         }
     }
+
+    public function getModelCar(): string
+    {
+        return implode(' ', array_filter([
+            $this->carMake?->translated(VehicleSetting::COLUMN_NAME),
+            $this->carModel?->translated(VehicleSetting::COLUMN_NAME),
+        ]));
+    }
 }
