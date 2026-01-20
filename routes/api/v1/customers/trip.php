@@ -20,6 +20,7 @@ Route::name('trips.')
                 Route::post('/{trip}/confirm', 'confirm')->name('confirm');
                 Route::get('/{trip}/status', 'getTripStatus')->name('status');
                 Route::post('/{trip}/cancel', 'cancel')->name('cancel');
+                Route::post('/cancel-schedule', 'cancelScheduleTrip')->name('cancel-schedule');
                 Route::get('/{trip}/rider-location', 'getRiderLocation')->name('rider-location');
                 Route::get('/{trip}/estimated-arrival-time', 'estimatedArrivalTime')->name('estimated-arrival-time');
             });
