@@ -19,6 +19,7 @@ enum SettingEnum: string
     case CUSTOMER_ARRIVING_AT_POLL_INTERVAL = 'customer_arriving_at_poll_interval';
     case CUSTOMER_MIN_RETURN_TIME_MINUTES = 'customer_min_return_time_minutes';
     case CUSTOMER_MIN_SCHEDULE_TIME_MINUTES = 'customer_min_schedule_time_minutes';
+    case CUSTOMER_MAX_SCHEDULE_TIME_DAYS = 'customer_max_schedule_time_days';
 
     // Pricing
     case WAITING_TIME_RATE = 'waiting_time_rate';
@@ -39,7 +40,8 @@ enum SettingEnum: string
 
             self::CUSTOMER_ARRIVING_AT_POLL_INTERVAL,
             self::CUSTOMER_MIN_RETURN_TIME_MINUTES,
-            self::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES => 'customer',
+            self::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES,
+            self::CUSTOMER_MAX_SCHEDULE_TIME_DAYS => 'customer',
 
             self::WAITING_TIME_RATE,
             self::WAITING_TIME_INTERVAL_MINUTES => 'pricing',
@@ -78,12 +80,24 @@ enum SettingEnum: string
             self::CUSTOMER_ARRIVING_AT_POLL_INTERVAL,
             self::CUSTOMER_MIN_RETURN_TIME_MINUTES,
             self::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES,
+            self::CUSTOMER_MAX_SCHEDULE_TIME_DAYS,
             self::WAITING_TIME_INTERVAL_MINUTES,
             self::SCHEDULED_TRIP_SEARCH_START_MINUTES => 'int',
         };
     }
 
-    public function cast(mixed $value): int | float | string | bool
+    /**
+     * Check if this setting is nullable (no default value)
+     */
+    public function isNullable(): bool
+    {
+        return match ($this) {
+            self::CUSTOMER_MAX_SCHEDULE_TIME_DAYS => true,
+            default => false,
+        };
+    }
+
+    public function cast(mixed $value): int | float | string | bool | null
     {
         return match ($this->type()) {
             'int' => (int) $value,

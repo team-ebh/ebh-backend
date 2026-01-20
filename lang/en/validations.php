@@ -82,6 +82,7 @@ return [
             'integer' => 'Schedule date time must be a valid timestamp.',
             'min' => 'Schedule date time must be a valid timestamp.',
             'min_minutes' => 'Schedule date time must be at least :minutes minutes from now.',
+            'max_days' => 'Schedule date time must not be more than :days days from now.',
         ],
         'ride_type_id' => [
             'required' => 'Ride type is required.',

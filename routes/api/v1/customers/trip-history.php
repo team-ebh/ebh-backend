@@ -11,6 +11,11 @@ Route::name('trip-history.')
     ->controller(HistoryTripController::class)
     ->middleware(['auth:customer', 'customer.active'])
     ->group(function () {
-        Route::get('/', 'trips')->name('trips');
-        Route::get('/{trip}/details', 'details')->name('details');
+        // Upcoming trips
+        Route::get('/upcoming', 'upcomingTrips')->name('upcoming');
+        Route::get('/upcoming/{trip}', 'upcomingDetails')->name('upcoming.details');
+
+        // Past trips
+        Route::get('/past', 'pastTrips')->name('past');
+        Route::get('/past/{trip}', 'pastDetails')->name('past.details');
     });

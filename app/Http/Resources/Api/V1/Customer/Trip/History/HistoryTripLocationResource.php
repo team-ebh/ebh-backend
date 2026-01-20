@@ -38,25 +38,6 @@ class HistoryTripLocationResource extends JsonResource
              * @var string|null
              */
             'sub_title' => $location->{TripLocation::COLUMN_LOCATION_SUB_TITLE},
-
-            /**
-             * Location type
-             *
-             * @var array{id: int, label: string}
-             */
-            'type' => [
-                'id' => $location->{TripLocation::COLUMN_TYPE}->value,
-                'label' => $location->{TripLocation::COLUMN_TYPE}->getLabel(),
-            ],
-
-            /**
-             * Location sequence order
-             *
-             * @example 1
-             *
-             * @var int
-             */
-            'sequence' => $location->{TripLocation::COLUMN_SEQUENCE},
         ];
     }
 }

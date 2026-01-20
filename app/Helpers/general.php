@@ -6,6 +6,7 @@ use App\Enums\ApplicationEnvironmentEnum;
 use App\Models\Payment;
 use App\Models\Trip;
 use App\Services\SafeProcess;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -200,5 +201,25 @@ if (! function_exists('getApiUrl')) {
         }
 
         return "{$scheme}://{$domain}";
+    }
+}
+
+if (! function_exists('getInfiniteScroll')) {
+    function getInfiniteScroll(CursorPaginator $paginator): array
+    {
+        if (! $paginator->hasMorePages()) {
+            $nextCursor = null;
+        } else {
+            parse_str(parse_url($paginator->nextPageUrl(), PHP_URL_QUERY), $queryParams);
+            $nextCursor = $queryParams['cursor'] ?? null;
+        }
+
+        return [
+            'data' => collect($paginator->items()),
+            'pagination' => [
+                'has_more_pages' => $paginator->hasMorePages(),
+                'next_cursor' => is_null($nextCursor) ? null : (string) $nextCursor,
+            ],
+        ];
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Customer;
 
+use App\Actions\Api\V1\Customer\Trip\CancelScheduleTripAction;
 use App\Actions\Api\V1\Customer\Trip\CancelTripAction;
 use App\Actions\Api\V1\Customer\Trip\ChangeRideTypeAction;
 use App\Actions\Api\V1\Customer\Trip\ConfirmTripAction;
@@ -216,5 +217,22 @@ class TripController extends Controller
         $dto->getDataFromRequest($request);
 
         return new EstimatedArrivalTimeResource($action($dto));
+    }
+
+    /**
+     * Cancel schedule trip
+     *
+     * Cancels the trip and changes status to CANCEL.
+     * Only DRAFT trips can be canceled.
+     *
+     * @authenticated
+     *
+     * @throws \Throwable
+     */
+    public function cancelScheduleTrip(CancelScheduleTripAction $action): JsonResponse
+    {
+        $action();
+
+        return $this->successResponse();
     }
 }

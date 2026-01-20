@@ -51,6 +51,24 @@ class Setting extends Model
     }
 
     /**
+     * Get a nullable setting value by enum (returns null if not set)
+     */
+    public static function getNullable(SettingEnum $setting): int | float | string | bool | null
+    {
+        $cacheKey = self::CACHE_PREFIX . $setting->value;
+
+        $value = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($setting) {
+            return self::query()->where(self::COLUMN_KEY, $setting->value)->first()?->{self::COLUMN_VALUE};
+        });
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return $setting->cast($value);
+    }
+
+    /**
      * Set a setting value by enum
      */
     public static function set(SettingEnum $setting, int | float | string | bool $value): Model
@@ -66,6 +84,18 @@ class Setting extends Model
         Cache::forget(self::CACHE_PREFIX . $setting->value);
 
         return $record;
+    }
+
+    /**
+     * Remove a setting by enum (for nullable settings)
+     */
+    public static function remove(SettingEnum $setting): bool
+    {
+        $deleted = self::query()->where(self::COLUMN_KEY, $setting->value)->delete();
+
+        Cache::forget(self::CACHE_PREFIX . $setting->value);
+
+        return $deleted > 0;
     }
 
     /**

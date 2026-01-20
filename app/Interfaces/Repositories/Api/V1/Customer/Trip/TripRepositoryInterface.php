@@ -9,6 +9,7 @@ use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Models\Trip;
 use App\Models\TripLocation;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 interface TripRepositoryInterface
@@ -37,15 +38,17 @@ interface TripRepositoryInterface
 
     public function createDestinationLocation(Trip $trip, string $locationTitle, ?string $locationSubTitle, float $latitude, float $longitude, int $sequence): TripLocation;
 
-    public function deleteAdditionalDestinations(Trip $trip): void;
-
     public function createDemandTrip(Trip $sourceTrip, array $originLocation, array $destinationLocation, ?int $scheduledTime, ?float $baseFare = null, ?float $roundTripPrice = null, ?float $accessibilityCost = null, ?float $totalPrice = null): Trip;
 
     public function deleteDraftTrips(int $customerId): void;
 
-    public function getUpcomingTrips(int $customerId): Collection;
+    public function getUpcomingTrips(int $customerId): CursorPaginator;
 
-    public function getPastTrips(int $customerId): Collection;
+    public function getPastTrips(int $customerId): CursorPaginator;
+
+    public function getUpcomingTripWithDetails(int $tripId, int $customerId): ?Trip;
+
+    public function getPastTripWithDetails(int $tripId, int $customerId): ?Trip;
 
     public function getTripWithDetails(int $tripId, int $customerId): ?Trip;
 }

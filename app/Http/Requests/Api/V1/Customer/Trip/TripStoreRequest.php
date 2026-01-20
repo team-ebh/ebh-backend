@@ -103,6 +103,7 @@ class TripStoreRequest extends FormRequest
                 'nullable',
                 'integer',
                 'min:' . $this->getMinScheduleTimestamp(),
+                ...$this->getMaxScheduleTimestampRule(),
                 Rule::requiredIf(fn () => (int) $this->input('trip_type_id') === TripTypeEnum::SCHEDULED->value),
             ],
         ];
@@ -116,6 +117,22 @@ class TripStoreRequest extends FormRequest
         $minScheduleMinutes = (int) Setting::get(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES);
 
         return now()->addMinutes($minScheduleMinutes)->timestamp;
+    }
+
+    /**
+     * Get maximum schedule timestamp rule based on setting (nullable).
+     *
+     * @return array<int, string>
+     */
+    private function getMaxScheduleTimestampRule(): array
+    {
+        $maxScheduleDays = Setting::getNullable(SettingEnum::CUSTOMER_MAX_SCHEDULE_TIME_DAYS);
+
+        if ($maxScheduleDays === null) {
+            return [];
+        }
+
+        return ['max:' . now()->addDays((int) $maxScheduleDays)->timestamp];
     }
 
     public function messages(): array
@@ -173,6 +190,9 @@ class TripStoreRequest extends FormRequest
             'schedule_date_time.integer' => trans('validations.trips.schedule_date_time.integer'),
             'schedule_date_time.min' => trans('validations.trips.schedule_date_time.min_minutes', [
                 'minutes' => (int) Setting::get(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES),
+            ]),
+            'schedule_date_time.max' => trans('validations.trips.schedule_date_time.max_days', [
+                'days' => Setting::getNullable(SettingEnum::CUSTOMER_MAX_SCHEDULE_TIME_DAYS) ?? 0,
             ]),
         ];
     }

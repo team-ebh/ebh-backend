@@ -60,4 +60,15 @@ readonly class CustomerTripRepository implements CustomerTripRepositoryInterface
             ->scheduledTrips()
             ->exists();
     }
+
+    /**
+     * Check if customer has a scheduled trip
+     */
+    public function firstScheduledTrip(int $customerId): ?Trip
+    {
+        return Trip::query()
+            ->forCustomer($customerId)
+            ->scheduledTrips()
+            ->first();
+    }
 }
