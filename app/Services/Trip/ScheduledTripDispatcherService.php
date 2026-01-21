@@ -55,7 +55,9 @@ class ScheduledTripDispatcherService
         $jobRunTime = Carbon::parse($scheduledTime)->subMinutes($searchStartMinutes);
 
         // Calculate delay from now until job run time
-        $delay = $jobRunTime->diffInSeconds(now(), false);
+        // now()->diffInSeconds($jobRunTime, false) gives: $jobRunTime - now()
+        // Positive when jobRunTime is in the future, negative when in the past
+        $delay = now()->diffInSeconds($jobRunTime, false);
 
         // If job run time is in the past or very soon, dispatch immediately
         if ($delay <= 0) {
