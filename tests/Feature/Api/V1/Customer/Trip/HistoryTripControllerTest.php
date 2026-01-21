@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Enums\Currency\CurrencyEnum;
+use App\Enums\Order\OrderStatusEnum;
+use App\Enums\Payment\PaymentMethodEnum;
 use App\Enums\Trip\AccessibilityRequirementsEnum;
 use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
@@ -10,6 +12,7 @@ use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripAccessibility;
@@ -36,6 +39,14 @@ describe('Upcoming Trips List API', function () {
     });
 
     it('returns scheduled draft trips as upcoming trips', function () {
+        $order = Order::create([
+            Order::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Order::COLUMN_TOTAL_PRICE => 10.000,
+            Order::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+            Order::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET->value,
+            Order::COLUMN_STATUS => OrderStatusEnum::COMPLETED->value,
+        ]);
+
         $trip = Trip::create([
             Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
             Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::SCHEDULED->value,
@@ -47,7 +58,7 @@ describe('Upcoming Trips List API', function () {
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
             Trip::COLUMN_STATUS => TripStatusEnum::DRAFT->value,
             Trip::COLUMN_SCHEDULED_TIME => now()->addHours(2),
-            Trip::COLUMN_ORDER_ID => 1,
+            Trip::COLUMN_ORDER_ID => $order->id,
         ]);
 
         TripLocation::create([
@@ -73,10 +84,10 @@ describe('Upcoming Trips List API', function () {
         $response = getJson(route('v1.customers.trip-history.upcoming'));
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data.data')
+            ->assertJsonCount(1, 'data.trips')
             ->assertJsonStructure([
                 'data' => [
-                    'data' => [
+                    'trips' => [
                         '*' => [
                             'id',
                             'locations' => [
@@ -86,12 +97,12 @@ describe('Upcoming Trips List API', function () {
                             'type' => ['id', 'label'],
                         ],
                     ],
-                    'next_cursor',
+                    'pagination' => ['has_more_pages', 'next_cursor'],
                 ],
             ]);
 
         // Verify type is present (trip type, not ride type)
-        $response->assertJsonPath('data.data.0.type.id', TripTypeEnum::SCHEDULED->value);
+        $response->assertJsonPath('data.trips.0.type.id', TripTypeEnum::SCHEDULED->value);
     });
 
     it('does not return ride now draft trips as upcoming', function () {
@@ -109,10 +120,26 @@ describe('Upcoming Trips List API', function () {
         $response = getJson(route('v1.customers.trip-history.upcoming'));
 
         $response->assertStatus(200)
-            ->assertJsonCount(0, 'data');
+            ->assertJsonCount(0, 'data.trips');
     });
 
     it('orders upcoming trips by scheduled time', function () {
+        $order1 = Order::create([
+            Order::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Order::COLUMN_TOTAL_PRICE => 5.000,
+            Order::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+            Order::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET->value,
+            Order::COLUMN_STATUS => OrderStatusEnum::COMPLETED->value,
+        ]);
+
+        $order2 = Order::create([
+            Order::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Order::COLUMN_TOTAL_PRICE => 5.000,
+            Order::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+            Order::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET->value,
+            Order::COLUMN_STATUS => OrderStatusEnum::COMPLETED->value,
+        ]);
+
         $laterTrip = Trip::create([
             Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
             Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::SCHEDULED->value,
@@ -123,7 +150,7 @@ describe('Upcoming Trips List API', function () {
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
             Trip::COLUMN_STATUS => TripStatusEnum::DRAFT->value,
             Trip::COLUMN_SCHEDULED_TIME => now()->addHours(5),
-            Trip::COLUMN_ORDER_ID => 1,
+            Trip::COLUMN_ORDER_ID => $order1->id,
         ]);
 
         $soonerTrip = Trip::create([
@@ -136,7 +163,7 @@ describe('Upcoming Trips List API', function () {
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
             Trip::COLUMN_STATUS => TripStatusEnum::DRAFT->value,
             Trip::COLUMN_SCHEDULED_TIME => now()->addHours(1),
-            Trip::COLUMN_ORDER_ID => 2,
+            Trip::COLUMN_ORDER_ID => $order2->id,
         ]);
 
         foreach ([$laterTrip, $soonerTrip] as $trip) {
@@ -161,15 +188,23 @@ describe('Upcoming Trips List API', function () {
         $response = getJson(route('v1.customers.trip-history.upcoming'));
 
         $response->assertStatus(200)
-            ->assertJsonCount(2, 'data.data');
+            ->assertJsonCount(2, 'data.trips');
 
         // First trip should be the sooner one
-        $response->assertJsonPath('data.data.0.id', $soonerTrip->id);
-        $response->assertJsonPath('data.data.1.id', $laterTrip->id);
+        $response->assertJsonPath('data.trips.0.id', $soonerTrip->id);
+        $response->assertJsonPath('data.trips.1.id', $laterTrip->id);
     });
 
     it('does not include rider information in upcoming trips', function () {
         $rider = Rider::factory()->create();
+
+        $order = Order::create([
+            Order::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Order::COLUMN_TOTAL_PRICE => 5.000,
+            Order::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+            Order::COLUMN_PAYMENT_METHOD => PaymentMethodEnum::KNET->value,
+            Order::COLUMN_STATUS => OrderStatusEnum::COMPLETED->value,
+        ]);
 
         $trip = Trip::create([
             Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
@@ -182,7 +217,7 @@ describe('Upcoming Trips List API', function () {
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
             Trip::COLUMN_STATUS => TripStatusEnum::DRAFT->value,
             Trip::COLUMN_SCHEDULED_TIME => now()->addHours(2),
-            Trip::COLUMN_ORDER_ID => 1,
+            Trip::COLUMN_ORDER_ID => $order->id,
         ]);
 
         TripLocation::create([
@@ -197,7 +232,7 @@ describe('Upcoming Trips List API', function () {
         $response = getJson(route('v1.customers.trip-history.upcoming'));
 
         $response->assertStatus(200);
-        expect($response->json('data.data.0'))->not->toHaveKey('rider');
+        expect($response->json('data.trips.0'))->not->toHaveKey('rider');
     });
 });
 
@@ -278,10 +313,10 @@ describe('Past Trips List API', function () {
         $response = getJson(route('v1.customers.trip-history.past'));
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data.data')
+            ->assertJsonCount(1, 'data.trips')
             ->assertJsonStructure([
                 'data' => [
-                    'data' => [
+                    'trips' => [
                         '*' => [
                             'id',
                             'rider' => ['id', 'image', 'name', 'rating'],
@@ -292,17 +327,43 @@ describe('Past Trips List API', function () {
                             'status' => ['id', 'label'],
                         ],
                     ],
-                    'next_cursor',
+                    'pagination' => ['has_more_pages', 'next_cursor'],
                 ],
             ]);
 
         // Verify status is present
-        $response->assertJsonPath('data.data.0.status.id', TripStatusEnum::COMPLETED->value);
+        $response->assertJsonPath('data.trips.0.status.id', TripStatusEnum::COMPLETED->value);
     });
 
     it('returns cancelled trips with simple Cancelled label', function () {
+        $rider = Rider::factory()->create();
+
+        $carMake = VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => 'car_make',
+            VehicleSetting::COLUMN_NAME => 'Toyota',
+            VehicleSetting::COLUMN_NAME_AR => 'تويوتا',
+            VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+
+        $carModel = VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => 'car_model',
+            VehicleSetting::COLUMN_NAME => 'Camry',
+            VehicleSetting::COLUMN_NAME_AR => 'كامري',
+            VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+
+        Vehicle::create([
+            Vehicle::COLUMN_RIDER_ID => $rider->id,
+            Vehicle::COLUMN_PLATE_NUMBER => 'ABC-123',
+            Vehicle::COLUMN_CAR_MAKE_ID => $carMake->id,
+            Vehicle::COLUMN_CAR_MODEL_ID => $carModel->id,
+            Vehicle::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            Vehicle::COLUMN_YEAR => 2023,
+        ]);
+
         $trip = Trip::create([
             Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Trip::COLUMN_RIDER_ID => $rider->id,
             Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
             Trip::COLUMN_RIDE_TYPE => RideTypeEnum::ONE_WAY->value,
             Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
@@ -324,12 +385,14 @@ describe('Past Trips List API', function () {
         $response = getJson(route('v1.customers.trip-history.past'));
 
         $response->assertStatus(200)
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.status.id', TripStatusEnum::CANCELED_BY_CUSTOMER->value)
-            ->assertJsonPath('data.0.status.label', 'Cancelled');
+            ->assertJsonCount(1, 'data.trips')
+            ->assertJsonPath('data.trips.0.status.id', TripStatusEnum::CANCELED_BY_CUSTOMER->value)
+            ->assertJsonPath('data.trips.0.status.label', 'Cancelled by Customer');
     });
 
     it('does not return draft or active trips in past trips', function () {
+        $rider = Rider::factory()->create();
+
         $statuses = [
             TripStatusEnum::DRAFT,
             TripStatusEnum::PENDING_RIDER,
@@ -341,6 +404,7 @@ describe('Past Trips List API', function () {
         foreach ($statuses as $status) {
             Trip::create([
                 Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
+                Trip::COLUMN_RIDER_ID => $rider->id,
                 Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
                 Trip::COLUMN_RIDE_TYPE => RideTypeEnum::ONE_WAY->value,
                 Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
@@ -354,13 +418,36 @@ describe('Past Trips List API', function () {
         $response = getJson(route('v1.customers.trip-history.past'));
 
         $response->assertStatus(200)
-            ->assertJsonCount(0, 'data');
+            ->assertJsonCount(0, 'data.trips');
     });
 
     it('includes rider information when trip has assigned rider', function () {
         $rider = Rider::factory()->create([
             Rider::COLUMN_FULL_NAME => 'John Doe',
             Rider::COLUMN_PHONE_NUMBER => '+96512345678',
+        ]);
+
+        $carMake = VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => 'car_make',
+            VehicleSetting::COLUMN_NAME => 'Toyota',
+            VehicleSetting::COLUMN_NAME_AR => 'تويوتا',
+            VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+
+        $carModel = VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => 'car_model',
+            VehicleSetting::COLUMN_NAME => 'Camry',
+            VehicleSetting::COLUMN_NAME_AR => 'كامري',
+            VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+
+        Vehicle::create([
+            Vehicle::COLUMN_RIDER_ID => $rider->id,
+            Vehicle::COLUMN_PLATE_NUMBER => 'ABC-123',
+            Vehicle::COLUMN_CAR_MAKE_ID => $carMake->id,
+            Vehicle::COLUMN_CAR_MODEL_ID => $carModel->id,
+            Vehicle::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            Vehicle::COLUMN_YEAR => 2023,
         ]);
 
         $trip = Trip::create([
@@ -389,22 +476,55 @@ describe('Past Trips List API', function () {
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'data' => [
-                    '*' => [
-                        'rider' => [
-                            'id',
-                            'name',
-                            'phone',
-                            'rating',
+                    'trips' => [
+                        '*' => [
+                            'rider' => [
+                                'id',
+                                'image',
+                                'name',
+                                'rating',
+                            ],
+                            'vehicle' => [
+                                'model',
+                                'plate_number',
+                            ],
                         ],
                     ],
                 ],
             ])
-            ->assertJsonPath('data.0.rider.name', 'John Doe');
+            ->assertJsonPath('data.trips.0.rider.name', 'John Doe')
+            ->assertJsonPath('data.trips.0.vehicle.plate_number', 'ABC-123');
     });
 
     it('orders past trips by id descending (most recent first)', function () {
+        $rider = Rider::factory()->create();
+
+        $carMake = VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => 'car_make',
+            VehicleSetting::COLUMN_NAME => 'Toyota',
+            VehicleSetting::COLUMN_NAME_AR => 'تويوتا',
+            VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+
+        $carModel = VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => 'car_model',
+            VehicleSetting::COLUMN_NAME => 'Camry',
+            VehicleSetting::COLUMN_NAME_AR => 'كامري',
+            VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+
+        Vehicle::create([
+            Vehicle::COLUMN_RIDER_ID => $rider->id,
+            Vehicle::COLUMN_PLATE_NUMBER => 'ABC-123',
+            Vehicle::COLUMN_CAR_MAKE_ID => $carMake->id,
+            Vehicle::COLUMN_CAR_MODEL_ID => $carModel->id,
+            Vehicle::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            Vehicle::COLUMN_YEAR => 2023,
+        ]);
+
         $olderTrip = Trip::create([
             Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Trip::COLUMN_RIDER_ID => $rider->id,
             Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
             Trip::COLUMN_RIDE_TYPE => RideTypeEnum::ONE_WAY->value,
             Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
@@ -416,6 +536,7 @@ describe('Past Trips List API', function () {
 
         $newerTrip = Trip::create([
             Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Trip::COLUMN_RIDER_ID => $rider->id,
             Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
             Trip::COLUMN_RIDE_TYPE => RideTypeEnum::ONE_WAY->value,
             Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
@@ -439,11 +560,11 @@ describe('Past Trips List API', function () {
         $response = getJson(route('v1.customers.trip-history.past'));
 
         $response->assertStatus(200)
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount(2, 'data.trips');
 
         // Newer trip should be first
-        $response->assertJsonPath('data.0.id', $newerTrip->id);
-        $response->assertJsonPath('data.1.id', $olderTrip->id);
+        $response->assertJsonPath('data.trips.0.id', $newerTrip->id);
+        $response->assertJsonPath('data.trips.1.id', $olderTrip->id);
     });
 });
 
@@ -497,7 +618,7 @@ describe('Upcoming Trip Details API', function () {
                     'schedule_date_time',
                     'trip_type' => ['id', 'label'],
                     'locations' => [
-                        '*' => ['title', 'sub_title', 'type' => ['id', 'label'], 'sequence'],
+                        '*' => ['title', 'sub_title'],
                     ],
                     'price_breakdown',
                     'ride_type' => ['id', 'label', 'description', 'icon'],
@@ -697,7 +818,7 @@ describe('Past Trip Details API', function () {
                     'vehicle_plate_number',
                     'trip_type' => ['id', 'label'],
                     'locations' => [
-                        '*' => ['title', 'sub_title', 'type' => ['id', 'label'], 'sequence'],
+                        '*' => ['title', 'sub_title'],
                     ],
                     'price_breakdown',
                     'ride_type' => ['id', 'label', 'description', 'icon'],
