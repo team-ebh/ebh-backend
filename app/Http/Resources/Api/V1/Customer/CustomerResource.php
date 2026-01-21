@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1\Customer;
 
+use App\Interfaces\Repositories\Api\V1\Customer\CustomerRepositoryInterface;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -69,6 +70,25 @@ class CustomerResource extends JsonResource
              * @var PhoneCodeResource
              */
             'phone' => new PhoneCodeResource($this->resource->{Customer::COLUMN_PHONE_NUMBER}),
+
+            /**
+             * Customer profile image URL
+             *
+             * @example "https://example.com/storage/customers/1/profile.jpg"
+             *
+             * @var string|null
+             */
+            'image' => $this->resource->getFirstMediaLink(Customer::PROFILE_PHOTO),
+
+            /**
+             * Total number of completed trips
+             *
+             * @example 15
+             *
+             * @var int
+             */
+            'total_rides_count' => app(CustomerRepositoryInterface::class)
+                ->getCompletedTripsCount($this->resource->{Customer::COLUMN_ID}),
 
             /**
              * Customer status information

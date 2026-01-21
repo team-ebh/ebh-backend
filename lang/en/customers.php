@@ -10,11 +10,13 @@ return [
             'first_name' => [
                 'required' => 'First name is required.',
                 'string' => 'First name must be a string.',
+                'min' => 'First name must be at least 2 characters.',
                 'max' => 'First name may not be greater than 30 characters.',
             ],
             'last_name' => [
                 'required' => 'Last name is required.',
                 'string' => 'Last name must be a string.',
+                'min' => 'Last name must be at least 2 characters.',
                 'max' => 'Last name may not be greater than 30 characters.',
             ],
             'email' => [
@@ -43,6 +45,14 @@ return [
             'invalid_otp' => 'Invalid or expired OTP.',
             'before_registered' => 'Customer is already registered.',
             'must_be_registered' => 'Customer must be registered first.',
+        ],
+        'profile' => [
+            'image' => [
+                'required' => 'Profile image is required.',
+                'image' => 'The file must be an image.',
+                'mimes' => 'Profile image must be a JPEG, PNG, or WebP file.',
+                'max' => 'Profile image may not be greater than 2MB.',
+            ],
         ],
     ],
     'admin' => [

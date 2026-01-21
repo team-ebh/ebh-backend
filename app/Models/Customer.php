@@ -6,17 +6,20 @@ namespace App\Models;
 
 use App\Enums\Customer\CustomerStatusEnum;
 use App\Traits\Model\HasDefaultColumnModelTrait;
+use App\Traits\Model\HasMediaTrait;
 use App\Traits\Model\LogsActivity;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\MediaLibrary\HasMedia;
 
-class Customer extends User
+class Customer extends User implements HasMedia
 {
     use HasApiTokens;
     use HasDefaultColumnModelTrait;
     use HasFactory;
+    use HasMediaTrait;
     use LogsActivity;
 
     public const string COLUMN_FIRST_NAME = 'first_name';
@@ -32,6 +35,10 @@ class Customer extends User
     public const string COLUMN_OTP_EXPIRES_AT = 'otp_expires_at';
 
     public const string COLUMN_STATUS = 'status';
+
+    public const string PROFILE_PHOTO = 'profile_photo';
+
+    public const string MEDIA_COLLECTION_NAME = 'customers';
 
     protected $casts = [
         self::COLUMN_OTP_EXPIRES_AT => 'timestamp',
