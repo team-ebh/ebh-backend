@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Repositories\Api\V1\Customer;
 
 use App\DTOs\Api\V1\Customer\Auth\SignUpDTO;
+use App\DTOs\Api\V1\Customer\Profile\UpdateProfileDTO;
 use App\Enums\Customer\CustomerStatusEnum;
+use App\Enums\Trip\TripStatusEnum;
 use App\Exceptions\Customer\CustomerAccountDisabledException;
 use App\Exceptions\Customer\CustomerBeforeRegisteredException;
 use App\Exceptions\Customer\CustomerMustBeRegisterException;
@@ -13,6 +15,8 @@ use App\Exceptions\Customer\CustomerNotFoundException;
 use App\Exceptions\Customer\InvalidOtpException;
 use App\Interfaces\Repositories\Api\V1\Customer\CustomerRepositoryInterface;
 use App\Models\Customer;
+use App\Models\Trip;
+use Illuminate\Http\UploadedFile;
 use Random\RandomException;
 
 class CustomerRepository implements CustomerRepositoryInterface
@@ -117,5 +121,39 @@ class CustomerRepository implements CustomerRepositoryInterface
     public function createAuthToken(Customer $customer): string
     {
         return $customer->createToken('auth-token')->plainTextToken;
+    }
+
+    public function updateProfile(Customer $customer, UpdateProfileDTO $dto): Customer
+    {
+        $customer->update([
+            Customer::COLUMN_FIRST_NAME => $dto->firstName,
+            Customer::COLUMN_LAST_NAME => $dto->lastName,
+            Customer::COLUMN_EMAIL => $dto->email,
+            Customer::COLUMN_PHONE_NUMBER => $dto->phoneNumber,
+        ]);
+
+        return $customer->fresh();
+    }
+
+    public function updateProfileImage(Customer $customer, UploadedFile $image): Customer
+    {
+        // Clear existing profile photos
+        $customer->clearMediaCollection(Customer::MEDIA_COLLECTION_NAME);
+
+        // Add new profile photo
+        $customer
+            ->addMedia($image)
+            ->withCustomProperties(['name' => Customer::PROFILE_PHOTO])
+            ->toMediaCollection(Customer::MEDIA_COLLECTION_NAME);
+
+        return $customer->fresh();
+    }
+
+    public function getCompletedTripsCount(int $customerId): int
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->where(Trip::COLUMN_STATUS, TripStatusEnum::COMPLETED)
+            ->count();
     }
 }

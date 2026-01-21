@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\Api\V1\Customer\Auth;
+namespace App\Http\Requests\Api\V1\Customer\Profile;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SignUpRequest extends FormRequest
+class UpdateProfileRequest extends FormRequest
 {
     public function rules(): array
     {
