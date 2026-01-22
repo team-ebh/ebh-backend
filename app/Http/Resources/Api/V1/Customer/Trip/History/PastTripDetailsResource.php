@@ -95,11 +95,10 @@ class PastTripDetailsResource extends JsonResource
 
             /**
              * Ride type information
+             *
+             * @var RideTypeHistoryResource
              */
-            'ride_type' => [
-                'id' => $trip->{Trip::COLUMN_RIDE_TYPE}->value,
-                'label' => $trip->{Trip::COLUMN_RIDE_TYPE}->getLabel(),
-            ],
+            'ride_type' => new RideTypeHistoryResource($trip->{Trip::COLUMN_RIDE_TYPE}),
 
             /**
              * Number of passengers

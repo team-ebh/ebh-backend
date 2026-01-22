@@ -616,12 +616,11 @@ describe('Upcoming Trip Details API', function () {
                 'data' => [
                     'id',
                     'schedule_date_time',
-                    'trip_type' => ['id', 'label'],
                     'locations' => [
                         '*' => ['title', 'sub_title'],
                     ],
                     'price_breakdown',
-                    'ride_type' => ['id', 'label', 'description', 'icon'],
+                    'type' => ['id', 'label'],
                     'passenger_count',
                 ],
             ]);
@@ -671,7 +670,7 @@ describe('Upcoming Trip Details API', function () {
             ]);
     });
 
-    it('returns waiting time for round trip with wait', function () {
+    it('returns ride type for round trip with wait', function () {
         $trip = Trip::create([
             Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
             Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::SCHEDULED->value,
@@ -698,7 +697,7 @@ describe('Upcoming Trip Details API', function () {
         $response = getJson(route('v1.customers.trip-history.upcoming.details', $trip));
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.waiting_time', 45);
+            ->assertJsonPath('data.type.id', RideTypeEnum::ROUND_TRIP_WAIT->value);
     });
 
     it('cannot get upcoming details of trip belonging to another customer', function () {
