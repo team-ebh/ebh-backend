@@ -372,6 +372,7 @@ return [
             'return_trip' => 'رحلة العودة',
             'round_trip_fee' => 'الذهاب والعودة',
             'waiting_time_charge' => 'رسوم وقت الانتظار',
+            'wait_time_charge' => 'رسوم الانتظار',
             'accessibility_services' => 'خدمات إمكانية الوصول',
             'to_be_calculated' => 'سيتم حسابها',
             'included' => 'مشمول',

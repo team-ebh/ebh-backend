@@ -372,6 +372,7 @@ return [
             'return_trip' => 'Return Trip',
             'round_trip_fee' => 'Round Trip',
             'waiting_time_charge' => 'Waiting Time Charge',
+            'wait_time_charge' => 'Wait time charge',
             'accessibility_services' => 'Accessibility Services',
             'to_be_calculated' => 'To be calculated',
             'included' => 'Included',

@@ -387,7 +387,7 @@ describe('Past Trips List API', function () {
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data.trips')
             ->assertJsonPath('data.trips.0.status.id', TripStatusEnum::CANCELED_BY_CUSTOMER->value)
-            ->assertJsonPath('data.trips.0.status.label', 'Cancelled by Customer');
+            ->assertJsonPath('data.trips.0.status.label', 'Cancelled');
     });
 
     it('does not return draft or active trips in past trips', function () {
@@ -814,27 +814,55 @@ describe('Past Trip Details API', function () {
             ->assertJsonStructure([
                 'data' => [
                     'id',
-                    'rider' => ['id', 'name', 'phone', 'rating'],
-                    'vehicle_plate_number',
-                    'trip_type' => ['id', 'label'],
+                    'rider' => ['id', 'image', 'name', 'rating'],
+                    'vehicle' => ['model', 'plate_number'],
+                    'status' => ['id', 'label'],
                     'locations' => [
                         '*' => ['title', 'sub_title'],
                     ],
                     'price_breakdown',
-                    'ride_type' => ['id', 'label', 'description', 'icon'],
+                    'ride_type' => ['id', 'label'],
                     'passenger_count',
+                    'date_time',
                 ],
             ])
             ->assertJsonPath('data.rider.name', 'Test Rider')
-            ->assertJsonPath('data.vehicle_plate_number', 'ABC-123');
+            ->assertJsonPath('data.vehicle.plate_number', 'ABC-123')
+            ->assertJsonPath('data.vehicle.model', 'Toyota Camry');
 
         // Verify no schedule_date_time in past details
         expect($response->json('data'))->not->toHaveKey('schedule_date_time');
     });
 
     it('returns accessibility requirements for past trip', function () {
+        $rider = Rider::factory()->create();
+
+        $carMake = VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => 'car_make',
+            VehicleSetting::COLUMN_NAME => 'Honda',
+            VehicleSetting::COLUMN_NAME_AR => 'هوندا',
+            VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+
+        $carModel = VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => 'car_model',
+            VehicleSetting::COLUMN_NAME => 'Accord',
+            VehicleSetting::COLUMN_NAME_AR => 'أكورد',
+            VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+
+        Vehicle::create([
+            Vehicle::COLUMN_RIDER_ID => $rider->id,
+            Vehicle::COLUMN_PLATE_NUMBER => 'XYZ-789',
+            Vehicle::COLUMN_CAR_MAKE_ID => $carMake->id,
+            Vehicle::COLUMN_CAR_MODEL_ID => $carModel->id,
+            Vehicle::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            Vehicle::COLUMN_YEAR => 2023,
+        ]);
+
         $trip = Trip::create([
             Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Trip::COLUMN_RIDER_ID => $rider->id,
             Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::RIDE_NOW->value,
             Trip::COLUMN_RIDE_TYPE => RideTypeEnum::ONE_WAY->value,
             Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,

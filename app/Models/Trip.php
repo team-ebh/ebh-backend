@@ -132,6 +132,16 @@ class Trip extends Model
         return $query->where(self::COLUMN_STATUS, '<>', TripStatusEnum::DRAFT);
     }
 
+    #[Scope]
+    protected function pastTrips($query)
+    {
+        return $query->whereIn(Trip::COLUMN_STATUS, [
+            TripStatusEnum::COMPLETED,
+            TripStatusEnum::CANCELED_BY_CUSTOMER,
+            TripStatusEnum::CANCELLED_BY_RIDER,
+        ])->whereNotNull(Trip::COLUMN_RIDER_ID);
+    }
+
     /**
      * Check if trip is draft
      */
