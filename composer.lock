@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e362d2b79d5512b1821dd5274e74db0d",
+    "content-hash": "c675ebbdcedd7d64cb601692eb56a365",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -5336,7 +5336,7 @@
             "version": "v2.9.0",
             "source": {
                 "type": "git",
-                "url": "https://git.nizek.com/php/packages/filament/static-pages",
+                "url": "https://glpat-BAD9-41R01nk2QCPViXir286MQp1OjUwCA.01.0y1r085xz@git.nizek.com/php/packages/filament/static-pages",
                 "reference": "9cfe9e9d88a2dfa2b5f7c115278daf60e61566db"
             },
             "require": {
