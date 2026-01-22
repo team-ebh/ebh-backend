@@ -103,7 +103,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://glpat-BAD9-41R01nk2QCPViXir286MQp1OjUwCA.01.0y1r085xz@git.nizek.com/php/packages/filament/static-pages"
+            "url": "https://git.nizek.com/php/packages/filament/static-pages"
         }
     ]
 }
