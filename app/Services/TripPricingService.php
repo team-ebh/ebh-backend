@@ -10,6 +10,7 @@ use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
 use App\Models\Setting;
+use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Models\TripLocationStatusLog;
 use Illuminate\Support\Collection;
@@ -520,5 +521,66 @@ class TripPricingService
                 cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
 
         return $angle * $earthRadius;
+    }
+
+    /**
+     * Build price breakdown for history trips from Trip model
+     *
+     * Builds breakdown based on ride type:
+     * - ONE_WAY: base_fare, accessibility (if > 0), total
+     * - ROUND_TRIP: base_fare, round_trip_fee, accessibility (if > 0), total
+     * - ROUND_TRIP_WAIT: base_fare, round_trip_fee, wait_time_charge (if > 0), accessibility (if > 0), total
+     */
+    public function buildHistoryPriceBreakdown(Trip $trip): array
+    {
+        $breakdown = [];
+        $rideType = $trip->{Trip::COLUMN_RIDE_TYPE} ?? RideTypeEnum::ONE_WAY;
+
+        // 1. Base fare (always shown)
+        if ($trip->{Trip::COLUMN_BASE_FARE} !== null) {
+            $breakdown[] = [
+                'label' => trans('trips.api.breakdown.base_fare'),
+                'value' => priceFormat($trip->{Trip::COLUMN_BASE_FARE}) . ' ' . CurrencyEnum::KWD->getLabel(),
+            ];
+        }
+
+        // 2. Round trip fee (for ROUND_TRIP_WAIT)
+        if ($rideType === RideTypeEnum::ROUND_TRIP_WAIT
+            && $trip->{Trip::COLUMN_ROUND_TRIP_PRICE} !== null
+            && $trip->{Trip::COLUMN_ROUND_TRIP_PRICE} > 0) {
+            $breakdown[] = [
+                'label' => trans('trips.api.breakdown.round_trip_fee'),
+                'value' => priceFormat($trip->{Trip::COLUMN_ROUND_TRIP_PRICE}) . ' ' . CurrencyEnum::KWD->getLabel(),
+            ];
+        }
+
+        // 3. Wait time charge (only for ROUND_TRIP_WAIT when waiting_price > 0)
+        if ($rideType === RideTypeEnum::ROUND_TRIP_WAIT
+            && $trip->{Trip::COLUMN_WAITING_PRICE} !== null
+            && $trip->{Trip::COLUMN_WAITING_PRICE} > 0) {
+            $breakdown[] = [
+                'label' => trans('trips.api.breakdown.wait_time_charge'),
+                'value' => priceFormat($trip->{Trip::COLUMN_WAITING_PRICE}) . ' ' . CurrencyEnum::KWD->getLabel(),
+            ];
+        }
+
+        // 4. Accessibility services (when accessibility_price > 0)
+        if ($trip->{Trip::COLUMN_ACCESSIBILITY_PRICE} !== null
+            && $trip->{Trip::COLUMN_ACCESSIBILITY_PRICE} > 0) {
+            $breakdown[] = [
+                'label' => trans('trips.api.breakdown.accessibility_services'),
+                'value' => priceFormat($trip->{Trip::COLUMN_ACCESSIBILITY_PRICE}) . ' ' . CurrencyEnum::KWD->getLabel(),
+            ];
+        }
+
+        // 5. Total price (always shown)
+        if ($trip->{Trip::COLUMN_TOTAL_PRICE} !== null) {
+            $breakdown[] = [
+                'label' => trans('trips.api.breakdown.total'),
+                'value' => priceFormat($trip->{Trip::COLUMN_TOTAL_PRICE}) . ' ' . CurrencyEnum::KWD->getLabel(),
+            ];
+        }
+
+        return $breakdown;
     }
 }

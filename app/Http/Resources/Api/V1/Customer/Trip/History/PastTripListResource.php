@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Resources\Api\V1\Customer\Trip\History;
 
 use App\Http\Resources\Api\V1\Customer\StatusResource;
+use App\Http\Resources\Api\V1\Customer\Trip\History\Traits\HasVehicleInformation;
 use App\Http\Resources\Api\V1\Customer\Trip\VehicleInfoResource;
 use App\Models\Trip;
-use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,6 +18,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class PastTripListResource extends JsonResource
 {
+    use HasVehicleInformation;
+
     public function toArray(Request $request): array
     {
         /** @var Trip $trip */
@@ -62,14 +64,6 @@ class PastTripListResource extends JsonResource
              * @var StatusResource
              */
             'status' => new StatusResource($trip->{Trip::COLUMN_STATUS}),
-        ];
-    }
-
-    public function getVehicleInformation(Trip $trip): array
-    {
-        return [
-            'model' => $trip->rider->vehicle->getModelCar(),
-            'plate_number' => $trip->rider->vehicle->{Vehicle::COLUMN_PLATE_NUMBER},
         ];
     }
 }

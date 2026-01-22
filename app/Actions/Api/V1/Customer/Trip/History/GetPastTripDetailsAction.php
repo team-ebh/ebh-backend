@@ -36,28 +36,7 @@ readonly class GetPastTripDetailsAction
 
         return [
             'trip' => $trip,
-            'price_breakdown' => $this->buildPriceBreakdown($trip),
+            'price_breakdown' => $this->pricingService->buildHistoryPriceBreakdown($trip),
         ];
-    }
-
-    /**
-     * Build price breakdown from trip data
-     */
-    private function buildPriceBreakdown(Trip $trip): array
-    {
-        $pricing = [
-            'base_fare' => $trip->{Trip::COLUMN_BASE_FARE},
-            'accessibility_cost' => $trip->{Trip::COLUMN_ACCESSIBILITY_PRICE},
-            'round_trip_fee' => $trip->{Trip::COLUMN_ROUND_TRIP_PRICE},
-            'waiting_charge' => $trip->{Trip::COLUMN_WAITING_PRICE},
-            'total_price' => $trip->{Trip::COLUMN_TOTAL_PRICE},
-        ];
-
-        return $this->pricingService->buildPriceBreakdownFromTrip(
-            $trip->{Trip::COLUMN_RIDE_TYPE},
-            $pricing,
-            $trip->accessibility,
-            $trip->{Trip::COLUMN_WAITING_TIME}
-        );
     }
 }

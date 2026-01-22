@@ -6,6 +6,7 @@ namespace App\Http\Resources\Api\V1\Customer\Trip\History;
 
 use App\Http\Resources\Api\V1\Customer\Trip\AccessibilityRequirementsResource;
 use App\Http\Resources\Api\V1\Customer\Trip\TripPaymentResource;
+use App\Http\Resources\Api\V1\Customer\Trip\TripTypeResource;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -45,21 +46,16 @@ class UpcomingTripDetailsResource extends JsonResource
             /**
              * Trip type information
              *
-             * @var array{id: int, label: string}
+             * @var TripTypeResource
              */
-            'trip_type' => [
-                'id' => $trip->{Trip::COLUMN_TRIP_TYPE_ID}->value,
-                'label' => $trip->{Trip::COLUMN_TRIP_TYPE_ID}->getLabel(),
-            ],
+            'trip_type' => new TripTypeResource($trip->{Trip::COLUMN_TRIP_TYPE_ID}),
 
             /**
              * Trip locations sorted by sequence
              *
              * @var HistoryTripLocationResource[]
              */
-            'locations' => HistoryTripLocationResource::collection(
-                $trip->locations->sortBy('sequence')->values()
-            ),
+            'locations' => HistoryTripLocationResource::collection($trip->locations),
 
             /**
              * Accessibility requirements selected for this trip
@@ -81,14 +77,9 @@ class UpcomingTripDetailsResource extends JsonResource
             /**
              * Ride type information
              *
-             * @var array{id: int, label: string, description: string, icon: string}
+             * @var RideTypeHistoryResource
              */
-            'ride_type' => [
-                'id' => $trip->{Trip::COLUMN_RIDE_TYPE}->value,
-                'label' => $trip->{Trip::COLUMN_RIDE_TYPE}->getLabel(),
-                'description' => $trip->{Trip::COLUMN_RIDE_TYPE}->getDescription(),
-                'icon' => $trip->{Trip::COLUMN_RIDE_TYPE}->getIcon(),
-            ],
+            'type' => new RideTypeHistoryResource($trip->{Trip::COLUMN_RIDE_TYPE}),
 
             /**
              * Number of passengers
@@ -98,18 +89,6 @@ class UpcomingTripDetailsResource extends JsonResource
              * @var int
              */
             'passenger_count' => $trip->{Trip::COLUMN_PASSENGER_COUNT},
-
-            /**
-             * Waiting time in minutes (only for ROUND_TRIP_WAIT, null otherwise)
-             *
-             * @example 30
-             *
-             * @var int|null
-             */
-            'waiting_time' => $this->when(
-                $trip->{Trip::COLUMN_WAITING_TIME} !== null,
-                fn () => $trip->{Trip::COLUMN_WAITING_TIME}
-            ),
         ];
     }
 }

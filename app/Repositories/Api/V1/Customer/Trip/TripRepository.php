@@ -289,13 +289,7 @@ class TripRepository implements TripRepositoryInterface
     {
         // Get completed and canceled trips
         return Trip::query()
-            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
-            ->whereIn(Trip::COLUMN_STATUS, [
-                TripStatusEnum::COMPLETED,
-                TripStatusEnum::CANCELED_BY_CUSTOMER,
-                TripStatusEnum::CANCELLED_BY_RIDER,
-            ])
-            ->whereNotNull(Trip::COLUMN_RIDER_ID)
+            ->pastTrips()
             ->with([
                 'locations:id,trip_id,location_title,location_sub_title,type,sequence',
                 'rider:id,full_name',
@@ -327,17 +321,16 @@ class TripRepository implements TripRepositoryInterface
         return Trip::query()
             ->where(Trip::COLUMN_ID, $tripId)
             ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
-            ->whereIn(Trip::COLUMN_STATUS, [
-                TripStatusEnum::COMPLETED,
-                TripStatusEnum::CANCELED_BY_CUSTOMER,
-                TripStatusEnum::CANCELLED_BY_RIDER,
-            ])
+            ->pastTrips()
             ->with([
                 'locations:id,trip_id,location_title,location_sub_title,type,sequence',
                 'accessibility',
                 'rider:id,full_name,phone_number',
                 'rider.accessibilityCertifications:id,rider_id,certification_type',
-                'rider.vehicle:id,rider_id,plate_number',
+                'rider.vehicle:id,rider_id,car_make_id,car_model_id,plate_number',
+                'rider.vehicle.carMake:id,name,name_ar',
+                'rider.vehicle.carModel:id,name,name_ar',
+                'order.paidPayment:id,order_id,payment_number',
             ])
             ->first();
     }

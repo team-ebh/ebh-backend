@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1\Customer\Trip\History;
 
+use App\Http\Resources\Api\V1\Customer\StatusResource;
 use App\Http\Resources\Api\V1\Customer\Trip\AccessibilityRequirementsResource;
-use App\Http\Resources\Api\V1\Customer\Trip\History\Concerns\FormatsRiderData;
-use App\Http\Resources\Api\V1\Customer\Trip\RiderInfoResource;
+use App\Http\Resources\Api\V1\Customer\Trip\History\Traits\HasVehicleInformation;
 use App\Http\Resources\Api\V1\Customer\Trip\TripPaymentResource;
+use App\Http\Resources\Api\V1\Customer\Trip\VehicleInfoResource;
+use App\Models\Payment;
 use App\Models\Trip;
-use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -21,7 +22,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class PastTripDetailsResource extends JsonResource
 {
-    use FormatsRiderData;
+    use HasVehicleInformation;
 
     public function toArray(Request $request): array
     {
@@ -40,45 +41,40 @@ class PastTripDetailsResource extends JsonResource
             'id' => $trip->{Trip::COLUMN_ID},
 
             /**
-             * Rider information (null if no rider was assigned)
+             * Rider information (null if trip was cancelled before rider accepted)
              *
-             * @var RiderInfoResource|null
+             * @var RiderInfoHistoryTripResource|null
              */
             'rider' => $this->when(
                 $trip->rider !== null,
-                fn () => new RiderInfoResource($this->formatRiderData($trip))
+                fn () => new RiderInfoHistoryTripResource($trip->rider)
             ),
 
             /**
-             * Vehicle plate number (null if no rider was assigned)
+             * Vehicle Information
              *
-             * @example "ABC-123"
+             * Vehicle details (null if trip was cancelled before rider accepted)
              *
-             * @var string|null
+             * @var VehicleInfoResource|null
              */
-            'vehicle_plate_number' => $this->when(
-                $trip->rider?->vehicle !== null,
-                fn () => $trip->rider->vehicle->{Vehicle::COLUMN_PLATE_NUMBER}
+            'vehicle' => $this->when(
+                $this->getVehicleInformation($trip) !== null,
+                fn () => new VehicleInfoResource($this->getVehicleInformation($trip))
             ),
 
             /**
-             * Trip type information
+             * Trip status
              *
-             * @var array{id: int, label: string}
+             * @var StatusResource
              */
-            'trip_type' => [
-                'id' => $trip->{Trip::COLUMN_TRIP_TYPE_ID}->value,
-                'label' => $trip->{Trip::COLUMN_TRIP_TYPE_ID}->getLabel(),
-            ],
+            'status' => new StatusResource($trip->{Trip::COLUMN_STATUS}),
 
             /**
              * Trip locations sorted by sequence
              *
              * @var HistoryTripLocationResource[]
              */
-            'locations' => HistoryTripLocationResource::collection(
-                $trip->locations->sortBy('sequence')->values()
-            ),
+            'locations' => HistoryTripLocationResource::collection($trip->locations),
 
             /**
              * Accessibility requirements selected for this trip
@@ -100,14 +96,9 @@ class PastTripDetailsResource extends JsonResource
             /**
              * Ride type information
              *
-             * @var array{id: int, label: string, description: string, icon: string}
+             * @var RideTypeHistoryResource
              */
-            'ride_type' => [
-                'id' => $trip->{Trip::COLUMN_RIDE_TYPE}->value,
-                'label' => $trip->{Trip::COLUMN_RIDE_TYPE}->getLabel(),
-                'description' => $trip->{Trip::COLUMN_RIDE_TYPE}->getDescription(),
-                'icon' => $trip->{Trip::COLUMN_RIDE_TYPE}->getIcon(),
-            ],
+            'ride_type' => new RideTypeHistoryResource($trip->{Trip::COLUMN_RIDE_TYPE}),
 
             /**
              * Number of passengers
@@ -121,14 +112,37 @@ class PastTripDetailsResource extends JsonResource
             /**
              * Waiting time in minutes (only for ROUND_TRIP_WAIT, null otherwise)
              *
-             * @example 30
+             * @example "30 min"
              *
-             * @var int|null
+             * @var string|null
              */
             'waiting_time' => $this->when(
-                $trip->{Trip::COLUMN_WAITING_TIME} !== null,
-                fn () => $trip->{Trip::COLUMN_WAITING_TIME}
+                ! is_null($trip->{Trip::COLUMN_WAITING_TIME}),
+                fn () => $trip->{Trip::COLUMN_WAITING_TIME} . ' ' . trans('trips.admin.timeline.minutes')
             ),
+
+            /**
+             * Payment number (if trip has a paid payment)
+             *
+             * If this field exists, show download receipt button
+             *
+             * @example "PAY-123456789"
+             *
+             * @var string|null
+             */
+            'payment_number' => $this->when(
+                ! is_null($trip->order?->paidPayment),
+                fn () => $trip->order->paidPayment->{Payment::COLUMN_PAYMENT_NUMBER}
+            ),
+
+            /**
+             * Trip creation date and time (timestamp)
+             *
+             * @example 1705932800
+             *
+             * @var int
+             */
+            'date_time' => $trip->{Trip::COLUMN_CREATED_AT}->timestamp,
         ];
     }
 }
