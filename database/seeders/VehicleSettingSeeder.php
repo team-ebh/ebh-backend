@@ -27,7 +27,6 @@ class VehicleSettingSeeder extends Seeder
         $this->seedPassengerCapacity();
         $this->seedCarMakes();
         $this->seedCarModels();
-        $this->seedVehicleTypes();
 
         $this->command->info('Vehicle settings seeded successfully!');
     }
@@ -136,28 +135,6 @@ class VehicleSettingSeeder extends Seeder
             VehicleSetting::query()->updateOrCreate(
                 [
                     VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_CAR_MODELS,
-                    VehicleSetting::COLUMN_NAME => $item['name'],
-                ],
-                [
-                    VehicleSetting::COLUMN_NAME_AR => $item['name_ar'],
-                    VehicleSetting::COLUMN_ORDER => $index,
-                ]
-            );
-        }
-    }
-
-    private function seedVehicleTypes(): void
-    {
-        $items = [
-            ['name' => 'Bed/Stretcher', 'name_ar' => 'سرير/نقالة'],
-            ['name' => 'Oxygen Equipment', 'name_ar' => 'معدات الأكسجين'],
-            ['name' => 'Mobility Aid', 'name_ar' => 'مساعدات التنقل'],
-        ];
-
-        foreach ($items as $index => $item) {
-            VehicleSetting::query()->updateOrCreate(
-                [
-                    VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
                     VehicleSetting::COLUMN_NAME => $item['name'],
                 ],
                 [
