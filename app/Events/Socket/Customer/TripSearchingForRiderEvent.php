@@ -10,29 +10,28 @@ use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 /**
- * Trip Next Pick Up Event
+ * Trip Searching For Rider Event
  *
- * Sent to customer when picked up again at an intermediate destination after waiting
- * This event is specific to ROUND_TRIP_WAIT trips where customer re-enters vehicle
+ * Sent to customer when a scheduled trip starts searching for riders
+ * This notifies the customer that their scheduled trip is now active and looking for available riders
  */
-class TripNextPickUpEvent extends BaseSocketEvent implements ShouldDispatchAfterCommit, ShouldQueue
+class TripSearchingForRiderEvent extends BaseSocketEvent implements ShouldDispatchAfterCommit, ShouldQueue
 {
     public function __construct(
         public readonly int $customerId,
         public readonly int $tripId,
-        public readonly int $riderId
     ) {}
 
     public function getEventName(): string
     {
-        return 'trip.next_pick_up';
+        return 'trip.searching_for_rider';
     }
 
     public function getEventData(): array
     {
         return [
             'trip_id' => $this->tripId,
-            'rider_id' => $this->riderId,
+            'customer_id' => $this->customerId,
         ];
     }
 
