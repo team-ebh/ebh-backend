@@ -121,6 +121,8 @@
                 <li><code class="bg-blue-100 px-2 py-1 rounded">trip.picked_up</code></li>
                 <li><code class="bg-blue-100 px-2 py-1 rounded">trip.completed</code></li>
                 <li><code class="bg-blue-100 px-2 py-1 rounded">trip.cancelled_by_rider</code></li>
+                <li><code class="bg-blue-100 px-2 py-1 rounded">trip.next_pick_up</code></li>
+                <li><code class="bg-blue-100 px-2 py-1 rounded">trip.drop_passenger</code></li>
             </ul>
         </div>
     </div>

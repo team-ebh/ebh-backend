@@ -10,6 +10,8 @@ return [
             'phone_number' => 'Phone Number',
             'address' => 'Address',
             'commission_rate' => 'Commission Rate',
+            'default_rate' => 'Default',
+            'custom_rate' => 'Custom',
             'riders_count' => 'Riders',
             'enabled' => 'Is Enabled?',
         ],

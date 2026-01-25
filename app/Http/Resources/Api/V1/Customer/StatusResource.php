@@ -28,7 +28,9 @@ class StatusResource extends JsonResource
              *
              * @var string
              */
-            'label' => $this->resource->getLabel(),
+            'label' => method_exists($this->resource, 'getApiLabel')
+                ? $this->resource->getApiLabel()
+                : $this->resource->getLabel(),
         ];
     }
 }

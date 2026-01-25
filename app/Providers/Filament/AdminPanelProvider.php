@@ -20,6 +20,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Nizek\StaticPage\Filament\StaticPagesPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -55,6 +56,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->plugins([
+                new StaticPagesPlugin(),
             ])
             ->sidebarCollapsibleOnDesktop()
 //            ->brandLogo(asset('/images/logo/dark.svg'))

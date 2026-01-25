@@ -14,11 +14,13 @@ class SignUpRequest extends FormRequest
             'first_name' => [
                 'required',
                 'string',
+                'min:2',
                 'max:30',
             ],
             'last_name' => [
                 'required',
                 'string',
+                'min:2',
                 'max:30',
             ],
             'email' => [
@@ -42,9 +44,11 @@ class SignUpRequest extends FormRequest
         return [
             'first_name.required' => trans('customers.api.auth.first_name.required'),
             'first_name.string' => trans('customers.api.auth.first_name.string'),
+            'first_name.min' => trans('customers.api.auth.first_name.min'),
             'first_name.max' => trans('customers.api.auth.first_name.max'),
             'last_name.required' => trans('customers.api.auth.last_name.required'),
             'last_name.string' => trans('customers.api.auth.last_name.string'),
+            'last_name.min' => trans('customers.api.auth.last_name.min'),
             'last_name.max' => trans('customers.api.auth.last_name.max'),
             'email.email' => trans('customers.api.auth.email.email'),
             'email.max' => trans('customers.api.auth.email.max'),

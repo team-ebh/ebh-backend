@@ -1,4 +1,5 @@
 @php
+    use App\Models\Order;
     use App\Models\Payment;
     use App\Models\Trip;
     use App\Models\TripLocation;
@@ -8,10 +9,11 @@
     $textAlign = $isArabic ? 'right' : 'left';
     $direction = $isArabic ? 'rtl' : 'ltr';
 
-    $trip = $payment->trip;
-    $customer = $trip->customer;
-    $rider = $trip->rider;
-    $locations = $trip->locations->sortBy(TripLocation::COLUMN_SEQUENCE);
+    $order = $payment->order;
+    $trip = $order->trips->first();
+    $customer = $order->customer;
+    $rider = $trip?->rider;
+    $locations = $trip?->locations->sortBy(TripLocation::COLUMN_SEQUENCE);
 @endphp
 
     <!DOCTYPE html>
@@ -141,7 +143,7 @@
         ],
         [
             'label' => trans('receipts.payment_method'),
-            'value' => $trip->{Trip::COLUMN_PAYMENT_METHOD}?->getLabel() ?? '-'
+            'value' => $order->{Order::COLUMN_PAYMENT_METHOD}?->getLabel() ?? '-'
         ],
         [
             'label' => trans('receipts.payment_status'),

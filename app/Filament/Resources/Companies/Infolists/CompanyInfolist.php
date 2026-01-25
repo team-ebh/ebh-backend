@@ -47,12 +47,6 @@ class CompanyInfolist
                     ->icon('heroicon-o-chart-bar')
                     ->columns(2)
                     ->schema([
-                        TextEntry::make(Company::COLUMN_COMMISSION_RATE)
-                            ->label(trans('companies.admin.fields.commission_rate'))
-                            ->icon('heroicon-o-percent-badge')
-                            ->suffix('%')
-                            ->color(fn ($state) => $state >= 10 ? 'warning' : 'success'),
-
                         TextEntry::make('riders_count')
                             ->counts('riders')
                             ->label(trans('companies.admin.fields.riders_count'))

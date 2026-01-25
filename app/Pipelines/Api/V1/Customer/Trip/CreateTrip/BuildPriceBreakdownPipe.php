@@ -39,7 +39,9 @@ readonly class BuildPriceBreakdownPipe
 
         // Build price estimation using service
         $context->priceEstimation = $this->pricingService->buildPriceEstimation(
-            $context->estimatedPrice
+            $context->estimatedPrice,
+            RideTypeEnum::ONE_WAY,
+            $context->accessibilityCost
         );
 
         return $next($context);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Pipelines\Api\V1\Customer\Trip\GetTripStatus;
 
 use App\Models\Vehicle;
-use App\Models\VehicleSetting;
 use Closure;
 
 /**
@@ -30,10 +29,7 @@ class BuildVehicleDataPipe
         }
 
         $context->vehicle = [
-            'model' => implode(' ', array_filter([
-                $vehicle->carMake?->translated(VehicleSetting::COLUMN_NAME),
-                $vehicle->carModel?->translated(VehicleSetting::COLUMN_NAME),
-            ])),
+            'model' => $vehicle->getModelCar(),
             'plate_number' => $vehicle->{Vehicle::COLUMN_PLATE_NUMBER},
         ];
 

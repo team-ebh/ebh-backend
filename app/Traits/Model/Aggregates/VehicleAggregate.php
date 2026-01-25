@@ -48,11 +48,6 @@ trait VehicleAggregate
         return $this->belongsTo(VehicleSetting::class, Vehicle::COLUMN_CAR_MODEL_ID);
     }
 
-    public function vehicleType(): BelongsTo
-    {
-        return $this->belongsTo(VehicleSetting::class, Vehicle::COLUMN_VEHICLE_TYPE_ID);
-    }
-
     public function accessibilityFeatures(): HasMany
     {
         return $this->hasMany(VehicleAccessibilityFeature::class, VehicleAccessibilityFeature::COLUMN_VEHICLE_ID);

@@ -39,8 +39,6 @@ class VehicleSetting extends Model implements TranslatableInterface
 
     public const string TYPE_CAR_MODELS = 'car_models';
 
-    public const string TYPE_VEHICLE_TYPES = 'vehicle_types';
-
     public function getTranslatableColumns(): array
     {
         return [self::COLUMN_NAME];
@@ -128,7 +126,6 @@ class VehicleSetting extends Model implements TranslatableInterface
             self::TYPE_PASSENGER_CAPACITY => Vehicle::COLUMN_PASSENGER_CAPACITY_ID,
             self::TYPE_CAR_MAKES => Vehicle::COLUMN_CAR_MAKE_ID,
             self::TYPE_CAR_MODELS => Vehicle::COLUMN_CAR_MODEL_ID,
-            self::TYPE_VEHICLE_TYPES => Vehicle::COLUMN_VEHICLE_TYPE_ID,
         ];
 
         if (! isset($columnMap[$type])) {

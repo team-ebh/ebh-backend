@@ -27,7 +27,8 @@ class PaymentSection
                 // Payment Summary
                 Grid::make(3)
                     ->schema([
-                        TextEntry::make('payment_method')
+                        TextEntry::make('order.payment_method')
+                            ->label(trans('trips.admin.fields.payment_method'))
                             ->badge()
                             ->size('lg')
                             ->icon('heroicon-o-credit-card'),
@@ -40,7 +41,7 @@ class PaymentSection
                             ->color('success')
                             ->icon('heroicon-o-banknotes'),
 
-                        TextEntry::make('lastPayment.status')
+                        TextEntry::make('order.lastPayment.status')
                             ->label(trans('trips.admin.fields.payment_status'))
                             ->badge()
                             ->size('lg')
@@ -90,7 +91,7 @@ class PaymentSection
                 // Payments Table
                 Section::make(trans('trips.admin.sections.payments_list'))
                     ->schema([
-                        RepeatableEntry::make('payments')
+                        RepeatableEntry::make('order.payments')
                             ->hiddenLabel()
                             ->schema([
                                 Grid::make([
@@ -355,14 +356,14 @@ class PaymentSection
                                         ]),
                                     ]),
                             ])
-                            ->getStateUsing(fn ($record) => $record->payments()->orderBy('created_at', 'desc')->get())
+                            ->getStateUsing(fn ($record) => $record->order?->payments()->orderBy('created_at', 'desc')->get())
                             ->contained(false)
-                            ->visible(fn ($record) => $record->payments->isNotEmpty()),
+                            ->visible(fn ($record) => $record->order?->payments?->isNotEmpty() ?? false),
                     ])
                     ->collapsible()
                     ->collapsed(false)
-                    ->visible(fn ($record) => $record->payment_method === PaymentMethodEnum::KNET
-                        && $record->payments->isNotEmpty()),
+                    ->visible(fn ($record) => $record->order?->payment_method === PaymentMethodEnum::KNET
+                        && ($record->order?->payments?->isNotEmpty() ?? false)),
             ])
             ->columnSpanFull()
             ->compact();

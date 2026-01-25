@@ -24,6 +24,14 @@ enum TripStatusEnum: int implements HasColor, HasIcon, HasLabel
         return trans('trips.api.trip_statuses.' . $this->name);
     }
 
+    /**
+     * Get simplified label for trip history (e.g., "Canceled" instead of "Canceled by Customer")
+     */
+    public function getApiLabel(): string
+    {
+        return trans('trips.api.trip_statuses_simple.' . $this->name);
+    }
+
     public function getColor(): string | array | null
     {
         return match ($this) {

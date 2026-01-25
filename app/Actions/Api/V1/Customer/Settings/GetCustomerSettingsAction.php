@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Api\V1\Customer\Settings;
 
+use App\Enums\Setting\SettingEnum;
+use App\Models\Setting;
+
 /**
  * Get Customer Settings Action
  *
@@ -14,10 +17,15 @@ readonly class GetCustomerSettingsAction
     /**
      * Execute the action
      *
-     * @return array{arriving_at_poll_interval_seconds: int}
+     * @return array{arriving_at_poll_interval_seconds: int, min_return_time_minutes: int, min_schedule_time_minutes: int, max_schedule_time_days: int|null}
      */
     public function __invoke(): array
     {
-        return config('app_settings.customer');
+        return [
+            'arriving_at_poll_interval_seconds' => Setting::get(SettingEnum::CUSTOMER_ARRIVING_AT_POLL_INTERVAL),
+            'min_return_time_minutes' => Setting::get(SettingEnum::CUSTOMER_MIN_RETURN_TIME_MINUTES),
+            'min_schedule_time_minutes' => Setting::get(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES),
+            'max_schedule_time_days' => Setting::getNullable(SettingEnum::CUSTOMER_MAX_SCHEDULE_TIME_DAYS),
+        ];
     }
 }

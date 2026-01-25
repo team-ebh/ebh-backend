@@ -12,10 +12,10 @@ use Closure;
  *
  * Builds price breakdown, estimation, and waiting time config using TripPricingService
  */
-class BuildRideTypeBreakdownPipe
+readonly class BuildRideTypeBreakdownPipe
 {
     public function __construct(
-        private readonly TripPricingService $pricingService
+        private TripPricingService $pricingService
     ) {}
 
     public function handle(ChangeRideTypeContext $context, Closure $next): mixed
@@ -47,11 +47,15 @@ class BuildRideTypeBreakdownPipe
             $context->dto->rideTypeId,
             $pricing,
             $context->dto->trip->accessibility,
-            $context->dto->returnTime
+            $context->dto->scheduledTime
         );
 
         // Build price estimation using service
-        $context->priceEstimation = $this->pricingService->buildPriceEstimation($context->totalPrice);
+        $context->priceEstimation = $this->pricingService->buildPriceEstimation(
+            $context->totalPrice,
+            $context->dto->rideTypeId,
+            $context->accessibilityCost
+        );
 
         return $next($context);
     }

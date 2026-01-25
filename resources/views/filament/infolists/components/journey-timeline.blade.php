@@ -260,8 +260,9 @@
     // For Round Trip with Wait
     if ($isRoundTripWithWait) {
         $droppedAtFirst = $findLocationStatusLog($firstDestination, TripLocationStatusEnum::DROPPED_OFF);
-        $pickedUpAtFirst = $findLocationStatusLog($firstDestination, TripLocationStatusEnum::PICKED_UP);
-        $droppedAtFinal = $findLocationStatusLog($finalDestination, TripLocationStatusEnum::DROPPED_OFF);
+        // After pickup at first destination, the FINAL destination gets PICKED_UP status (not the first destination)
+        $pickedUpAtFinal = $findLocationStatusLog($finalDestination, TripLocationStatusEnum::PICKED_UP);
+        $completedAtFinal = $findLocationStatusLog($finalDestination, TripLocationStatusEnum::COMPLETED);
 
         // Step 4: Picked Up & En Route to First Destination
         if ($droppedAtFirst) {
@@ -298,8 +299,9 @@
         }
 
         // Step 5: Dropped & Waiting for Pickup Again
-        if ($pickedUpAtFirst) {
-            $waitTime = $droppedAtFirst ? $calculateWaitTime($droppedAtFirst->created_at, $pickedUpAtFirst->created_at) : null;
+        if ($pickedUpAtFinal) {
+            // Customer was picked up again (final destination has PICKED_UP status)
+            $waitTime = $droppedAtFirst ? $calculateWaitTime($droppedAtFirst->created_at, $pickedUpAtFinal->created_at) : null;
             $steps[] = [
                 'title' => trans('trips.admin.timeline.passenger_dropped_off'),
                 'icon' => '⏱️',
@@ -308,6 +310,7 @@
                 'waitTime' => $waitTime,
             ];
         } elseif ($droppedAtFirst) {
+            // Customer is waiting at first destination
             $waitTime = $calculateWaitTime($droppedAtFirst->created_at);
             $steps[] = [
                 'title' => trans('trips.admin.timeline.passenger_dropped_off'),
@@ -326,16 +329,18 @@
         }
 
         // Step 6: Picked Up Again & En Route to Final Destination
-        if ($droppedAtFinal) {
-            $travelTime = $pickedUpAtFirst ? $calculateWaitTime($pickedUpAtFirst->created_at, $droppedAtFinal->created_at) : null;
+        if ($completedAtFinal) {
+            // Trip is completed - final destination was reached
+            $travelTime = $pickedUpAtFinal ? $calculateWaitTime($pickedUpAtFinal->created_at, $completedAtFinal->created_at) : null;
             $steps[] = [
                 'title' => trans('trips.admin.timeline.en_route_to_final_destination'),
                 'icon' => '🔄',
-                'timestamp' => $pickedUpAtFirst?->created_at,
+                'timestamp' => $pickedUpAtFinal?->created_at,
                 'status' => 'completed',
                 'duration' => $travelTime,
             ];
-        } elseif ($pickedUpAtFirst) {
+        } elseif ($pickedUpAtFinal) {
+            // Customer picked up, on the way to final destination
             $eta = null;
             if ($trip->rider && $finalDestination && $trip->rider->latitude && $trip->rider->longitude && $finalDestination->latitude && $finalDestination->longitude) {
                 $eta = $calculateETA($trip->rider->latitude, $trip->rider->longitude, $finalDestination->latitude, $finalDestination->longitude);
@@ -343,15 +348,16 @@
             $step = [
                 'title' => trans('trips.admin.timeline.en_route_to_final_destination'),
                 'icon' => '🔄',
-                'timestamp' => $pickedUpAtFirst->created_at,
+                'timestamp' => $pickedUpAtFinal->created_at,
                 'status' => 'active',
             ];
             if ($eta) {
                 $step['eta'] = $eta;
-                $step['arrivalTime'] = $calculateArrivalTime($eta, $pickedUpAtFirst->created_at);
+                $step['arrivalTime'] = $calculateArrivalTime($eta, $pickedUpAtFinal->created_at);
             }
             $steps[] = $step;
         } else {
+            // Waiting for second pickup
             $steps[] = [
                 'title' => trans('trips.admin.timeline.second_pickup'),
                 'icon' => '🔄',

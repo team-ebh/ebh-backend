@@ -192,41 +192,6 @@ test('cannot delete car model that is in use', function () {
     expect(VehicleSetting::find($carModel->id))->not->toBeNull();
 });
 
-test('cannot delete vehicle type that is in use', function () {
-    // Arrange
-    $vehicleType = VehicleSetting::createItem(
-        type: VehicleSetting::TYPE_VEHICLE_TYPES,
-        name: 'Ambulance',
-        nameAr: 'سيارة إسعاف'
-    );
-
-    $rider = Rider::factory()->create();
-    Vehicle::create([
-        Vehicle::COLUMN_RIDER_ID => $rider->id,
-        Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleType->id,
-        Vehicle::COLUMN_PLATE_NUMBER => 'ABC123',
-    ]);
-
-    // Act - Try to delete the vehicle type
-    $remainingTypes = VehicleSetting::getByType(VehicleSetting::TYPE_VEHICLE_TYPES)
-        ->where('id', '!==', $vehicleType->id)
-        ->map(fn ($item) => [
-            'id' => $item->id,
-            'name' => $item->{VehicleSetting::COLUMN_NAME},
-            'name_ar' => $item->{VehicleSetting::COLUMN_NAME_AR},
-        ])
-        ->toArray();
-
-    livewire(\App\Filament\Pages\VehicleSettings::class)
-        ->fillForm([
-            'vehicle_types' => $remainingTypes,
-        ])
-        ->call('save');
-
-    // Assert - Verify the vehicle type was NOT deleted
-    expect(VehicleSetting::find($vehicleType->id))->not->toBeNull();
-});
-
 test('cannot delete passenger capacity that is in use', function () {
     // Arrange
     $passengerCapacity = VehicleSetting::createItem(

@@ -37,10 +37,11 @@ class DownloadReceiptAction
                 );
 
                 $payment->load([
-                    'trip:id,customer_id,rider_id,payment_method,total_price,accessibility_price,waiting_price,currency,created_at,updated_at',
-                    'trip.customer:id,first_name,last_name,email,phone_number',
-                    'trip.rider:id,full_name,phone_number',
-                    'trip.locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence,status',
+                    'order:id,customer_id,payment_method,total_price,currency,created_at,updated_at',
+                    'order.customer:id,first_name,last_name,email,phone_number',
+                    'order.trips:id,order_id,customer_id,rider_id,total_price,accessibility_price,waiting_price,currency,created_at,updated_at',
+                    'order.trips.rider:id,full_name,phone_number',
+                    'order.trips.locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence,status',
                 ]);
 
                 $filename = 'EBH-' . $payment->{Payment::COLUMN_PAYMENT_NUMBER} . '-' . now()->timestamp . '.pdf';

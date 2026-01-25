@@ -6,19 +6,22 @@ namespace App\Repositories\Api\V1\Customer\Trip;
 
 use App\DTOs\Api\V1\Customer\Trip\TripStoreDTO;
 use App\Enums\Currency\CurrencyEnum;
-use App\Enums\Payment\PaymentMethodEnum;
+use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
 use App\Enums\Trip\TripStatusEnum;
+use App\Enums\Trip\TripTypeEnum;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Models\Trip;
 use App\Models\TripAccessibility;
 use App\Models\TripLocation;
+use Carbon\Carbon;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class TripRepository implements TripRepositoryInterface
 {
-    public function createTrip(TripStoreDTO $dto, array $originLocation, array $destinationLocation, ?float $accessibilityCost, float $totalPrice): Trip
+    public function createTrip(TripStoreDTO $dto, array $originLocation, array $destinationLocation, ?float $baseFare, ?float $roundTripPrice, ?float $accessibilityCost, float $totalPrice): Trip
     {
         // Create trip
         $trip = Trip::query()->create([
@@ -26,11 +29,14 @@ class TripRepository implements TripRepositoryInterface
             Trip::COLUMN_TRIP_TYPE_ID => $dto->tripTypeId,
             Trip::COLUMN_VEHICLE_TYPE_ID => $dto->vehicleTypeId,
             Trip::COLUMN_PASSENGER_COUNT => $dto->passengerCount,
+            Trip::COLUMN_BASE_FARE => $baseFare,
+            Trip::COLUMN_ROUND_TRIP_PRICE => $roundTripPrice,
             Trip::COLUMN_ACCESSIBILITY_PRICE => ($accessibilityCost && $accessibilityCost > 0) ? $accessibilityCost : null,
             Trip::COLUMN_WAITING_PRICE => null,
             Trip::COLUMN_TOTAL_PRICE => $totalPrice,
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD,
             Trip::COLUMN_STATUS => TripStatusEnum::DRAFT,
+            Trip::COLUMN_SCHEDULED_TIME => $dto->scheduledDateTime,
         ]);
 
         $locations = [
@@ -91,6 +97,13 @@ class TripRepository implements TripRepositoryInterface
     {
         return Trip::query()
             ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->where(function ($query) {
+                // Exclude draft scheduled trips (demand trips)
+                $query->where(function ($q) {
+                    $q->where(Trip::COLUMN_STATUS, '!=', TripStatusEnum::DRAFT)
+                        ->orWhere(Trip::COLUMN_TRIP_TYPE_ID, '!=', TripTypeEnum::SCHEDULED->value);
+                });
+            })
             ->with(['customer', 'locations', 'accessibility'])
             ->orderByDesc(Trip::COLUMN_ID)
             ->get();
@@ -123,19 +136,11 @@ class TripRepository implements TripRepositoryInterface
         return $trip->fresh();
     }
 
-    public function updatePaymentMethod(Trip $trip, PaymentMethodEnum $paymentMethod): Trip
+    public function updateOrderAndStatus(Trip $trip, int $orderId, TripStatusEnum $status): Trip
     {
+        // Update trip status and associate with order
         $trip->update([
-            Trip::COLUMN_PAYMENT_METHOD => $paymentMethod,
-        ]);
-
-        return $trip->fresh();
-    }
-
-    public function updatePaymentMethodAndStatus(Trip $trip, PaymentMethodEnum $paymentMethod, TripStatusEnum $status): Trip
-    {
-        $trip->update([
-            Trip::COLUMN_PAYMENT_METHOD => $paymentMethod,
+            Trip::COLUMN_ORDER_ID => $orderId,
             Trip::COLUMN_STATUS => $status,
         ]);
 
@@ -166,11 +171,181 @@ class TripRepository implements TripRepositoryInterface
             ]);
     }
 
+    public function updateRideTypeAndPrices(Trip $trip, RideTypeEnum $rideType, float $baseFare, ?float $roundTripPrice, ?float $accessibilityPrice, ?float $waitingPrice, float $totalPrice): Trip
+    {
+        $trip->update([
+            Trip::COLUMN_RIDE_TYPE => $rideType,
+            Trip::COLUMN_BASE_FARE => $baseFare,
+            Trip::COLUMN_ROUND_TRIP_PRICE => $roundTripPrice,
+            Trip::COLUMN_ACCESSIBILITY_PRICE => $accessibilityPrice,
+            Trip::COLUMN_WAITING_PRICE => $waitingPrice,
+            Trip::COLUMN_TOTAL_PRICE => $totalPrice,
+        ]);
+
+        return $trip->fresh();
+    }
+
+    public function createDestinationLocation(Trip $trip, string $locationTitle, ?string $locationSubTitle, float $latitude, float $longitude, int $sequence): TripLocation
+    {
+        return TripLocation::query()->create([
+            TripLocation::COLUMN_TRIP_ID => $trip->{Trip::COLUMN_ID},
+            TripLocation::COLUMN_LOCATION_TITLE => $locationTitle,
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => $locationSubTitle,
+            TripLocation::COLUMN_LATITUDE => $latitude,
+            TripLocation::COLUMN_LONGITUDE => $longitude,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+            TripLocation::COLUMN_SEQUENCE => $sequence,
+        ]);
+    }
+
+    public function createDemandTrip(Trip $sourceTrip, array $originLocation, array $destinationLocation, ?int $scheduledTime, ?float $baseFare = null, ?float $roundTripPrice = null, ?float $accessibilityCost = null, ?float $totalPrice = null): Trip
+    {
+        // Create demand trip with SCHEDULED type
+        $demandTrip = Trip::query()->create([
+            Trip::COLUMN_CUSTOMER_ID => $sourceTrip->{Trip::COLUMN_CUSTOMER_ID},
+            Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::SCHEDULED->value,
+            Trip::COLUMN_RIDE_TYPE => RideTypeEnum::ONE_WAY,
+            Trip::COLUMN_VEHICLE_TYPE_ID => $sourceTrip->{Trip::COLUMN_VEHICLE_TYPE_ID},
+            Trip::COLUMN_PASSENGER_COUNT => $sourceTrip->{Trip::COLUMN_PASSENGER_COUNT},
+            Trip::COLUMN_BASE_FARE => $baseFare,
+            Trip::COLUMN_ROUND_TRIP_PRICE => $roundTripPrice,
+            Trip::COLUMN_ACCESSIBILITY_PRICE => $accessibilityCost,
+            Trip::COLUMN_WAITING_PRICE => null,
+            Trip::COLUMN_TOTAL_PRICE => $totalPrice,
+            Trip::COLUMN_CURRENCY => CurrencyEnum::KWD,
+            Trip::COLUMN_STATUS => TripStatusEnum::DRAFT,
+            Trip::COLUMN_SCHEDULED_TIME => $scheduledTime ? Carbon::createFromTimestamp($scheduledTime) : null,
+            Trip::COLUMN_DEMAND_TRIP_ID => $sourceTrip->{Trip::COLUMN_ID},
+        ]);
+
+        // Create origin location (last destination of source trip)
+        TripLocation::query()->create([
+            TripLocation::COLUMN_TRIP_ID => $demandTrip->{Trip::COLUMN_ID},
+            TripLocation::COLUMN_LOCATION_TITLE => $originLocation['title'],
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => $originLocation['sub_title'],
+            TripLocation::COLUMN_LATITUDE => $originLocation['latitude'],
+            TripLocation::COLUMN_LONGITUDE => $originLocation['longitude'],
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+            TripLocation::COLUMN_SEQUENCE => 1,
+        ]);
+
+        // Create destination location
+        TripLocation::query()->create([
+            TripLocation::COLUMN_TRIP_ID => $demandTrip->{Trip::COLUMN_ID},
+            TripLocation::COLUMN_LOCATION_TITLE => $destinationLocation['title'],
+            TripLocation::COLUMN_LOCATION_SUB_TITLE => $destinationLocation['sub_title'],
+            TripLocation::COLUMN_LATITUDE => $destinationLocation['latitude'],
+            TripLocation::COLUMN_LONGITUDE => $destinationLocation['longitude'],
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_STATUS => TripLocationStatusEnum::PENDING->value,
+            TripLocation::COLUMN_SEQUENCE => 2,
+        ]);
+
+        // Copy accessibility requirements from source trip to demand trip
+        $sourceAccessibility = $sourceTrip->accessibility;
+        if ($sourceAccessibility->isNotEmpty()) {
+            $accessibilityData = $sourceAccessibility->map(fn ($item) => [
+                TripAccessibility::COLUMN_TRIP_ID => $demandTrip->{Trip::COLUMN_ID},
+                TripAccessibility::COLUMN_ACCESSIBILITY_REQUIREMENT => $item->{TripAccessibility::COLUMN_ACCESSIBILITY_REQUIREMENT},
+                'created_at' => now(),
+                'updated_at' => now(),
+            ])->toArray();
+
+            TripAccessibility::query()->insert($accessibilityData);
+        }
+
+        return $demandTrip->fresh(['locations', 'accessibility']);
+    }
+
     public function deleteDraftTrips(int $customerId): void
     {
+        // Delete draft trips but preserve scheduled trips (demand trips from ROUND_TRIP)
         Trip::query()
             ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
             ->where(Trip::COLUMN_STATUS, TripStatusEnum::DRAFT)
+            ->where(Trip::COLUMN_TRIP_TYPE_ID, '!=', TripTypeEnum::SCHEDULED)
             ->delete();
+    }
+
+    public function getUpcomingTrips(int $customerId): CursorPaginator
+    {
+        // Get draft scheduled trips (confirmed scheduled trips waiting for processing)
+        return Trip::query()
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->where(Trip::COLUMN_STATUS, TripStatusEnum::DRAFT)
+            ->where(Trip::COLUMN_TRIP_TYPE_ID, TripTypeEnum::SCHEDULED)
+            ->whereNotNull(Trip::COLUMN_ORDER_ID)
+            ->whereNotNull(Trip::COLUMN_SCHEDULED_TIME)
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+            ])
+            ->orderBy(Trip::COLUMN_SCHEDULED_TIME)
+            ->cursorPaginate(5);
+    }
+
+    public function getPastTrips(int $customerId): CursorPaginator
+    {
+        // Get completed and canceled trips
+        return Trip::query()
+            ->pastTrips()
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+                'rider:id,full_name',
+                'rider:media',
+                'rider.vehicle:id,rider_id,car_make_id,car_model_id,plate_number',
+                'rider.vehicle.carMake:id,name,name_ar',
+                'rider.vehicle.carModel:id,name,name_ar',
+            ])
+            ->orderByDesc(Trip::COLUMN_ID)
+            ->cursorPaginate(5);
+    }
+
+    public function getUpcomingTripWithDetails(int $tripId, int $customerId): ?Trip
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_ID, $tripId)
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->where(Trip::COLUMN_STATUS, TripStatusEnum::DRAFT)
+            ->where(Trip::COLUMN_TRIP_TYPE_ID, TripTypeEnum::SCHEDULED)
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+                'accessibility',
+            ])
+            ->first();
+    }
+
+    public function getPastTripWithDetails(int $tripId, int $customerId): ?Trip
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_ID, $tripId)
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->pastTrips()
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+                'accessibility',
+                'rider:id,full_name,phone_number',
+                'rider.accessibilityCertifications:id,rider_id,certification_type',
+                'rider.vehicle:id,rider_id,car_make_id,car_model_id,plate_number',
+                'rider.vehicle.carMake:id,name,name_ar',
+                'rider.vehicle.carModel:id,name,name_ar',
+                'order.paidPayment:id,order_id,payment_number',
+            ])
+            ->first();
+    }
+
+    public function getTripWithDetails(int $tripId, int $customerId): ?Trip
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_ID, $tripId)
+            ->where(Trip::COLUMN_CUSTOMER_ID, $customerId)
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,latitude,longitude,type,sequence',
+                'accessibility',
+                'rider:id,full_name,phone_number',
+                'rider.accessibilityCertifications:id,rider_id,certification_type',
+            ])
+            ->first();
     }
 }

@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Traits\Model\Aggregates;
 
-use App\Enums\Payment\PaymentStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
 use App\Models\Customer;
-use App\Models\Payment;
+use App\Models\Order;
 use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripAccessibility;
@@ -28,6 +27,11 @@ trait TripAggregate
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, Trip::COLUMN_CUSTOMER_ID);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, Trip::COLUMN_ORDER_ID);
     }
 
     public function rider(): BelongsTo
@@ -89,20 +93,21 @@ trait TripAggregate
         return $this->hasMany(TripStatusLog::class, TripStatusLog::COLUMN_TRIP_ID);
     }
 
-    public function payments(): HasMany
+    /**
+     * Get the demand trip that this scheduled return trip belongs to.
+     * For round trips, the scheduled return trip has a demand_trip_id pointing to the original demand trip.
+     */
+    public function demandTrip(): BelongsTo
     {
-        return $this->hasMany(Payment::class, Payment::COLUMN_TRIP_ID);
+        return $this->belongsTo(Trip::class, Trip::COLUMN_DEMAND_TRIP_ID);
     }
 
-    public function paidPayment(): HasOne
+    /**
+     * Get the scheduled return trip for this demand trip.
+     * For round trips, the demand trip has a related scheduled return trip.
+     */
+    public function scheduledReturnTrip(): HasOne
     {
-        return $this->hasOne(Payment::class, Payment::COLUMN_TRIP_ID)
-            ->withAttributes(Payment::COLUMN_STATUS, PaymentStatusEnum::PAID);
-    }
-
-    public function lastPayment(): HasOne
-    {
-        return $this->hasOne(Payment::class, Payment::COLUMN_TRIP_ID)
-            ->latest('id');
+        return $this->hasOne(Trip::class, Trip::COLUMN_DEMAND_TRIP_ID);
     }
 }

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Customer\Trip;
 
+use App\Enums\Setting\SettingEnum;
 use App\Enums\Trip\AccessibilityRequirementsEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
+use App\Models\Setting;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -21,7 +23,18 @@ class TripStoreRequest extends FormRequest
     {
         return [
             // Origin location
+            /**
+             * Origin location title
+             *
+             * @example Kuwait City
+             */
             'origin_location_title' => ['required', 'string', 'max:255'],
+
+            /**
+             * Origin location subtitle
+             *
+             * @example Near the main square
+             */
             'origin_location_sub_title' => ['required', 'string', 'max:255'],
             /**
              * @example 29.353325
@@ -42,8 +55,18 @@ class TripStoreRequest extends FormRequest
                 'max:180',
             ],
 
-            // Destination location
+            /**
+             * Destination location title
+             *
+             * @example Salmiya
+             */ // Destination location
             'destination_location_title' => ['required', 'string', 'max:255'],
+
+            /**
+             * Destination location subtitle
+             *
+             * @example Belajat Street 112
+             */
             'destination_location_sub_title' => ['required', 'string', 'max:255'],
             /**
              * @example 29.327636
@@ -70,7 +93,46 @@ class TripStoreRequest extends FormRequest
             'accessibility_requirements' => ['nullable', 'array'],
             'accessibility_requirements.*' => ['integer', Rule::enum(AccessibilityRequirementsEnum::class)],
             'passenger_count' => ['required', 'integer', 'min:1', 'max:6'],
+
+            /**
+             * Scheduled date time (Unix timestamp). Required when trip_type_id is SCHEDULED (2)
+             *
+             * @example 1735689600
+             */
+            'schedule_date_time' => [
+                'nullable',
+                'integer',
+                'min:' . $this->getMinScheduleTimestamp(),
+                ...$this->getMaxScheduleTimestampRule(),
+                Rule::requiredIf(fn () => (int) $this->input('trip_type_id') === TripTypeEnum::SCHEDULED->value),
+            ],
         ];
+    }
+
+    /**
+     * Get minimum schedule timestamp based on setting.
+     */
+    private function getMinScheduleTimestamp(): int
+    {
+        $minScheduleMinutes = (int) Setting::get(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES);
+
+        return now()->addMinutes($minScheduleMinutes)->timestamp;
+    }
+
+    /**
+     * Get maximum schedule timestamp rule based on setting (nullable).
+     *
+     * @return array<int, string>
+     */
+    private function getMaxScheduleTimestampRule(): array
+    {
+        $maxScheduleDays = Setting::getNullable(SettingEnum::CUSTOMER_MAX_SCHEDULE_TIME_DAYS);
+
+        if ($maxScheduleDays === null) {
+            return [];
+        }
+
+        return ['max:' . now()->addDays((int) $maxScheduleDays)->timestamp];
     }
 
     public function messages(): array
@@ -122,6 +184,16 @@ class TripStoreRequest extends FormRequest
             'passenger_count.integer' => trans('validations.trips.passenger_count.integer'),
             'passenger_count.min' => trans('validations.trips.passenger_count.min'),
             'passenger_count.max' => trans('validations.trips.passenger_count.max'),
+
+            // Schedule date time
+            'schedule_date_time.required' => trans('validations.trips.schedule_date_time.required'),
+            'schedule_date_time.integer' => trans('validations.trips.schedule_date_time.integer'),
+            'schedule_date_time.min' => trans('validations.trips.schedule_date_time.min_minutes', [
+                'minutes' => (int) Setting::get(SettingEnum::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES),
+            ]),
+            'schedule_date_time.max' => trans('validations.trips.schedule_date_time.max_days', [
+                'days' => Setting::getNullable(SettingEnum::CUSTOMER_MAX_SCHEDULE_TIME_DAYS) ?? 0,
+            ]),
         ];
     }
 }

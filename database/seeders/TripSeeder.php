@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Enums\Currency\CurrencyEnum;
-use App\Enums\Payment\PaymentMethodEnum;
 use App\Enums\Rider\RiderStatusEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
@@ -161,9 +160,6 @@ class TripSeeder extends Seeder
                 Trip::COLUMN_WAITING_PRICE => 0,
                 Trip::COLUMN_TOTAL_PRICE => fake()->numberBetween(10, 50),
                 Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
-                Trip::COLUMN_PAYMENT_METHOD => fake()->boolean()
-                    ? PaymentMethodEnum::CASH->value
-                    : PaymentMethodEnum::KNET->value,
                 Trip::COLUMN_STATUS => $status->value,
             ]);
 

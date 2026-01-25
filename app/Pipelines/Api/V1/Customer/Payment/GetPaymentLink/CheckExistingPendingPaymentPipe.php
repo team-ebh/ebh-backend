@@ -13,9 +13,9 @@ use Closure;
 /**
  * Check Existing Pending Payment Pipe
  *
- * Checks if there's an existing pending payment for the trip.
+ * Checks if there's an existing pending payment for the order.
  * If found, updates its status to locked to allow processing if customer pays through old link.
- * This prevents multiple pending payments for the same trip while allowing locked payments to be processed.
+ * This prevents multiple pending payments for the same order while allowing locked payments to be processed.
  */
 readonly class CheckExistingPendingPaymentPipe
 {
@@ -25,7 +25,10 @@ readonly class CheckExistingPendingPaymentPipe
 
     public function handle(PaymentLinkContext $context, Closure $next): mixed
     {
-        $existingPayment = $this->paymentRepository->findPendingPaymentForTrip($context->trip->{Trip::COLUMN_ID});
+        // Check for pending payment by order_id
+        $existingPayment = $this->paymentRepository->findPendingPaymentForOrder(
+            $context->trip->{Trip::COLUMN_ORDER_ID}
+        );
 
         if ($existingPayment) {
             $this->lockExistingPendingPayment($existingPayment);

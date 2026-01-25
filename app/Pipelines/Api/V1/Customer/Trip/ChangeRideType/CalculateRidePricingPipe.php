@@ -13,10 +13,10 @@ use Closure;
  * Calculates pricing based on ride type using TripPricingService
  * Supports dynamic pricing based on vehicle per-km rate, distance, and add-ons
  */
-class CalculateRidePricingPipe
+readonly class CalculateRidePricingPipe
 {
     public function __construct(
-        private readonly TripPricingService $pricingService
+        private TripPricingService $pricingService
     ) {}
 
     public function handle(ChangeRideTypeContext $context, Closure $next): mixed
@@ -31,8 +31,9 @@ class CalculateRidePricingPipe
             $context->dto->rideTypeId,
             $context->distance,
             $context->dto->trip->accessibility,
-            $context->dto->returnTime,
-            null // TODO: Pass vehicle ID when available
+            $context->dto->scheduledTime,
+            null, // TODO: Pass vehicle ID when available
+            $context->returnDistance
         );
 
         // Store pricing information in context

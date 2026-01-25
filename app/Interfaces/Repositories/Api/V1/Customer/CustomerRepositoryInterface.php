@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Interfaces\Repositories\Api\V1\Customer;
 
 use App\DTOs\Api\V1\Customer\Auth\SignUpDTO;
+use App\DTOs\Api\V1\Customer\Profile\UpdateProfileDTO;
 use App\Models\Customer;
+use Illuminate\Http\UploadedFile;
 
 interface CustomerRepositoryInterface
 {
@@ -30,4 +32,10 @@ interface CustomerRepositoryInterface
     public function validateOtp(Customer $customer, string $otp): void;
 
     public function createAuthToken(Customer $customer): string;
+
+    public function updateProfile(Customer $customer, UpdateProfileDTO $dto): Customer;
+
+    public function updateProfileImage(Customer $customer, UploadedFile $image): Customer;
+
+    public function getCompletedTripsCount(int $customerId): int;
 }

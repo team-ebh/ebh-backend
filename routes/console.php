@@ -8,3 +8,10 @@ use Illuminate\Support\Facades\Schedule;
 //    ->everyMinute()
 //    ->onOneServer()
 //    ->runInBackground();
+
+// Process scheduled trips - safety net for missed jobs
+Schedule::command('trips:process-scheduled')
+    ->everyFiveMinutes()
+    ->onOneServer()
+    ->runInBackground()
+    ->withoutOverlapping();

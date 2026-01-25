@@ -18,25 +18,29 @@ use Illuminate\Http\Request;
  */
 class ChangeRideTypeDTO implements RequestDataTransferObject
 {
-    public ?int $customerId;
+    public int $customerId;
 
     public Trip $trip;
 
-    public ?float $originLatitude;
+    public ?float $firstOriginLatitude = null;
 
-    public ?float $originLongitude;
+    public ?float $firstOriginLongitude = null;
 
-    public ?string $destinationLocationTitle;
+    public ?float $lastDestinationLatitude = null;
 
-    public ?string $destinationLocationSubTitle;
+    public ?float $lastDestinationLongitude = null;
 
-    public ?float $destinationLatitude;
+    public ?string $destinationLocationTitle = null;
 
-    public ?float $destinationLongitude;
+    public ?string $destinationLocationSubTitle = null;
+
+    public ?float $destinationLatitude = null;
+
+    public ?float $destinationLongitude = null;
 
     public RideTypeEnum $rideTypeId;
 
-    public ?int $returnTime;
+    public ?int $scheduledTime = null;
 
     /**
      * Populate DTO from request data
@@ -44,33 +48,42 @@ class ChangeRideTypeDTO implements RequestDataTransferObject
     public function getDataFromRequest(Request $request): void
     {
         $this->customerId = auth('customer')->id();
-        $this->trip = $request->route()->parameter('trip');
+        $this->trip = $request->route('trip');
+
+        $this->rideTypeId = $request->enum('ride_type_id', RideTypeEnum::class);
 
         // Load locations to get coordinates
         $this->trip->load('locations');
 
-        $originLocation = $this->trip->locations->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::ORIGIN)->first();
-        $destinationLocation = $this->trip->locations->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)->first();
+        $firstOriginLocation = $this->trip->locations->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::ORIGIN)->first();
+        $lastDestinationLocation = $this->trip->locations
+            ->where(TripLocation::COLUMN_TYPE, TripLocationTypeEnum::DESTINATION)
+            ->sortByDesc(TripLocation::COLUMN_SEQUENCE)
+            ->first();
 
         // Get origin from trip locations
-        $this->originLatitude = $originLocation ? (float) $originLocation->{TripLocation::COLUMN_LATITUDE} : 0;
-        $this->originLongitude = $originLocation ? (float) $originLocation->{TripLocation::COLUMN_LONGITUDE} : 0;
+        if ($firstOriginLocation) {
+            $this->firstOriginLatitude = (float) $firstOriginLocation->{TripLocation::COLUMN_LATITUDE};
+            $this->firstOriginLongitude = (float) $firstOriginLocation->{TripLocation::COLUMN_LONGITUDE};
+        }
 
-        // Get destination from request if provided, otherwise use trip's destination
-        $this->destinationLocationTitle = $request->filled('destination_location_title')
-            ? $request->post('destination_location_title')
-            : ($destinationLocation ? $destinationLocation->{TripLocation::COLUMN_LOCATION_TITLE} : null);
-        $this->destinationLocationSubTitle = $request->filled('destination_location_sub_title')
-            ? $request->post('destination_location_sub_title')
-            : ($destinationLocation ? $destinationLocation->{TripLocation::COLUMN_LOCATION_SUB_TITLE} : null);
-        $this->destinationLatitude = $request->filled('destination_latitude')
-            ? (float) $request->post('destination_latitude')
-            : ($destinationLocation ? (float) $destinationLocation->{TripLocation::COLUMN_LATITUDE} : 0);
-        $this->destinationLongitude = $request->filled('destination_longitude')
-            ? (float) $request->post('destination_longitude')
-            : ($destinationLocation ? (float) $destinationLocation->{TripLocation::COLUMN_LONGITUDE} : 0);
+        // Get last destination if exists
+        if ($lastDestinationLocation) {
+            $this->lastDestinationLatitude = (float) $lastDestinationLocation->{TripLocation::COLUMN_LATITUDE};
+            $this->lastDestinationLongitude = (float) $lastDestinationLocation->{TripLocation::COLUMN_LONGITUDE};
+        }
 
-        $this->rideTypeId = $request->enum('ride_type_id', RideTypeEnum::class);
-        $this->returnTime = $request->filled('return_time') ? (int) $request->post('return_time') : null;
+        if (RideTypeEnum::hasSecondDestination($this->rideTypeId)) {
+            $this->destinationLocationTitle = $request->post('destination_location_title');
+            $this->destinationLocationSubTitle = $request->post('destination_location_sub_title');
+
+            $this->destinationLatitude = (float) $request->post('destination_latitude');
+            $this->destinationLongitude = (float) $request->post('destination_longitude');
+        }
+
+        if (RideTypeEnum::hasScheduleTime($this->rideTypeId)) {
+            $this->scheduledTime = (int) $request->post('return_time');
+        }
+
     }
 }

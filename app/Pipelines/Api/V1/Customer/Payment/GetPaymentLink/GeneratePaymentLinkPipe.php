@@ -6,6 +6,7 @@ namespace App\Pipelines\Api\V1\Customer\Payment\GetPaymentLink;
 
 use App\Exceptions\Payment\PaymentLinkGenerationException;
 use App\Models\Customer;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Trip;
 use App\Services\Payment\DTOs\CreatePaymentLinkDTO;
@@ -68,7 +69,7 @@ readonly class GeneratePaymentLinkPipe
         $dto->orderAmount = priceFormat($trip->{Trip::COLUMN_TOTAL_PRICE});
 
         // Payment Gateway
-        $dto->paymentGatewaySrc = $trip->{Trip::COLUMN_PAYMENT_METHOD}->getGatewayKey();
+        $dto->paymentGatewaySrc = $trip->order->{Order::COLUMN_PAYMENT_METHOD}->getGatewayKey();
 
         // Language
         $dto->language = app()->getLocale();

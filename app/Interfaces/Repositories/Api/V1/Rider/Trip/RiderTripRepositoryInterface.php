@@ -37,5 +37,15 @@ interface RiderTripRepositoryInterface
 
     public function updateTripStatus(Trip $trip, TripStatusEnum $status): void;
 
+    public function updateTripWaitingTimeAndPrice(Trip $trip, int $waitingTime, ?float $waitingPrice, array $waitingTimeConfig): void;
+
+    /**
+     * Calculate and update waiting time for ROUND_TRIP_WAIT trips
+     * Returns true if waiting time was calculated and updated, false otherwise
+     */
+    public function calculateAndUpdateWaitingTime(Trip $trip): bool;
+
+    public function updateTripCommission(Trip $trip, float $commissionRate, string | float $commissionAmount): void;
+
     public function existsActiveTrip(int $riderId): bool;
 }

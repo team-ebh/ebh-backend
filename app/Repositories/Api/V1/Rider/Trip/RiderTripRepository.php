@@ -14,12 +14,14 @@ use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Models\TripRequest;
+use App\Services\TripPricingService;
 use Illuminate\Database\Eloquent\Collection;
 
 readonly class RiderTripRepository implements RiderTripRepositoryInterface
 {
     public function __construct(
-        private TripRequestRepositoryInterface $tripRequestRepository
+        private TripRequestRepositoryInterface $tripRequestRepository,
+        private TripPricingService $tripPricingService,
     ) {}
 
     /**
@@ -169,6 +171,73 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     {
         $trip->update([
             Trip::COLUMN_STATUS => $status,
+        ]);
+    }
+
+    /**
+     * Update trip waiting time, price, and config
+     *
+     * @param  Trip  $trip  The trip to update
+     * @param  int  $waitingTime  The waiting time in minutes
+     * @param  float|null  $waitingPrice  The waiting price (null if below minimum interval)
+     * @param  array  $waitingTimeConfig  The config used for calculation (rate, interval)
+     */
+    public function updateTripWaitingTimeAndPrice(Trip $trip, int $waitingTime, ?float $waitingPrice, array $waitingTimeConfig): void
+    {
+        $currentTotalPrice = $trip->{Trip::COLUMN_TOTAL_PRICE} ?? 0.0;
+
+        $trip->update([
+            Trip::COLUMN_WAITING_TIME => $waitingTime,
+            Trip::COLUMN_WAITING_PRICE => $waitingPrice,
+            Trip::COLUMN_WAITING_TIME_CONFIG => $waitingTimeConfig,
+            Trip::COLUMN_TOTAL_PRICE => $waitingPrice !== null ? $currentTotalPrice + $waitingPrice : $currentTotalPrice,
+        ]);
+    }
+
+    /**
+     * Calculate and update waiting time for ROUND_TRIP_WAIT trips
+     * Returns true if waiting time was calculated and updated, false otherwise
+     *
+     * Note: Waiting time is ALWAYS persisted if calculated (even if below minimum interval).
+     * Waiting price is only set when waiting time exceeds the minimum interval.
+     */
+    public function calculateAndUpdateWaitingTime(Trip $trip): bool
+    {
+        // Skip if waiting time is already calculated
+        if ($trip->{Trip::COLUMN_WAITING_TIME} !== null && $trip->{Trip::COLUMN_WAITING_TIME} > 0) {
+            return false;
+        }
+
+        // Load locations with status logs
+        $trip->loadMissing(['locations.statusLogs']);
+
+        // Calculate actual waiting time from status logs
+        $waitingTimeMinutes = $this->tripPricingService->calculateActualWaitingTime($trip->locations);
+
+        if ($waitingTimeMinutes === null || $waitingTimeMinutes < 0) {
+            return false;
+        }
+
+        // Get the config values used for calculation
+        $waitingTimeConfig = $this->tripPricingService->getWaitingTimeConfigRaw();
+
+        // Calculate waiting charge (will be null if below minimum interval)
+        $waitingCharge = $this->tripPricingService->calculateWaitingCharge($waitingTimeMinutes);
+
+        // Update trip with waiting time, price (may be null), and config
+        $this->updateTripWaitingTimeAndPrice($trip, $waitingTimeMinutes, $waitingCharge, $waitingTimeConfig);
+
+        return true;
+    }
+
+    /**
+     * Update trip commission rate and amount
+     */
+    public function updateTripCommission(Trip $trip, float $commissionRate, string | float $commissionAmount): void
+    {
+        $trip->update([
+            Trip::COLUMN_COMMISSION_RATE => $commissionRate,
+            Trip::COLUMN_COMMISSION_AMOUNT => $commissionAmount,
         ]);
     }
 

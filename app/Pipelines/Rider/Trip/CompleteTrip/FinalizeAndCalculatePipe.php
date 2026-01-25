@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Pipelines\Rider\Trip\CompleteTrip;
 
+use App\Enums\Setting\SettingEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Events\Socket\Customer\TripCompletedEvent;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
+use App\Models\Company;
+use App\Models\Setting;
 use App\Models\Trip;
 use App\Services\Trip\TripActionService;
 use Closure;
@@ -29,6 +32,14 @@ readonly class FinalizeAndCalculatePipe
         $allLocationsFinished = $trip->loadMissing('locations')->locations->every(fn ($location) => $location->isFinished());
 
         if ($allLocationsFinished) {
+            // Calculate and update waiting time for ROUND_TRIP_WAIT (fallback if not calculated during pickup)
+            if ($trip->isRoundTripWithWait()) {
+                $this->riderTripRepository->calculateAndUpdateWaitingTime($trip);
+            }
+
+            // Calculate and update commission
+            $this->calculateAndUpdateCommission($trip);
+
             // Complete trip and update rider status
             $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::COMPLETED);
 
@@ -37,7 +48,7 @@ readonly class FinalizeAndCalculatePipe
                 customerId: $trip->{Trip::COLUMN_CUSTOMER_ID},
                 tripId: $trip->{Trip::COLUMN_ID},
                 riderId: $trip->{Trip::COLUMN_RIDER_ID},
-                hasPendingPayment: $trip->isKnetPayment()
+                hasPendingPayment: ! $trip->isRoundTrip() && $trip->isKnetPayment()
             ));
 
             $this->riderTripRepository->updateRiderStatusToOnline($trip->{Trip::COLUMN_RIDER_ID});
@@ -46,9 +57,52 @@ readonly class FinalizeAndCalculatePipe
             $payload['next_action'] = null;
         } else {
             $payload['trip_completed'] = false;
-            $payload['next_action'] = $this->tripActionService->getNextAction($trip->fresh());
+            $payload['next_action'] = $this->tripActionService->getNextAction($trip->fresh())?->value;
         }
 
         return $next($payload);
+    }
+
+    /**
+     * Calculate and update trip commission
+     */
+    private function calculateAndUpdateCommission(Trip $trip): void
+    {
+        // Refresh trip to get latest total_price (in case waiting time was added)
+        $trip->refresh();
+
+        // Get commission rate from rider's company
+        $commissionRate = $this->getCommissionRate($trip);
+
+        // Calculate commission amount
+        $commissionAmount = bcdiv(
+            bcmul((string) $trip->{Trip::COLUMN_TOTAL_PRICE}, (string) $commissionRate, 4),
+            '100',
+            3
+        );
+
+        // Update trip with commission
+        $this->riderTripRepository->updateTripCommission($trip, $commissionRate, $commissionAmount);
+    }
+
+    /**
+     * Get commission rate from rider's company or default setting
+     */
+    private function getCommissionRate(Trip $trip): float
+    {
+        // Load rider with company
+        $rider = $trip->rider()->with('company')->first();
+
+        if (! $rider) {
+            return (float) Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE);
+        }
+
+        $company = $rider->company;
+
+        if ($company && $company->{Company::COLUMN_COMMISSION_RATE} !== null && $company->{Company::COLUMN_COMMISSION_RATE} > 0) {
+            return (float) $company->{Company::COLUMN_COMMISSION_RATE};
+        }
+
+        return (float) Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE);
     }
 }

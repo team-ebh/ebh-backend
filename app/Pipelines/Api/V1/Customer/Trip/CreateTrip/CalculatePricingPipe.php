@@ -42,6 +42,7 @@ class CalculatePricingPipe
 
         // Store pricing information in context
         $context->baseFare = $pricing['base_fare'];
+        $context->roundTripFee = $pricing['round_trip_fee'];
         $context->accessibilityCost = $pricing['accessibility_cost'];
         $context->estimatedPrice = $pricing['total_price'];
 

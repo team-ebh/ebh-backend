@@ -13,7 +13,7 @@ class CustomerStatsWidget extends BaseWidget
 {
     protected function getStats(): array
     {
-        $totalCustomers = Customer::query()->count();
+        $totalCustomers = Customer::query()->where(Customer::COLUMN_STATUS, '<>', CustomerStatusEnum::PENDING_VERIFICATION)->count();
         $activeCustomers = Customer::query()->where(Customer::COLUMN_STATUS, CustomerStatusEnum::ACTIVE)->count();
         $newThisMonth = Customer::query()
             ->whereMonth(Customer::COLUMN_CREATED_AT, now()->month)

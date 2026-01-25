@@ -11,6 +11,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * Customer Settings Resource
  *
  * @property int $arriving_at_poll_interval_seconds
+ * @property int $min_return_time_minutes
+ * @property int $min_schedule_time_minutes
+ * @property int|null $max_schedule_time_days
  */
 class CustomerSettingsResource extends JsonResource
 {
@@ -32,6 +35,39 @@ class CustomerSettingsResource extends JsonResource
              * @example 10
              */
             'arriving_at_poll_interval_seconds' => $this->resource['arriving_at_poll_interval_seconds'],
+
+            /**
+             * Minimum return time in minutes
+             *
+             * The minimum time (in minutes) that must pass before scheduling a return pickup in round trips
+             *
+             * @var int
+             *
+             * @example 60
+             */
+            'min_return_time_minutes' => $this->resource['min_return_time_minutes'],
+
+            /**
+             * Minimum schedule time in minutes
+             *
+             * The minimum time in advance (in minutes) that a customer can schedule a trip (5-1440 minutes)
+             *
+             * @var int
+             *
+             * @example 30
+             */
+            'min_schedule_time_minutes' => $this->resource['min_schedule_time_minutes'],
+
+            /**
+             * Maximum schedule time in days
+             *
+             * The maximum time in advance (in days) that a customer can schedule a trip. Null means no limit.
+             *
+             * @var int|null
+             *
+             * @example 30
+             */
+            'max_schedule_time_days' => $this->resource['max_schedule_time_days'],
         ];
     }
 }

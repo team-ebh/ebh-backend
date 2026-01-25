@@ -40,8 +40,8 @@ readonly class LockPendingPaymentsBeforeUpdatePipe
      */
     private function lockPendingPayments(PaymentProcessContext $context): void
     {
-        $pendingPayment = $this->paymentRepository->findPendingPaymentForTrip(
-            $context->payment->{Payment::COLUMN_TRIP_ID}
+        $pendingPayment = $this->paymentRepository->findPendingPaymentForOrder(
+            $context->payment->{Payment::COLUMN_ORDER_ID}
         );
 
         if ($pendingPayment) {

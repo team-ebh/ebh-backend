@@ -77,6 +77,13 @@ return [
             'min' => 'At least :min passenger is required.',
             'max' => 'Maximum :max passengers allowed.',
         ],
+        'schedule_date_time' => [
+            'required' => 'Schedule date time is required for scheduled trips.',
+            'integer' => 'Schedule date time must be a valid timestamp.',
+            'min' => 'Schedule date time must be a valid timestamp.',
+            'min_minutes' => 'Schedule date time must be at least :minutes minutes from now.',
+            'max_days' => 'Schedule date time must not be more than :days days from now.',
+        ],
         'ride_type_id' => [
             'required' => 'Ride type is required.',
             'integer' => 'Ride type must be an integer.',
@@ -86,6 +93,8 @@ return [
             'required' => 'Return time is required.',
             'integer' => 'Return time must be a valid timestamp.',
             'min' => 'Return time must be in the future.',
+            'min_minutes' => 'Return time must be at least :minutes minutes from now.',
+            'after' => 'Return time must be in the future.',
         ],
         'payment_method' => [
             'required' => 'Payment method is required.',

@@ -85,10 +85,30 @@ describe('V1 Customer Trip API', function () {
         $accessibilityIds = collect($accessibilityRequirements)->pluck('id')->toArray();
         expect($accessibilityIds)->toContain(AccessibilityRequirementsEnum::WHEELCHAIR_ACCESSIBLE->value)
             ->and($accessibilityIds)->toContain(AccessibilityRequirementsEnum::OXYGEN_SUPPORT->value)
-            ->and($accessibilityIds)->toContain(AccessibilityRequirementsEnum::PORTABLE_RAMP->value)
-            ->and($response->json('data.maximum_passengers'))->toBe(6);
+            ->and($accessibilityIds)->toContain(AccessibilityRequirementsEnum::PORTABLE_RAMP->value);
 
-        // Verify maximum passengers
+        // Verify maximum passengers (defaults to 6 when no passenger capacity settings exist)
+        expect($response->json('data.maximum_passengers'))->toBe(6);
+    });
+
+    it('returns maximum passengers from vehicle settings', function () {
+        // Create passenger capacity settings
+        VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_PASSENGER_CAPACITY,
+            VehicleSetting::COLUMN_CAPACITY => 4,
+            VehicleSetting::COLUMN_ORDER => 1,
+        ]);
+        VehicleSetting::create([
+            VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_PASSENGER_CAPACITY,
+            VehicleSetting::COLUMN_CAPACITY => 8,
+            VehicleSetting::COLUMN_ORDER => 2,
+        ]);
+
+        $response = get(route('v1.customers.trips.form-data'))
+            ->assertStatus(200);
+
+        // Should return the maximum capacity from settings (8)
+        expect($response->json('data.maximum_passengers'))->toBe(8);
     });
 
     it('returns correct labels for trip types', function () {
@@ -447,6 +467,39 @@ describe('Trip Store API', function () {
         ])->assertStatus(406);
     });
 
+    it('cannot create trip when customer has scheduled trip', function () {
+        // Create a scheduled trip (DRAFT with SCHEDULED type - from ROUND_TRIP)
+        $scheduledTrip = Trip::create([
+            Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::SCHEDULED->value,
+            Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            Trip::COLUMN_PASSENGER_COUNT => 1,
+            Trip::COLUMN_ACCESSIBILITY_PRICE => null,
+            Trip::COLUMN_WAITING_PRICE => null,
+            Trip::COLUMN_TOTAL_PRICE => 3.000,
+            Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+            Trip::COLUMN_STATUS => TripStatusEnum::DRAFT->value,
+            Trip::COLUMN_SCHEDULED_TIME => now()->addHour(),
+        ]);
+
+        // Try to create another trip - should be blocked
+        postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+        ])->assertStatus(406)
+            ->assertJsonPath('meta.message', trans('trips.api.exceptions.customer_has_scheduled_trip'));
+    });
+
     it('can create trip when only draft trips exist', function () {
         // Create draft trips (should be deleted automatically)
         Trip::create([
@@ -520,6 +573,113 @@ describe('Trip Store API', function () {
             'accessibility_requirements' => [],
             'passenger_count' => 2,
         ])->assertStatus(200);
+    });
+
+    it('requires schedule_date_time for scheduled trips', function () {
+        // Try to create a scheduled trip without schedule_date_time
+        postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+        ])->assertStatus(422)
+            ->assertJsonPath('meta.errors.0.field', 'schedule_date_time')
+            ->assertJsonPath('meta.errors.0.messages.0', trans('validations.trips.schedule_date_time.required'));
+    });
+
+    it('can create scheduled trip with schedule_date_time', function () {
+        $scheduledTime = now()->addHours(2)->timestamp;
+
+        $response = postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+            'schedule_date_time' => $scheduledTime,
+        ])->assertStatus(200);
+
+        // Verify scheduled_time is saved in database
+        $trip = Trip::latest()->first();
+        expect($trip->{Trip::COLUMN_SCHEDULED_TIME})->not->toBeNull()
+            ->and($trip->{Trip::COLUMN_SCHEDULED_TIME}->timestamp)->toBe($scheduledTime);
+    });
+
+    it('does not require schedule_date_time for ride now trips', function () {
+        // Create a ride now trip without schedule_date_time - should succeed
+        postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+        ])->assertStatus(200);
+
+        // Verify scheduled_time is null
+        $trip = Trip::latest()->first();
+        expect($trip->{Trip::COLUMN_SCHEDULED_TIME})->toBeNull();
+    });
+
+    it('validates schedule_date_time must be integer', function () {
+        postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+            'schedule_date_time' => 'invalid',
+        ])->assertStatus(422)
+            ->assertJsonPath('meta.errors.0.field', 'schedule_date_time')
+            ->assertJsonPath('meta.errors.0.messages.0', trans('validations.trips.schedule_date_time.integer'));
+    });
+
+    it('validates schedule_date_time must be positive', function () {
+        postJson(route('v1.customers.trips.store'), [
+            'origin_latitude' => 29.37694,
+            'origin_longitude' => 47.98306,
+            'origin_location_title' => 'Kuwait Hospital',
+            'origin_location_sub_title' => 'Sabah medical district',
+            'destination_latitude' => 29.22667,
+            'destination_longitude' => 47.96889,
+            'destination_location_title' => 'Kuwait Airport',
+            'destination_location_sub_title' => 'Terminal 1',
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'accessibility_requirements' => [],
+            'passenger_count' => 2,
+            'schedule_date_time' => -1,
+        ])->assertStatus(422)
+            ->assertJsonPath('meta.errors.0.field', 'schedule_date_time')
+            ->assertJsonPath('meta.errors.0.messages.0', trans('validations.trips.schedule_date_time.min_minutes', ['minutes' => 30]));
     });
 });
 
@@ -985,13 +1145,13 @@ describe('Cancel Trip API', function () {
         Event::assertDispatched(TripCancelledByCustomerEvent::class, 2);
         Event::assertDispatched(
             TripCancelledByCustomerEvent::class,
-            fn($event) => $event->riderId === $rider1->id
+            fn ($event) => $event->riderId === $rider1->id
                 && $event->tripId === $trip->id
                 && $event->tripRequestId === $pendingRequest->id
         );
         Event::assertDispatched(
             TripCancelledByCustomerEvent::class,
-            fn($event) => $event->riderId === $rider2->id
+            fn ($event) => $event->riderId === $rider2->id
                 && $event->tripId === $trip->id
                 && $event->tripRequestId === $acceptedRequest->id
         );
@@ -1068,6 +1228,52 @@ describe('Change Ride Type API', function () {
                 ],
             ]);
     });
+
+    it('cannot change ride type for scheduled trip', function () {
+        // Create a scheduled trip
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+            'scheduled_time' => now()->addHours(2),
+        ]);
+
+        // Create trip locations
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Origin',
+            TripLocation::COLUMN_LATITUDE => 29.37694,
+            TripLocation::COLUMN_LONGITUDE => 47.98306,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN,
+            TripLocation::COLUMN_SEQUENCE => 1,
+        ]);
+
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Destination',
+            TripLocation::COLUMN_LATITUDE => 29.3117,
+            TripLocation::COLUMN_LONGITUDE => 47.4818,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION,
+            TripLocation::COLUMN_SEQUENCE => 2,
+        ]);
+
+        // Try to change ride type - should fail for scheduled trips
+        $response = postJson(route('v1.customers.trips.change-ride-type', $trip), [
+            'ride_type_id' => RideTypeEnum::ROUND_TRIP->value,
+            'destination_location_title' => 'Return Location',
+            'destination_location_sub_title' => 'Sub Title',
+            'destination_latitude' => 29.3759,
+            'destination_longitude' => 47.9774,
+            'return_time' => now()->addHours(3)->timestamp,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('meta.message', trans('trips.api.exceptions.scheduled_trip_cannot_change_ride_type'));
+    });
 });
 
 describe('Confirm Trip API', function () {
@@ -1088,15 +1294,6 @@ describe('Confirm Trip API', function () {
 
         Event::fake([
             NewTripRequestEvent::class,
-        ]);
-
-        // Create vehicle setting that matches the enum value
-        $vehicleSetting = VehicleSetting::create([
-            VehicleSetting::COLUMN_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
-            VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
-            VehicleSetting::COLUMN_NAME => 'Wheelchair Accessible',
-            VehicleSetting::COLUMN_NAME_AR => 'نقل كراسي متحركة',
-            VehicleSetting::COLUMN_ORDER => 1,
         ]);
 
         // Create exactly 2 online riders and 1 offline rider
@@ -1162,6 +1359,7 @@ describe('Confirm Trip API', function () {
 
         // Confirm the trip
         postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
         ])
             ->assertStatus(200);
@@ -1176,7 +1374,7 @@ describe('Confirm Trip API', function () {
         // Verify event was dispatched for rider1
         Event::assertDispatched(
             NewTripRequestEvent::class,
-            fn($event) => $event->riderId === $rider1->id
+            fn ($event) => $event->riderId === $rider1->id
                 && isset($event->tripData['trip_request'])
                 && isset($event->tripData['map_locations'])
                 && isset($event->tripData['formatted_locations'])
@@ -1186,7 +1384,7 @@ describe('Confirm Trip API', function () {
         // Verify event was dispatched for rider2
         Event::assertDispatched(
             NewTripRequestEvent::class,
-            fn($event) => $event->riderId === $rider2->id
+            fn ($event) => $event->riderId === $rider2->id
                 && isset($event->tripData['trip_request'])
                 && isset($event->tripData['map_locations'])
                 && isset($event->tripData['formatted_locations'])
@@ -1196,7 +1394,7 @@ describe('Confirm Trip API', function () {
         // Verify event was NOT dispatched for offline rider
         Event::assertNotDispatched(
             NewTripRequestEvent::class,
-            fn($event) => $event->riderId === $rider3->id
+            fn ($event) => $event->riderId === $rider3->id
         );
     });
 
@@ -1204,14 +1402,6 @@ describe('Confirm Trip API', function () {
         // This test verifies that ShouldDispatchAfterCommit interface is working
         Event::fake([
             NewTripRequestEvent::class,
-        ]);
-
-        // Create vehicle setting for the trip vehicle type
-        $vehicleSetting = VehicleSetting::create([
-            VehicleSetting::COLUMN_TYPE => VehicleSetting::TYPE_VEHICLE_TYPES,
-            VehicleSetting::COLUMN_NAME => 'Wheelchair Accessible',
-            VehicleSetting::COLUMN_NAME_AR => 'نقل كراسي متحركة',
-            VehicleSetting::COLUMN_ORDER => 1,
         ]);
 
         // Create a rider
@@ -1222,7 +1412,7 @@ describe('Confirm Trip API', function () {
         // Create vehicle for rider
         Vehicle::create([
             Vehicle::COLUMN_RIDER_ID => $rider->id,
-            Vehicle::COLUMN_VEHICLE_TYPE_ID => $vehicleSetting->id,
+            Vehicle::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             Vehicle::COLUMN_PLATE_NUMBER => 'GHI789',
             Vehicle::COLUMN_YEAR => 2023,
         ]);
@@ -1262,6 +1452,7 @@ describe('Confirm Trip API', function () {
 
         // Confirm the trip
         postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
         ])
             ->assertStatus(200);
@@ -1277,7 +1468,7 @@ describe('Confirm Trip API', function () {
         // Verify event was dispatched with correct data
         Event::assertDispatched(
             NewTripRequestEvent::class,
-            fn($event) => $event->riderId === $rider->id
+            fn ($event) => $event->riderId === $rider->id
                 && $event->tripData['trip_request']['trip_request_id'] === $tripRequest->id
         );
     });
@@ -1289,11 +1480,22 @@ describe('Confirm Trip API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
+
+        // Create order with KNET payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::PENDING->value,
+        ]);
+
+        // Link trip to order
+        $previousTrip->update(['order_id' => $order->id]);
 
         // Create new draft trip
         $newTrip = Trip::create([
@@ -1308,6 +1510,7 @@ describe('Confirm Trip API', function () {
 
         // Try to confirm the new trip - should fail
         $response = postJson(route('v1.customers.trips.confirm', $newTrip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
         ]);
 
@@ -1332,11 +1535,22 @@ describe('Confirm Trip API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
+
+        // Create order with CASH payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::COMPLETED->value,
+        ]);
+
+        // Link trip to order
+        $previousTrip->update(['order_id' => $order->id]);
 
         // Create new draft trip with locations
         $newTrip = Trip::create([
@@ -1360,6 +1574,7 @@ describe('Confirm Trip API', function () {
 
         // Confirm the new trip - should succeed
         $response = postJson(route('v1.customers.trips.confirm', $newTrip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
         ]);
 
@@ -1379,16 +1594,27 @@ describe('Confirm Trip API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
 
-        // Create a payment record for the previous trip
+        // Create order with KNET payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::COMPLETED->value,
+        ]);
+
+        // Link trip to order
+        $previousTrip->update(['order_id' => $order->id]);
+
+        // Create a payment record for the order
         \App\Models\Payment::create([
             'payment_number' => generatePaymentNumber(),
-            'trip_id' => $previousTrip->id,
+            'order_id' => $order->id,
             'customer_id' => $this->customer->id,
             'amount' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
@@ -1418,6 +1644,7 @@ describe('Confirm Trip API', function () {
 
         // Confirm the new trip - should succeed
         $response = postJson(route('v1.customers.trips.confirm', $newTrip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
         ]);
 
@@ -1445,6 +1672,7 @@ describe('Confirm Trip API', function () {
 
         // Try to confirm the trip as authenticated customer
         $response = postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
         ]);
 
@@ -1452,6 +1680,108 @@ describe('Confirm Trip API', function () {
             ->assertJson([
                 'meta' => [
                     'message' => trans('trips.not_your_trip'),
+                ],
+            ]);
+    });
+
+    it('can confirm scheduled trip with only payment method', function () {
+        Queue::fake();
+
+        // Create a scheduled trip
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::SCHEDULED->value,
+            'ride_type' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+            'scheduled_time' => now()->addHours(2),
+        ]);
+
+        // Add origin location
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Origin Location',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'type' => TripLocationTypeEnum::ORIGIN->value,
+            'sequence' => 1,
+        ]);
+
+        // Add destination location
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Destination Location',
+            'latitude' => 29.3859,
+            'longitude' => 47.9874,
+            'type' => TripLocationTypeEnum::DESTINATION->value,
+            'sequence' => 2,
+        ]);
+
+        // Confirm the scheduled trip - only payment_method required
+        $response = postJson(route('v1.customers.trips.confirm', $trip), [
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+        ]);
+
+        $response->assertStatus(200);
+
+        // Verify trip status is still DRAFT (job will process at scheduled time)
+        $trip->refresh();
+        expect($trip->status)->toBe(TripStatusEnum::DRAFT);
+
+        // Verify order was created
+        expect($trip->order_id)->not->toBeNull();
+
+        // Verify ProcessScheduledTripJob was dispatched with delay
+        Queue::assertPushed(\App\Jobs\ProcessScheduledTripJob::class, function ($job) use ($trip) {
+            return $job->tripId === $trip->id;
+        });
+    });
+
+    it('cannot confirm trip with mismatched ride type', function () {
+        // Create a draft trip with ROUND_TRIP ride type
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'ride_type' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Add origin and destination locations for the ROUND_TRIP
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Origin Location',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'type' => TripLocationTypeEnum::ORIGIN->value,
+            'sequence' => 1,
+        ]);
+
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Destination Location',
+            'latitude' => 29.3117,
+            'longitude' => 47.4818,
+            'type' => TripLocationTypeEnum::DESTINATION->value,
+            'sequence' => 2,
+        ]);
+
+        // Try to confirm with ONE_WAY ride type (mismatch)
+        $response = postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('trips.api.exceptions.ride_type_mismatch'),
                 ],
             ]);
     });
@@ -1466,16 +1796,27 @@ describe('Check Pending Payment API', function () {
 
     it('returns true when customer has unpaid trip', function () {
         // Create a completed trip with KNET payment that wasn't paid
-        Trip::create([
+        $trip = Trip::create([
             'customer_id' => $this->customer->id,
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
+
+        // Create order with KNET payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::PENDING->value,
+        ]);
+
+        // Link trip to order
+        $trip->update(['order_id' => $order->id]);
 
         $response = getJson(route('v1.customers.payments.check-pending'));
 
@@ -1505,16 +1846,27 @@ describe('Check Pending Payment API', function () {
 
     it('returns false when customer last trip has cash payment', function () {
         // Create a completed trip with CASH payment (always considered paid)
-        Trip::create([
+        $trip = Trip::create([
             'customer_id' => $this->customer->id,
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
+
+        // Create order with CASH payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::COMPLETED->value,
+        ]);
+
+        // Link trip to order
+        $trip->update(['order_id' => $order->id]);
 
         $response = getJson(route('v1.customers.payments.check-pending'));
 
@@ -1534,16 +1886,27 @@ describe('Check Pending Payment API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::COMPLETED->value,
         ]);
 
-        // Create a payment record
+        // Create order with KNET payment method
+        $order = \App\Models\Order::create([
+            'customer_id' => $this->customer->id,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'status' => \App\Enums\Order\OrderStatusEnum::COMPLETED->value,
+        ]);
+
+        // Link trip to order
+        $trip->update(['order_id' => $order->id]);
+
+        // Create a payment record for the order
         \App\Models\Payment::create([
             'payment_number' => generatePaymentNumber(),
-            'trip_id' => $trip->id,
+            'order_id' => $order->id,
             'customer_id' => $this->customer->id,
             'amount' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
@@ -1569,7 +1932,6 @@ describe('Check Pending Payment API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::DRAFT->value,
@@ -1581,7 +1943,6 @@ describe('Check Pending Payment API', function () {
             'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
             'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
             'passenger_count' => 2,
-            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
             'total_price' => 5.000,
             'currency' => CurrencyEnum::KWD->value,
             'status' => TripStatusEnum::CANCELED_BY_CUSTOMER->value,

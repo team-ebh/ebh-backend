@@ -11,11 +11,16 @@ use App\Pipelines\Api\V1\Customer\Trip\GetTripStatus\BuildRiderDataPipe;
 use App\Pipelines\Api\V1\Customer\Trip\GetTripStatus\BuildVehicleDataPipe;
 use App\Pipelines\Api\V1\Customer\Trip\GetTripStatus\CheckTripStatusPipe;
 use App\Pipelines\Api\V1\Customer\Trip\GetTripStatus\TripStatusContext;
+use App\Services\Trip\TripRequestFormatterService;
 use Closure;
 use Illuminate\Pipeline\Pipeline;
 
 readonly class FormatResponsePipe
 {
+    public function __construct(
+        private TripRequestFormatterService $tripRequestFormatter,
+    ) {}
+
     /**
      * Handle the pipeline
      */
@@ -48,6 +53,7 @@ readonly class FormatResponsePipe
             'vehicle' => $result->vehicle,
             'map_locations' => $result->mapLocations,
             'formatted_locations' => $result->formattedLocations,
+            'payment' => $this->tripRequestFormatter->preparePaymentData($result->trip),
         ];
 
         return $next($payload);

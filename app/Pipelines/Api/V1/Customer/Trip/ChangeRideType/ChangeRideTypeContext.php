@@ -13,7 +13,9 @@ use App\DTOs\Api\V1\Customer\Trip\ChangeRideTypeDTO;
  */
 class ChangeRideTypeContext
 {
-    public ?float $distance = null;
+    public ?float $distance = null; // Distance from origin to first destination (A→B)
+
+    public ?float $returnDistance = null; // Distance from first destination to second destination (B→C)
 
     public float $baseFare;
 

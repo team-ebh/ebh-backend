@@ -147,7 +147,10 @@ class TripController extends Controller
     /**
      * Mark rider as arrived at location
      *
-     * Updates current location status to arrived and returns next action
+     * Updates current location status to arrived and returns next action.
+     *
+     * Response next_action values:
+     * - `pickup`: Rider should pick up passenger at origin
      *
      * @authenticated
      *
@@ -167,7 +170,15 @@ class TripController extends Controller
     /**
      * Mark passenger as picked up
      *
-     * Updates current location status to picked up and returns next action
+     * Updates current location status to picked up and returns next action.
+     *
+     * Response next_action values:
+     * - `complete`: Rider should complete destination (ONE_WAY, ROUND_TRIP)
+     * - `drop_passenger`: Rider should drop passenger at first destination (ROUND_TRIP_WAIT only)
+     *
+     * For ROUND_TRIP_WAIT: Call this endpoint twice:
+     * 1. First at origin (after arrived) → returns `drop_passenger`
+     * 2. Second at first destination after passenger waited → returns `complete`
      *
      * @authenticated
      *
@@ -187,7 +198,16 @@ class TripController extends Controller
     /**
      * Complete current location
      *
-     * Marks current location as completed. If all locations completed, marks trip as completed and rider as online
+     * Marks current location as completed. If all locations completed, marks trip as completed and rider as online.
+     *
+     * Response next_action values:
+     * - `complete`: More destinations to complete (ROUND_TRIP)
+     * - `next_pickup`: Passenger dropped off, waiting to be picked up again (ROUND_TRIP_WAIT only)
+     * - `null`: Trip completed (trip_completed=true)
+     *
+     * For ROUND_TRIP_WAIT: Call this endpoint twice:
+     * 1. At first destination (after drop_passenger action) → returns `next_pickup`
+     * 2. At final destination → returns `null` with trip_completed=true
      *
      * @authenticated
      *

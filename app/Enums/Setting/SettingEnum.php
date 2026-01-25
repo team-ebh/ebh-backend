@@ -1,0 +1,109 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Enums\Setting;
+
+enum SettingEnum: string
+{
+    // Commission
+    case DEFAULT_COMMISSION_RATE = 'default_commission_rate';
+
+    // Rider
+    case RIDER_TRIP_REQUEST_TIMEOUT_SECONDS = 'rider_trip_request_timeout_seconds';
+    case RIDER_LOCATION_UPDATE_INTERVAL_ONLINE = 'rider_location_update_interval_online';
+    case RIDER_LOCATION_UPDATE_INTERVAL_BUSY = 'rider_location_update_interval_busy';
+    case RIDER_ARRIVING_AT_POLL_INTERVAL = 'rider_arriving_at_poll_interval';
+
+    // Customer
+    case CUSTOMER_ARRIVING_AT_POLL_INTERVAL = 'customer_arriving_at_poll_interval';
+    case CUSTOMER_MIN_RETURN_TIME_MINUTES = 'customer_min_return_time_minutes';
+    case CUSTOMER_MIN_SCHEDULE_TIME_MINUTES = 'customer_min_schedule_time_minutes';
+    case CUSTOMER_MAX_SCHEDULE_TIME_DAYS = 'customer_max_schedule_time_days';
+
+    // Pricing
+    case WAITING_TIME_RATE = 'waiting_time_rate';
+    case WAITING_TIME_INTERVAL_MINUTES = 'waiting_time_interval_minutes';
+
+    // Scheduling
+    case SCHEDULED_TRIP_SEARCH_START_MINUTES = 'scheduled_trip_search_start_minutes';
+
+    public function group(): string
+    {
+        return match ($this) {
+            self::DEFAULT_COMMISSION_RATE => 'commission',
+
+            self::RIDER_TRIP_REQUEST_TIMEOUT_SECONDS,
+            self::RIDER_LOCATION_UPDATE_INTERVAL_ONLINE,
+            self::RIDER_LOCATION_UPDATE_INTERVAL_BUSY,
+            self::RIDER_ARRIVING_AT_POLL_INTERVAL => 'rider',
+
+            self::CUSTOMER_ARRIVING_AT_POLL_INTERVAL,
+            self::CUSTOMER_MIN_RETURN_TIME_MINUTES,
+            self::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES,
+            self::CUSTOMER_MAX_SCHEDULE_TIME_DAYS => 'customer',
+
+            self::WAITING_TIME_RATE,
+            self::WAITING_TIME_INTERVAL_MINUTES => 'pricing',
+
+            self::SCHEDULED_TRIP_SEARCH_START_MINUTES => 'scheduling',
+        };
+    }
+
+    public function default(): int | float | string | bool
+    {
+        return match ($this) {
+            self::DEFAULT_COMMISSION_RATE => 15.00,
+
+            self::RIDER_TRIP_REQUEST_TIMEOUT_SECONDS, self::RIDER_LOCATION_UPDATE_INTERVAL_ONLINE => 45,
+            self::RIDER_LOCATION_UPDATE_INTERVAL_BUSY => 15,
+            self::RIDER_ARRIVING_AT_POLL_INTERVAL, self::CUSTOMER_ARRIVING_AT_POLL_INTERVAL, self::CUSTOMER_MIN_RETURN_TIME_MINUTES => 60,
+            self::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES => 30,
+
+            self::WAITING_TIME_RATE => 2.500,
+            self::WAITING_TIME_INTERVAL_MINUTES => 30,
+
+            self::SCHEDULED_TRIP_SEARCH_START_MINUTES => 5,
+        };
+    }
+
+    public function type(): string
+    {
+        return match ($this) {
+            self::DEFAULT_COMMISSION_RATE,
+            self::WAITING_TIME_RATE => 'float',
+
+            self::RIDER_TRIP_REQUEST_TIMEOUT_SECONDS,
+            self::RIDER_LOCATION_UPDATE_INTERVAL_ONLINE,
+            self::RIDER_LOCATION_UPDATE_INTERVAL_BUSY,
+            self::RIDER_ARRIVING_AT_POLL_INTERVAL,
+            self::CUSTOMER_ARRIVING_AT_POLL_INTERVAL,
+            self::CUSTOMER_MIN_RETURN_TIME_MINUTES,
+            self::CUSTOMER_MIN_SCHEDULE_TIME_MINUTES,
+            self::CUSTOMER_MAX_SCHEDULE_TIME_DAYS,
+            self::WAITING_TIME_INTERVAL_MINUTES,
+            self::SCHEDULED_TRIP_SEARCH_START_MINUTES => 'int',
+        };
+    }
+
+    /**
+     * Check if this setting is nullable (no default value)
+     */
+    public function isNullable(): bool
+    {
+        return match ($this) {
+            self::CUSTOMER_MAX_SCHEDULE_TIME_DAYS => true,
+            default => false,
+        };
+    }
+
+    public function cast(mixed $value): int | float | string | bool | null
+    {
+        return match ($this->type()) {
+            'int' => (int) $value,
+            'float' => (float) $value,
+            'bool' => (bool) $value,
+            default => (string) $value,
+        };
+    }
+}
