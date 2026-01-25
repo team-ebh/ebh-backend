@@ -670,8 +670,7 @@ describe('ROUND_TRIP_WAIT - Socket Events', function () {
         Event::assertDispatched(TripNextPickUpEvent::class, function ($event) use ($trip) {
             return $event->customerId === $trip->{Trip::COLUMN_CUSTOMER_ID}
                 && $event->tripId === $trip->{Trip::COLUMN_ID}
-                && $event->riderId === $this->rider->{Rider::COLUMN_ID}
-                && $event->locationSequence === 3;
+                && $event->riderId === $this->rider->{Rider::COLUMN_ID};
         });
 
         // Assert: Standard TripPickedUpEvent should NOT be dispatched for intermediate pickup

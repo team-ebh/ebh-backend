@@ -43,9 +43,7 @@ readonly class ExecuteAndBroadcastPipe
                 broadcast(new TripNextPickUpEvent(
                     customerId: $trip->{Trip::COLUMN_CUSTOMER_ID},
                     tripId: $trip->{Trip::COLUMN_ID},
-                    riderId: $dto->riderId,
-                    locationId: $nextDestination->{TripLocation::COLUMN_ID},
-                    locationSequence: $nextDestination->{TripLocation::COLUMN_SEQUENCE}
+                    riderId: $dto->riderId
                 ));
             }
         } else {

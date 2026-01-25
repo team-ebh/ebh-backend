@@ -10,12 +10,14 @@ use App\Enums\Trip\TripLocationTypeEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Enums\Trip\TripTypeEnum;
 use App\Enums\Trip\TripVehicleTypeEnum;
+use App\Events\Socket\Customer\TripSearchingForRiderEvent;
 use App\Jobs\ProcessScheduledTripJob;
 use App\Models\Customer;
 use App\Models\Setting;
 use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Services\Trip\ScheduledTripDispatcherService;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
 
@@ -170,6 +172,90 @@ describe('Scheduled Trip Confirmation', function () {
         // Trip should still be in DRAFT (job not executed yet)
         $trip->refresh();
         expect($trip->{Trip::COLUMN_STATUS})->toBe(TripStatusEnum::DRAFT);
+    });
+});
+
+describe('ProcessScheduledTripJob Event Dispatch', function () {
+    beforeEach(function () {
+        Event::fake([TripSearchingForRiderEvent::class]);
+        $this->customer = Customer::factory()->create();
+    });
+
+    it('dispatches TripSearchingForRiderEvent when scheduled trip starts searching', function () {
+        // Create a scheduled trip in DRAFT status
+        $trip = Trip::create([
+            Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::SCHEDULED->value,
+            Trip::COLUMN_RIDE_TYPE => RideTypeEnum::ONE_WAY->value,
+            Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            Trip::COLUMN_PASSENGER_COUNT => 1,
+            Trip::COLUMN_BASE_FARE => 5.000,
+            Trip::COLUMN_TOTAL_PRICE => 5.000,
+            Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+            Trip::COLUMN_STATUS => TripStatusEnum::DRAFT->value,
+            Trip::COLUMN_SCHEDULED_TIME => now()->addHour(),
+        ]);
+
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Origin',
+            TripLocation::COLUMN_LATITUDE => 29.3759,
+            TripLocation::COLUMN_LONGITUDE => 47.9774,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::ORIGIN->value,
+            TripLocation::COLUMN_SEQUENCE => 1,
+        ]);
+
+        TripLocation::create([
+            TripLocation::COLUMN_TRIP_ID => $trip->id,
+            TripLocation::COLUMN_LOCATION_TITLE => 'Destination',
+            TripLocation::COLUMN_LATITUDE => 29.3117,
+            TripLocation::COLUMN_LONGITUDE => 47.4818,
+            TripLocation::COLUMN_TYPE => TripLocationTypeEnum::DESTINATION->value,
+            TripLocation::COLUMN_SEQUENCE => 2,
+        ]);
+
+        // Run the job
+        $job = new ProcessScheduledTripJob(tripId: $trip->id);
+        app()->call([$job, 'handle']);
+
+        // Assert event was dispatched with correct data
+        Event::assertDispatched(
+            TripSearchingForRiderEvent::class,
+            fn ($event) => $event->customerId === $this->customer->id
+                && $event->tripId === $trip->id
+        );
+    });
+
+    it('does not dispatch TripSearchingForRiderEvent when trip is cancelled', function () {
+        // Create a cancelled trip
+        $trip = Trip::create([
+            Trip::COLUMN_CUSTOMER_ID => $this->customer->id,
+            Trip::COLUMN_TRIP_TYPE_ID => TripTypeEnum::SCHEDULED->value,
+            Trip::COLUMN_RIDE_TYPE => RideTypeEnum::ONE_WAY->value,
+            Trip::COLUMN_VEHICLE_TYPE_ID => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            Trip::COLUMN_PASSENGER_COUNT => 1,
+            Trip::COLUMN_BASE_FARE => 5.000,
+            Trip::COLUMN_TOTAL_PRICE => 5.000,
+            Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
+            Trip::COLUMN_STATUS => TripStatusEnum::CANCELED_BY_CUSTOMER->value,
+            Trip::COLUMN_SCHEDULED_TIME => now()->addHour(),
+        ]);
+
+        // Run the job
+        $job = new ProcessScheduledTripJob(tripId: $trip->id);
+        app()->call([$job, 'handle']);
+
+        // Assert event was NOT dispatched
+        Event::assertNotDispatched(TripSearchingForRiderEvent::class);
+    });
+
+    it('does not dispatch TripSearchingForRiderEvent when trip does not exist', function () {
+        // Run the job with non-existent trip ID
+        $job = new ProcessScheduledTripJob(tripId: 99999);
+        app()->call([$job, 'handle']);
+
+        // Assert event was NOT dispatched
+        Event::assertNotDispatched(TripSearchingForRiderEvent::class);
     });
 });
 
