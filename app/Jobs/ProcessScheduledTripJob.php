@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Enums\Payment\PaymentMethodEnum;
 use App\Enums\Trip\TripStatusEnum;
+use App\Events\Socket\Customer\TripSearchingForRiderEvent;
 use App\Interfaces\Repositories\Api\V1\Customer\OrderRepositoryInterface;
 use App\Models\Trip;
 use App\Services\Trip\TripRequestService;
@@ -83,6 +84,11 @@ class ProcessScheduledTripJob implements ShouldQueue
 
             // Send requests to eligible riders
             $tripRequestService->sendRequestsToRiders($trip, searchAttempt: 1);
+
+            broadcast(new TripSearchingForRiderEvent(
+                customerId: $trip->{Trip::COLUMN_CUSTOMER_ID},
+                tripId: $trip->{Trip::COLUMN_ID},
+            ));
         });
     }
 

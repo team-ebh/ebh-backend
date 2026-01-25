@@ -123,6 +123,7 @@
                 <li><code class="bg-blue-100 px-2 py-1 rounded">trip.cancelled_by_rider</code></li>
                 <li><code class="bg-blue-100 px-2 py-1 rounded">trip.next_pick_up</code></li>
                 <li><code class="bg-blue-100 px-2 py-1 rounded">trip.drop_passenger</code></li>
+                <li><code class="bg-blue-100 px-2 py-1 rounded">trip.searching_for_rider</code></li>
             </ul>
         </div>
     </div>
@@ -358,6 +359,18 @@
 
         channel.listen('.trip.cancelled_by_rider', (data) => {
             log('event', '🚫 Trip Cancelled by Rider', data);
+        });
+
+        channel.listen('.trip.next_pick_up', (data) => {
+            log('event', 'Trip Next pick up', data);
+        });
+
+        channel.listen('.trip.drop_passenger', (data) => {
+            log('event', 'Trip drop passenger', data);
+        });
+
+        channel.listen('.trip.searching_for_rider', (data) => {
+            log('event', 'Trip searching for rider', data);
         });
 
         connectBtn.textContent = 'Connected';
