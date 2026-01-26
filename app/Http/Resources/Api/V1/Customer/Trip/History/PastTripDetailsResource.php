@@ -110,14 +110,14 @@ class PastTripDetailsResource extends JsonResource
             'passenger_count' => $trip->{Trip::COLUMN_PASSENGER_COUNT},
 
             /**
-             * Waiting time in minutes (only for ROUND_TRIP_WAIT, null otherwise)
+             * Waiting time in minutes (only for ROUND_TRIP_WAIT with waiting time > 0)
              *
              * @example "30 min"
              *
              * @var string|null
              */
             'waiting_time' => $this->when(
-                ! is_null($trip->{Trip::COLUMN_WAITING_TIME}),
+                ! empty($trip->{Trip::COLUMN_WAITING_TIME}),
                 fn () => $trip->{Trip::COLUMN_WAITING_TIME} . ' ' . trans('trips.admin.timeline.minutes')
             ),
 
