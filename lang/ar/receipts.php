@@ -24,6 +24,9 @@ return [
     'accessibility_fee' => 'رسوم إمكانية الوصول',
     'waiting_fee' => 'رسوم الانتظار',
     'total_paid' => 'المجموع المدفوع',
+    'total' => 'المجموع',
+    'trip_summary' => 'ملخص الرحلة',
+    'cash_payment' => 'الدفع نقداً',
     'copyright' => 'جميع الحقوق محفوظة © :year بواسطة :app_name.',
     'thank_you' => 'شكراً لاختياركم خدمتنا!',
 ];

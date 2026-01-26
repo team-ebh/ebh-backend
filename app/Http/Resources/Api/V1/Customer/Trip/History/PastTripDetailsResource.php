@@ -122,20 +122,6 @@ class PastTripDetailsResource extends JsonResource
             ),
 
             /**
-             * Payment number (if trip has a paid payment)
-             *
-             * If this field exists, show download receipt button
-             *
-             * @example "PAY-123456789"
-             *
-             * @var string|null
-             */
-            'payment_number' => $this->when(
-                ! is_null($trip->order?->paidPayment),
-                fn () => $trip->order->paidPayment->{Payment::COLUMN_PAYMENT_NUMBER}
-            ),
-
-            /**
              * Trip creation date and time (timestamp)
              *
              * @example 1705932800

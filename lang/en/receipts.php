@@ -24,6 +24,9 @@ return [
     'accessibility_fee' => 'Accessibility Fee',
     'waiting_fee' => 'Waiting Fee',
     'total_paid' => 'Total Paid',
+    'total' => 'Total',
+    'trip_summary' => 'Trip Summary',
+    'cash_payment' => 'Cash Payment',
     'copyright' => 'Copyright © :year All Rights Reserved by :app_name.',
     'thank_you' => 'Thank you for choosing our service!',
 ];

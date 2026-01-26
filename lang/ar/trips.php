@@ -392,6 +392,7 @@ return [
             'trip_not_found' => 'لم يتم العثور على رحلة نشطة للدفع.',
             'trip_payment_not_allowed' => 'الدفع غير مسموح به لهذه الرحلة.',
             'scheduled_trip_cannot_change_ride_type' => 'لا يمكن تغيير نوع الرحلة للرحلات المجدولة.',
+            'trip_not_completed' => 'الإيصال متاح فقط للرحلات المكتملة.',
         ],
     ],
     'not_your_trip' => 'غير مصرح لك بالوصول إلى هذه الرحلة.',
