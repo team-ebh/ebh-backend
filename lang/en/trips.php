@@ -378,6 +378,11 @@ return [
             'included' => 'Included',
             'total' => 'Total',
         ],
+        'filters' => [
+            'all' => 'All',
+            'completed' => 'Completed',
+            'canceled' => 'Canceled',
+        ],
         'exceptions' => [
             'trip_not_pending' => 'This trip cannot be confirmed. Only draft trips can be confirmed.',
             'trip_not_draft' => 'Ride type can only be changed for draft trips.',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories\Api\V1\Rider\Trip;
 
 use App\Enums\Rider\RiderStatusEnum;
+use App\Enums\Trip\TripHistoryFilterEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripRequestStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
@@ -15,6 +16,7 @@ use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Models\TripRequest;
 use App\Services\TripPricingService;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 readonly class RiderTripRepository implements RiderTripRepositoryInterface
@@ -250,5 +252,68 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
             ->where(Trip::COLUMN_RIDER_ID, $riderId)
             ->activeTrips()
             ->exists();
+    }
+
+    /**
+     * Get past trips for a rider (completed and canceled)
+     */
+    public function getPastTrips(int $riderId, TripHistoryFilterEnum $filter): CursorPaginator
+    {
+        $query = Trip::query()
+            ->where(Trip::COLUMN_RIDER_ID, $riderId)
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+            ])
+            ->orderByDesc(Trip::COLUMN_ID);
+
+        // Apply filter
+        match ($filter) {
+            TripHistoryFilterEnum::COMPLETED => $query->completed(),
+            TripHistoryFilterEnum::CANCELED => $query->canceled(),
+            TripHistoryFilterEnum::ALL => $query->pastTrips(),
+        };
+
+        return $query->cursorPaginate(5);
+    }
+
+    /**
+     * Get past trip with details for a rider
+     */
+    public function getPastTripWithDetails(int $tripId, int $riderId): ?Trip
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_ID, $tripId)
+            ->where(Trip::COLUMN_RIDER_ID, $riderId)
+            ->pastTrips()
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+                'accessibility',
+            ])
+            ->first();
+    }
+
+    /**
+     * Get total completed rides count for a rider
+     */
+    public function getTotalRidesCount(int $riderId): int
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_RIDER_ID, $riderId)
+            ->where(Trip::COLUMN_STATUS, TripStatusEnum::COMPLETED)
+            ->count();
+    }
+
+    /**
+     * Get canceled trips count for a rider
+     */
+    public function getCanceledCount(int $riderId): int
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_RIDER_ID, $riderId)
+            ->whereIn(Trip::COLUMN_STATUS, [
+                TripStatusEnum::CANCELED_BY_CUSTOMER,
+                TripStatusEnum::CANCELLED_BY_RIDER,
+            ])
+            ->count();
     }
 }

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Resources\Api\V1\Customer\Trip\History;
+namespace App\Http\Resources\Api\V1\Rider\Trip\History;
 
 use App\Http\Resources\Api\V1\Customer\StatusResource;
 use App\Http\Resources\Api\V1\Customer\Trip\AccessibilityRequirementsResource;
-use App\Http\Resources\Api\V1\Customer\Trip\History\Traits\HasVehicleInformation;
+use App\Http\Resources\Api\V1\Customer\Trip\History\RideTypeHistoryResource;
+use App\Http\Resources\Api\V1\Customer\Trip\RideTypeResource;
 use App\Http\Resources\Api\V1\Customer\Trip\TripPaymentResource;
-use App\Http\Resources\Api\V1\Customer\Trip\VehicleInfoResource;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -17,12 +17,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * Past Trip Details Resource
  *
  * Formats detailed trip data for past (completed/cancelled) trips
- * Includes rider information and vehicle plate number
+ * Includes customer information
  */
 class PastTripDetailsResource extends JsonResource
 {
-    use HasVehicleInformation;
-
     public function toArray(Request $request): array
     {
         /** @var Trip $trip */
@@ -40,26 +38,13 @@ class PastTripDetailsResource extends JsonResource
             'id' => $trip->{Trip::COLUMN_ID},
 
             /**
-             * Rider information (null if trip was cancelled before rider accepted)
+             * Trip number
              *
-             * @var RiderInfoHistoryTripResource|null
+             * @example TRP-123
+             *
+             * @var string
              */
-            'rider' => $this->when(
-                $trip->rider !== null,
-                fn () => new RiderInfoHistoryTripResource($trip->rider)
-            ),
-
-            /**
-             * Vehicle Information
-             *
-             * Vehicle details (null if trip was cancelled before rider accepted)
-             *
-             * @var VehicleInfoResource|null
-             */
-            'vehicle' => $this->when(
-                $this->getVehicleInformation($trip) !== null,
-                fn () => new VehicleInfoResource($this->getVehicleInformation($trip))
-            ),
+            'trip_number' => tripNumberFormat($trip),
 
             /**
              * Trip status
@@ -97,7 +82,7 @@ class PastTripDetailsResource extends JsonResource
              *
              * @var RideTypeHistoryResource
              */
-            'ride_type' => new RideTypeHistoryResource($trip->{Trip::COLUMN_RIDE_TYPE}),
+            'ride_type' => new RideTypeResource($trip->{Trip::COLUMN_RIDE_TYPE}),
 
             /**
              * Number of passengers
@@ -107,18 +92,6 @@ class PastTripDetailsResource extends JsonResource
              * @var int
              */
             'passenger_count' => $trip->{Trip::COLUMN_PASSENGER_COUNT},
-
-            /**
-             * Waiting time in minutes (only for ROUND_TRIP_WAIT with waiting time > 0)
-             *
-             * @example "30 min"
-             *
-             * @var string|null
-             */
-            'waiting_time' => $this->when(
-                ! empty($trip->{Trip::COLUMN_WAITING_TIME}),
-                fn () => $trip->{Trip::COLUMN_WAITING_TIME} . ' ' . trans('trips.admin.timeline.minutes')
-            ),
 
             /**
              * Trip creation date and time (timestamp)
