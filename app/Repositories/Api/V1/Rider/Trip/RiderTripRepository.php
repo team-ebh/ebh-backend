@@ -288,6 +288,16 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
             ->with([
                 'locations:id,trip_id,location_title,location_sub_title,type,sequence',
                 'accessibility',
+                'acceptedTripRequest:id,trip_id,distance_meters,estimated_arrival_seconds',
+                'order:id,payment_method,status,total_price',
+                'rider:id',
+                'rider.vehicle:id,rider_id,car_type_id,car_color_id,passenger_capacity_id,car_make_id,car_model_id,year,plate_number',
+                'rider.vehicle.carType:id,name,name_ar',
+                'rider.vehicle.carColor:id,name,name_ar',
+                'rider.vehicle.passengerCapacity:id,capacity',
+                'rider.vehicle.carMake:id,name,name_ar',
+                'rider.vehicle.carModel:id,name,name_ar',
+                'rider.vehicle.accessibilityFeatures',
             ])
             ->first();
     }

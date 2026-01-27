@@ -6,10 +6,11 @@ namespace App\Http\Resources\Api\V1\Rider\Trip\History;
 
 use App\Http\Resources\Api\V1\Customer\StatusResource;
 use App\Http\Resources\Api\V1\Customer\Trip\AccessibilityRequirementsResource;
-use App\Http\Resources\Api\V1\Customer\Trip\History\RideTypeHistoryResource;
 use App\Http\Resources\Api\V1\Customer\Trip\RideTypeResource;
 use App\Http\Resources\Api\V1\Customer\Trip\TripPaymentResource;
+use App\Http\Resources\Api\V1\Rider\VehicleResource;
 use App\Models\Trip;
+use App\Models\TripRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -80,18 +81,53 @@ class PastTripDetailsResource extends JsonResource
             /**
              * Ride type information
              *
-             * @var RideTypeHistoryResource
+             * @var RideTypeResource
              */
             'ride_type' => new RideTypeResource($trip->{Trip::COLUMN_RIDE_TYPE}),
 
             /**
-             * Number of passengers
+             * Trip duration in minutes
              *
-             * @example 2
+             * @example 25
              *
-             * @var int
+             * @var int|null
              */
-            'passenger_count' => $trip->{Trip::COLUMN_PASSENGER_COUNT},
+            'duration' => $this->when(
+                $trip->acceptedTripRequest !== null,
+                fn () => (int) ceil($trip->acceptedTripRequest->{TripRequest::COLUMN_ESTIMATED_ARRIVAL_SECONDS} / 60)
+            ),
+
+            /**
+             * Trip distance in meters
+             *
+             * @example 5000
+             *
+             * @var int|null
+             */
+            'distance' => $this->when(
+                $trip->acceptedTripRequest !== null,
+                fn () => $trip->acceptedTripRequest->{TripRequest::COLUMN_DISTANCE_METERS}
+            ),
+
+            /**
+             * Payment information (only for completed trips with non-cash payment)
+             *
+             * @var PaymentInfoResource|null
+             */
+            'payment' => $this->when(
+                $trip->isCompleted() && $trip->order !== null && ! $trip->isCashPayment(),
+                fn () => new PaymentInfoResource($trip->order)
+            ),
+
+            /**
+             * Vehicle Information
+             *
+             * @var VehicleResource|null
+             */
+            'vehicle' => $this->when(
+                $trip->rider?->vehicle !== null,
+                fn () => new VehicleResource($trip->rider->vehicle)
+            ),
 
             /**
              * Trip creation date and time (timestamp)
