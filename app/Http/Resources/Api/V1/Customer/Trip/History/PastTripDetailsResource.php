@@ -9,7 +9,6 @@ use App\Http\Resources\Api\V1\Customer\Trip\AccessibilityRequirementsResource;
 use App\Http\Resources\Api\V1\Customer\Trip\History\Traits\HasVehicleInformation;
 use App\Http\Resources\Api\V1\Customer\Trip\TripPaymentResource;
 use App\Http\Resources\Api\V1\Customer\Trip\VehicleInfoResource;
-use App\Models\Payment;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -110,29 +109,15 @@ class PastTripDetailsResource extends JsonResource
             'passenger_count' => $trip->{Trip::COLUMN_PASSENGER_COUNT},
 
             /**
-             * Waiting time in minutes (only for ROUND_TRIP_WAIT, null otherwise)
+             * Waiting time in minutes (only for ROUND_TRIP_WAIT with waiting time > 0)
              *
              * @example "30 min"
              *
              * @var string|null
              */
             'waiting_time' => $this->when(
-                ! is_null($trip->{Trip::COLUMN_WAITING_TIME}),
+                ! empty($trip->{Trip::COLUMN_WAITING_TIME}),
                 fn () => $trip->{Trip::COLUMN_WAITING_TIME} . ' ' . trans('trips.admin.timeline.minutes')
-            ),
-
-            /**
-             * Payment number (if trip has a paid payment)
-             *
-             * If this field exists, show download receipt button
-             *
-             * @example "PAY-123456789"
-             *
-             * @var string|null
-             */
-            'payment_number' => $this->when(
-                ! is_null($trip->order?->paidPayment),
-                fn () => $trip->order->paidPayment->{Payment::COLUMN_PAYMENT_NUMBER}
             ),
 
             /**

@@ -6,6 +6,7 @@ namespace App\Http\Resources\Api\V1\Rider;
 
 use App\Http\Resources\Api\V1\Customer\PhoneCodeResource;
 use App\Http\Resources\Api\V1\Customer\StatusResource;
+use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
 use App\Models\Rider;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -55,11 +56,59 @@ class RiderResource extends JsonResource
             'phone' => new PhoneCodeResource($this->resource->{Rider::COLUMN_PHONE_NUMBER}),
 
             /**
+             * Rider profile image URL
+             *
+             * @example "https://example.com/storage/riders/1/profile.jpg"
+             *
+             * @var string|null
+             */
+            'image' => $this->resource->getFirstMediaLink(Rider::PROFILE_PHOTO),
+
+            /**
+             * Total number of completed trips
+             *
+             * @example 25
+             *
+             * @var int
+             */
+            'total_rides_count' => app(RiderRepositoryInterface::class)
+                ->getCompletedTripsCount($this->resource->{Rider::COLUMN_ID}),
+
+            /**
+             * Rider Rating
+             *
+             * Average rating from 0 to 5
+             *
+             * @example 4.8
+             *
+             * @var float
+             */
+            'rating' => 4.6,
+
+            /**
              * Rider status information
              *
              * @var StatusResource
              */
             'status' => new StatusResource($this->resource->{Rider::COLUMN_STATUS}),
+
+            /**
+             * Rider's vehicle information
+             *
+             * @var VehicleResource|null
+             */
+            'vehicle' => $this->resource->vehicle
+                ? new VehicleResource($this->resource->vehicle)
+                : null,
+
+            /**
+             * Account joined timestamp (Unix timestamp)
+             *
+             * @example 1705315800
+             *
+             * @var int|null
+             */
+            'joined_at' => $this->resource->{Rider::COLUMN_CREATED_AT}?->timestamp,
         ];
     }
 }

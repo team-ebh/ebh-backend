@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Repositories\Api\V1\Rider;
 
+use App\DTOs\Api\V1\Rider\Profile\UpdateProfileDTO;
+use App\Enums\Trip\TripStatusEnum;
 use App\Exceptions\Customer\InvalidOtpException;
 use App\Exceptions\Customer\RiderNotFoundException;
 use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
 use App\Models\Rider;
+use App\Models\Trip;
+use Illuminate\Http\UploadedFile;
 use Random\RandomException;
 
 class RiderRepository implements RiderRepositoryInterface
@@ -87,5 +91,44 @@ class RiderRepository implements RiderRepositoryInterface
             Rider::COLUMN_LONGITUDE => $longitude,
             Rider::COLUMN_LAST_LOCATION_UPDATE => now(),
         ]);
+    }
+
+    public function updateProfile(Rider $rider, UpdateProfileDTO $dto): Rider
+    {
+        $data = [
+            Rider::COLUMN_FULL_NAME => $dto->fullName,
+            Rider::COLUMN_PHONE_NUMBER => $dto->phoneNumber,
+        ];
+
+        // Only update email if provided (nullable in request, but NOT NULL in database)
+        if ($dto->email !== null) {
+            $data[Rider::COLUMN_EMAIL] = $dto->email;
+        }
+
+        $rider->update($data);
+
+        return $rider->fresh();
+    }
+
+    public function updateProfileImage(Rider $rider, UploadedFile $image): Rider
+    {
+        // Clear existing profile photos
+        $rider->clearMediaCollection(Rider::MEDIA_COLLECTION_NAME);
+
+        // Add new profile photo
+        $rider
+            ->addMedia($image)
+            ->withCustomProperties(['name' => Rider::PROFILE_PHOTO])
+            ->toMediaCollection(Rider::MEDIA_COLLECTION_NAME);
+
+        return $rider->fresh();
+    }
+
+    public function getCompletedTripsCount(int $riderId): int
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_RIDER_ID, $riderId)
+            ->where(Trip::COLUMN_STATUS, TripStatusEnum::COMPLETED)
+            ->count();
     }
 }

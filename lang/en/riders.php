@@ -74,6 +74,28 @@ return [
                 'required' => 'Status is required',
                 'in' => 'Status must be either online or offline',
             ],
+            'profile' => [
+                'full_name' => [
+                    'required' => 'Full name is required',
+                    'string' => 'Full name must be a string',
+                    'min' => 'Full name must be at least 2 characters',
+                    'max' => 'Full name must not exceed 60 characters',
+                ],
+                'email' => [
+                    'email' => 'Please enter a valid email address',
+                    'max' => 'Email must not exceed 255 characters',
+                ],
+                'phone_number' => [
+                    'required' => 'Phone number is required',
+                    'regex' => 'Phone number must be exactly 8 digits',
+                ],
+                'image' => [
+                    'required' => 'Profile image is required',
+                    'image' => 'File must be an image',
+                    'mimes' => 'Image must be a JPEG, JPG, PNG, or WebP file',
+                    'max' => 'Image size must not exceed 2MB',
+                ],
+            ],
         ],
         'errors' => [
             'trip_not_available' => 'Trip is no longer available',
