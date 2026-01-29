@@ -70,6 +70,28 @@ describe('EnsureCustomerIsActive Middleware', function () {
         expect($this->customer->tokens()->count())->toBe(0);
     });
 
+    it('blocks deleted customer and revokes tokens', function () {
+        // Create token for customer
+        $token = $this->customer->createToken('test-token')->plainTextToken;
+
+        // Change customer status to deleted
+        $this->customer->update(['status' => CustomerStatusEnum::DELETED]);
+
+        $response = getJson(route('v1.customers.profile'), [
+            'Authorization' => "Bearer {$token}",
+        ]);
+
+        $response->assertStatus(406)
+            ->assertJson([
+                'meta' => [
+                    'message' => trans('customers.api.exceptions.account_deleted'),
+                ],
+            ]);
+
+        // Verify all tokens were revoked
+        expect($this->customer->tokens()->count())->toBe(0);
+    });
+
     // Note: PENDING_VERIFICATION status test is commented out as it's handled identically to INACTIVE/SUSPENDED
     // The logic is the same - isActive() returns false for all non-ACTIVE statuses
     // it('blocks pending verification customer and revokes tokens', function () {

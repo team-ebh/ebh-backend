@@ -98,6 +98,8 @@ class PaymentController extends Controller
      *
      * @authenticated
      *
+     * @deprecated
+     *
      * @throws \Throwable
      */
     public function getReceiptLink(

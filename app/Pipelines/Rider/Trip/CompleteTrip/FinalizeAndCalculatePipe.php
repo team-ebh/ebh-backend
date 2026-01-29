@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace App\Pipelines\Rider\Trip\CompleteTrip;
 
-use App\Enums\Setting\SettingEnum;
-use App\Enums\Trip\TripStatusEnum;
 use App\Events\Socket\Customer\TripCompletedEvent;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
-use App\Models\Company;
-use App\Models\Setting;
 use App\Models\Trip;
 use App\Services\Trip\TripActionService;
+use App\Services\Trip\TripSnapshotService;
+use App\Services\TripPricingService;
 use Closure;
 
 readonly class FinalizeAndCalculatePipe
@@ -19,6 +17,8 @@ readonly class FinalizeAndCalculatePipe
     public function __construct(
         private RiderTripRepositoryInterface $riderTripRepository,
         private TripActionService $tripActionService,
+        private TripSnapshotService $tripSnapshotService,
+        private TripPricingService $tripPricingService,
     ) {}
 
     /**
@@ -37,11 +37,20 @@ readonly class FinalizeAndCalculatePipe
                 $this->riderTripRepository->calculateAndUpdateWaitingTime($trip);
             }
 
-            // Calculate and update commission
-            $this->calculateAndUpdateCommission($trip);
+            // Calculate commission data
+            $commissionData = $this->tripPricingService->calculateCommission($trip);
 
-            // Complete trip and update rider status
-            $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::COMPLETED);
+            // Calculate duration and distance
+            $tripMetrics = $this->tripSnapshotService->calculateDurationAndDistance($trip);
+
+            // Finalize trip completion with all data in a single update
+            $this->riderTripRepository->finalizeTripCompletion(
+                trip: $trip,
+                commissionRate: $commissionData['rate'],
+                commissionAmount: $commissionData['amount'],
+                durationMinutes: $tripMetrics['duration_minutes'],
+                distanceMeters: $tripMetrics['distance_meters'],
+            );
 
             // Broadcast to customer
             broadcast(new TripCompletedEvent(
@@ -61,48 +70,5 @@ readonly class FinalizeAndCalculatePipe
         }
 
         return $next($payload);
-    }
-
-    /**
-     * Calculate and update trip commission
-     */
-    private function calculateAndUpdateCommission(Trip $trip): void
-    {
-        // Refresh trip to get latest total_price (in case waiting time was added)
-        $trip->refresh();
-
-        // Get commission rate from rider's company
-        $commissionRate = $this->getCommissionRate($trip);
-
-        // Calculate commission amount
-        $commissionAmount = bcdiv(
-            bcmul((string) $trip->{Trip::COLUMN_TOTAL_PRICE}, (string) $commissionRate, 4),
-            '100',
-            3
-        );
-
-        // Update trip with commission
-        $this->riderTripRepository->updateTripCommission($trip, $commissionRate, $commissionAmount);
-    }
-
-    /**
-     * Get commission rate from rider's company or default setting
-     */
-    private function getCommissionRate(Trip $trip): float
-    {
-        // Load rider with company
-        $rider = $trip->rider()->with('company')->first();
-
-        if (! $rider) {
-            return (float) Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE);
-        }
-
-        $company = $rider->company;
-
-        if ($company && $company->{Company::COLUMN_COMMISSION_RATE} !== null && $company->{Company::COLUMN_COMMISSION_RATE} > 0) {
-            return (float) $company->{Company::COLUMN_COMMISSION_RATE};
-        }
-
-        return (float) Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE);
     }
 }

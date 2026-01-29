@@ -1785,6 +1785,194 @@ describe('Confirm Trip API', function () {
                 ],
             ]);
     });
+
+    it('cannot confirm round trip with cash payment', function () {
+        // Create a draft trip with ROUND_TRIP ride type
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'ride_type' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Add origin and destination locations
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Origin Location',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'type' => TripLocationTypeEnum::ORIGIN->value,
+            'sequence' => 1,
+        ]);
+
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Destination Location',
+            'latitude' => 29.3117,
+            'longitude' => 47.4818,
+            'type' => TripLocationTypeEnum::DESTINATION->value,
+            'sequence' => 2,
+        ]);
+
+        // Try to confirm with CASH payment - should fail
+        $response = postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+            'destination_location_title' => 'Destination Location',
+            'destination_location_sub_title' => 'Sub title',
+            'destination_latitude' => 29.3117,
+            'destination_longitude' => 47.4818,
+            'return_time' => now()->addHours(2)->timestamp,
+        ]);
+
+        $response->assertStatus(422);
+
+        $errors = $response->json('meta.errors');
+        $errorFields = collect($errors)->pluck('field')->toArray();
+        expect($errorFields)->toContain('payment_method');
+    });
+
+    it('can confirm round trip with wait using cash payment', function () {
+        Event::fake();
+
+        // Create a draft trip with ROUND_TRIP_WAIT ride type
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'ride_type' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP_WAIT->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Add origin and destination locations
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Origin Location',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'type' => TripLocationTypeEnum::ORIGIN->value,
+            'sequence' => 1,
+        ]);
+
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Destination Location',
+            'latitude' => 29.3117,
+            'longitude' => 47.4818,
+            'type' => TripLocationTypeEnum::DESTINATION->value,
+            'sequence' => 2,
+        ]);
+
+        // ROUND_TRIP_WAIT allows cash payment (only ROUND_TRIP restricts cash)
+        $response = postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP_WAIT->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+            'destination_location_title' => 'Destination Location',
+            'destination_location_sub_title' => 'Sub title',
+            'destination_latitude' => 29.3117,
+            'destination_longitude' => 47.4818,
+        ]);
+
+        $response->assertStatus(200);
+    });
+
+    it('can confirm round trip with KNET payment', function () {
+        Event::fake();
+
+        // Create a draft trip with ROUND_TRIP ride type
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'ride_type' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Add origin and destination locations
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Origin Location',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'type' => TripLocationTypeEnum::ORIGIN->value,
+            'sequence' => 1,
+        ]);
+
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Destination Location',
+            'latitude' => 29.3117,
+            'longitude' => 47.4818,
+            'type' => TripLocationTypeEnum::DESTINATION->value,
+            'sequence' => 2,
+        ]);
+
+        // Confirm with KNET payment - should succeed
+        $response = postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
+            'destination_location_title' => 'Destination Location',
+            'destination_location_sub_title' => 'Sub title',
+            'destination_latitude' => 29.3117,
+            'destination_longitude' => 47.4818,
+            'return_time' => now()->addHours(2)->timestamp,
+        ]);
+
+        $response->assertStatus(200);
+    });
+
+    it('can confirm one way trip with cash payment', function () {
+        Event::fake();
+
+        // Create a draft trip with ONE_WAY ride type
+        $trip = Trip::create([
+            'customer_id' => $this->customer->id,
+            'trip_type_id' => TripTypeEnum::RIDE_NOW->value,
+            'ride_type' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+            'vehicle_type_id' => TripVehicleTypeEnum::WHEELCHAIR_ACCESSIBLE->value,
+            'passenger_count' => 1,
+            'total_price' => 5.000,
+            'currency' => CurrencyEnum::KWD->value,
+            'status' => TripStatusEnum::DRAFT->value,
+        ]);
+
+        // Add origin and destination locations
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Origin Location',
+            'latitude' => 29.3759,
+            'longitude' => 47.9774,
+            'type' => TripLocationTypeEnum::ORIGIN->value,
+            'sequence' => 1,
+        ]);
+
+        TripLocation::create([
+            'trip_id' => $trip->id,
+            'location_title' => 'Destination Location',
+            'latitude' => 29.3117,
+            'longitude' => 47.4818,
+            'type' => TripLocationTypeEnum::DESTINATION->value,
+            'sequence' => 2,
+        ]);
+
+        // Confirm with CASH payment - should succeed for ONE_WAY
+        $response = postJson(route('v1.customers.trips.confirm', $trip), [
+            'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ONE_WAY->value,
+            'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
+        ]);
+
+        $response->assertStatus(200);
+    });
 });
 
 describe('Check Pending Payment API', function () {

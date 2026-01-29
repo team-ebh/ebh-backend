@@ -11,6 +11,7 @@ use App\Interfaces\Repositories\Api\V1\Customer\OrderRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\CustomerTripRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\RiderLocationRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
+use App\Interfaces\Repositories\Api\V1\Rider\Earnings\RiderEarningsRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Interfaces\Repositories\Payment\PaymentLogRepositoryInterface;
@@ -22,6 +23,7 @@ use App\Repositories\Api\V1\Customer\OrderRepository;
 use App\Repositories\Api\V1\Customer\Trip\CustomerTripRepository;
 use App\Repositories\Api\V1\Customer\Trip\RiderLocationRepository;
 use App\Repositories\Api\V1\Customer\Trip\TripRepository;
+use App\Repositories\Api\V1\Rider\Earnings\RiderEarningsRepository;
 use App\Repositories\Api\V1\Rider\RiderRepository;
 use App\Repositories\Api\V1\Rider\Trip\RiderTripRepository;
 use App\Repositories\Payment\PaymentLogRepository;
@@ -74,6 +76,7 @@ class AppServiceProvider extends ServiceProvider
         RiderLocationRepositoryInterface::class => RiderLocationRepository::class,
         RiderRepositoryInterface::class => RiderRepository::class,
         RiderTripRepositoryInterface::class => RiderTripRepository::class,
+        RiderEarningsRepositoryInterface::class => RiderEarningsRepository::class,
         TripRequestRepositoryInterface::class => TripRequestRepository::class,
         PaymentRepositoryInterface::class => PaymentRepository::class,
         PaymentLogRepositoryInterface::class => PaymentLogRepository::class,

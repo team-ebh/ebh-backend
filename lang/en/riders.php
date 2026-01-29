@@ -24,6 +24,7 @@ return [
             'online' => 'Online',
             'offline' => 'Offline',
             'busy' => 'Busy',
+            'deleted' => 'Deleted',
         ],
         'model_label' => 'Rider',
         'plural_model_label' => 'Riders',
@@ -62,6 +63,7 @@ return [
         ],
         'exceptions' => [
             'has_active_trip' => 'Cannot disable rider. The rider has an active trip in progress.',
+            'cannot_edit_deleted' => 'Cannot edit a deleted rider account.',
         ],
     ],
     'api' => [
@@ -74,6 +76,28 @@ return [
                 'required' => 'Status is required',
                 'in' => 'Status must be either online or offline',
             ],
+            'profile' => [
+                'full_name' => [
+                    'required' => 'Full name is required',
+                    'string' => 'Full name must be a string',
+                    'min' => 'Full name must be at least 2 characters',
+                    'max' => 'Full name must not exceed 60 characters',
+                ],
+                'email' => [
+                    'email' => 'Please enter a valid email address',
+                    'max' => 'Email must not exceed 255 characters',
+                ],
+                'phone_number' => [
+                    'required' => 'Phone number is required',
+                    'regex' => 'Phone number must be exactly 8 digits',
+                ],
+                'image' => [
+                    'required' => 'Profile image is required',
+                    'image' => 'File must be an image',
+                    'mimes' => 'Image must be a JPEG, JPG, PNG, or WebP file',
+                    'max' => 'Image size must not exceed 2MB',
+                ],
+            ],
         ],
         'errors' => [
             'trip_not_available' => 'Trip is no longer available',
@@ -83,6 +107,7 @@ return [
         ],
         'exceptions' => [
             'account_disabled' => 'Your account is disabled. Please contact support.',
+            'account_deleted' => 'Your account has been deleted.',
             'cannot_change_status' => 'Cannot change status. You must complete or cancel your active trip first, or wait until you are not busy.',
         ],
         'success' => [
@@ -91,6 +116,27 @@ return [
             'status_updated' => 'Status updated successfully',
         ],
         'location_updated_successfully' => 'Location updated successfully',
+        'earnings' => [
+            'filters' => [
+                'today' => 'Today',
+                'this_week' => 'This Week',
+                'past_trips' => 'Past Trips',
+            ],
+            'validation' => [
+                'filter' => [
+                    'enum' => 'The selected filter is invalid.',
+                ],
+            ],
+            'comparison' => [
+                'no_change' => 'No change from previous period',
+                'text' => ':prefix:percentage% from :period',
+                'periods' => [
+                    'yesterday' => 'yesterday',
+                    'last_week' => 'last week',
+                ],
+            ],
+            'route_text' => 'From :from to :to',
+        ],
     ],
     'location_updated_successfully' => 'Location updated successfully',
 ];

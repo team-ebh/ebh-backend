@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories\Api\V1\Rider\Trip;
 
 use App\Enums\Rider\RiderStatusEnum;
+use App\Enums\Trip\TripHistoryFilterEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripRequestStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
@@ -14,7 +15,9 @@ use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Models\TripRequest;
+use App\Services\Trip\TripSnapshotService;
 use App\Services\TripPricingService;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 readonly class RiderTripRepository implements RiderTripRepositoryInterface
@@ -22,6 +25,7 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     public function __construct(
         private TripRequestRepositoryInterface $tripRequestRepository,
         private TripPricingService $tripPricingService,
+        private TripSnapshotService $tripSnapshotService,
     ) {}
 
     /**
@@ -79,10 +83,14 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
             TripRequest::COLUMN_RESPONDED_AT => now(),
         ]);
 
-        // Update trip with rider assignment and status
+        // Create vehicle snapshot
+        $vehicleSnapshot = $this->tripSnapshotService->createVehicleSnapshot($rider);
+
+        // Update trip with rider assignment, status, and vehicle snapshot
         $trip->update([
             Trip::COLUMN_RIDER_ID => $rider->{Rider::COLUMN_ID},
             Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER,
+            Trip::COLUMN_VEHICLE_SNAPSHOT => $vehicleSnapshot,
         ]);
 
         // Update rider status to BUSY
@@ -231,17 +239,6 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     }
 
     /**
-     * Update trip commission rate and amount
-     */
-    public function updateTripCommission(Trip $trip, float $commissionRate, string | float $commissionAmount): void
-    {
-        $trip->update([
-            Trip::COLUMN_COMMISSION_RATE => $commissionRate,
-            Trip::COLUMN_COMMISSION_AMOUNT => $commissionAmount,
-        ]);
-    }
-
-    /**
      * Check if rider has an active trip
      */
     public function existsActiveTrip(int $riderId): bool
@@ -250,5 +247,105 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
             ->where(Trip::COLUMN_RIDER_ID, $riderId)
             ->activeTrips()
             ->exists();
+    }
+
+    /**
+     * Get past trips for a rider (completed and canceled)
+     */
+    public function getPastTrips(int $riderId, TripHistoryFilterEnum $filter): CursorPaginator
+    {
+        $query = Trip::query()
+            ->where(Trip::COLUMN_RIDER_ID, $riderId)
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+            ])
+            ->orderByDesc(Trip::COLUMN_ID);
+
+        // Apply filter
+        match ($filter) {
+            TripHistoryFilterEnum::COMPLETED => $query->completed(),
+            TripHistoryFilterEnum::CANCELED => $query->canceled(),
+            TripHistoryFilterEnum::ALL => $query->pastTrips(),
+        };
+
+        return $query->cursorPaginate(5);
+    }
+
+    /**
+     * Get past trip with details for a rider
+     */
+    public function getPastTripWithDetails(int $tripId, int $riderId): ?Trip
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_ID, $tripId)
+            ->where(Trip::COLUMN_RIDER_ID, $riderId)
+            ->pastTrips()
+            ->with([
+                'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+                'locations.statusLogs:id,trip_location_id,status,created_at',
+                'accessibility',
+                'order:id,payment_method,status,total_price,currency',
+            ])
+            ->first();
+    }
+
+    /**
+     * Get total completed rides count for a rider
+     */
+    public function getTotalRidesCount(int $riderId): int
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_RIDER_ID, $riderId)
+            ->where(Trip::COLUMN_STATUS, TripStatusEnum::COMPLETED)
+            ->count();
+    }
+
+    /**
+     * Get canceled trips count for a rider
+     */
+    public function getCanceledCount(int $riderId): int
+    {
+        return Trip::query()
+            ->where(Trip::COLUMN_RIDER_ID, $riderId)
+            ->whereIn(Trip::COLUMN_STATUS, [
+                TripStatusEnum::CANCELED_BY_CUSTOMER,
+                TripStatusEnum::CANCELLED_BY_RIDER,
+            ])
+            ->count();
+    }
+
+    /**
+     * Save picked up timestamp (first pickup only)
+     */
+    public function savePickedUpAt(Trip $trip): void
+    {
+        // Only save if not already set (first pickup)
+        if ($trip->{Trip::COLUMN_PICKED_UP_AT} === null) {
+            $trip->update([
+                Trip::COLUMN_PICKED_UP_AT => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Finalize trip completion with all data in a single update
+     *
+     * Updates: status, commission, completed_at, duration, distance
+     */
+    public function finalizeTripCompletion(
+        Trip $trip,
+        float $commissionRate,
+        string $commissionAmount,
+        int $durationMinutes,
+        int $distanceMeters
+    ): void {
+        $trip->update([
+            Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED,
+            Trip::COLUMN_COMMISSION_RATE => $commissionRate,
+            Trip::COLUMN_COMMISSION_AMOUNT => $commissionAmount,
+            Trip::COLUMN_COMPLETED_AT => now(),
+            Trip::COLUMN_DURATION_MINUTES => $durationMinutes,
+            Trip::COLUMN_DISTANCE_METERS => $distanceMeters,
+        ]);
     }
 }

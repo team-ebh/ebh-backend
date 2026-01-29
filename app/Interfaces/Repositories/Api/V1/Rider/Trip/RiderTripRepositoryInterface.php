@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Interfaces\Repositories\Api\V1\Rider\Trip;
 
 use App\Enums\Rider\RiderStatusEnum;
+use App\Enums\Trip\TripHistoryFilterEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripStatusEnum;
 use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Models\TripRequest;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 interface RiderTripRepositoryInterface
@@ -45,7 +47,43 @@ interface RiderTripRepositoryInterface
      */
     public function calculateAndUpdateWaitingTime(Trip $trip): bool;
 
-    public function updateTripCommission(Trip $trip, float $commissionRate, string | float $commissionAmount): void;
-
     public function existsActiveTrip(int $riderId): bool;
+
+    /**
+     * Get past trips for a rider (completed and cancelled)
+     */
+    public function getPastTrips(int $riderId, TripHistoryFilterEnum $filter): CursorPaginator;
+
+    /**
+     * Get past trip with details for a rider
+     */
+    public function getPastTripWithDetails(int $tripId, int $riderId): ?Trip;
+
+    /**
+     * Get total completed rides count for a rider
+     */
+    public function getTotalRidesCount(int $riderId): int;
+
+    /**
+     * Get canceled trips count for a rider
+     */
+    public function getCanceledCount(int $riderId): int;
+
+    /**
+     * Save picked up timestamp (first pickup only)
+     */
+    public function savePickedUpAt(Trip $trip): void;
+
+    /**
+     * Finalize trip completion with all data in a single update
+     *
+     * Updates: status, commission, completed_at, duration, distance
+     */
+    public function finalizeTripCompletion(
+        Trip $trip,
+        float $commissionRate,
+        string $commissionAmount,
+        int $durationMinutes,
+        int $distanceMeters
+    ): void;
 }

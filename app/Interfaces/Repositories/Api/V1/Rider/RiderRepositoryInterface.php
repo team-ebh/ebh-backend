@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Repositories\Api\V1\Rider;
 
+use App\DTOs\Api\V1\Rider\Profile\UpdateProfileDTO;
 use App\Models\Rider;
+use Illuminate\Http\UploadedFile;
 
 interface RiderRepositoryInterface
 {
@@ -25,4 +27,10 @@ interface RiderRepositoryInterface
     public function createAuthToken(Rider $rider): string;
 
     public function updateLocation(Rider $rider, float $latitude, float $longitude): void;
+
+    public function updateProfile(Rider $rider, UpdateProfileDTO $dto): Rider;
+
+    public function updateProfileImage(Rider $rider, UploadedFile $image): Rider;
+
+    public function getCompletedTripsCount(int $riderId): int;
 }

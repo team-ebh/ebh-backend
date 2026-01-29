@@ -42,6 +42,7 @@ return [
         'exceptions' => [
             'not_found' => 'Customer not found.',
             'account_disabled' => 'Your account is suspended or inactive. Please contact support.',
+            'account_deleted' => 'Your account has been deleted.',
             'invalid_otp' => 'Invalid or expired OTP.',
             'before_registered' => 'Customer is already registered.',
             'must_be_registered' => 'Customer must be registered first.',
@@ -92,6 +93,7 @@ return [
             CustomerStatusEnum::ACTIVE->name => 'Active',
             CustomerStatusEnum::INACTIVE->name => 'Inactive',
             CustomerStatusEnum::SUSPENDED->name => 'Suspended',
+            CustomerStatusEnum::DELETED->name => 'Deleted',
         ],
         'actions' => [
             'activate' => 'Activate',
@@ -106,6 +108,7 @@ return [
         'exceptions' => [
             'has_active_trip' => 'Cannot disable customer. The customer has an active trip in progress.',
             'has_pending_payment' => 'Cannot disable customer. The customer has a pending payment that must be completed first.',
+            'cannot_edit_deleted' => 'Cannot edit a deleted customer account.',
         ],
         'stats' => [
             'total_customers' => 'Total Customers',

@@ -47,7 +47,7 @@ class RiderFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             Rider::COLUMN_OTP => fake()->numerify('####'),
-            Rider::COLUMN_OTP_EXPIRES_AT => now()->addMinutes(5)->timestamp,
+            Rider::COLUMN_OTP_EXPIRES_AT => now()->addMinutes(5),
         ]);
     }
 }

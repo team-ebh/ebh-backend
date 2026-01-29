@@ -42,6 +42,7 @@ return [
         'exceptions' => [
             'not_found' => 'العميل غير موجود.',
             'account_disabled' => 'حسابك موقوف أو غير نشط. يرجى التواصل مع الدعم.',
+            'account_deleted' => 'تم حذف حسابك.',
             'invalid_otp' => 'رمز التحقق غير صالح أو منتهي الصلاحية.',
             'before_registered' => 'العميل مسجل مسبقاً.',
             'must_be_registered' => 'يجب تسجيل العميل أولاً.',
@@ -92,6 +93,7 @@ return [
             CustomerStatusEnum::ACTIVE->name => 'نشط',
             CustomerStatusEnum::INACTIVE->name => 'غير نشط',
             CustomerStatusEnum::SUSPENDED->name => 'معلق',
+            CustomerStatusEnum::DELETED->name => 'محذوف',
         ],
         'actions' => [
             'activate' => 'تفعيل',
@@ -106,6 +108,7 @@ return [
         'exceptions' => [
             'has_active_trip' => 'لا يمكن تعطيل العميل. العميل لديه رحلة نشطة قيد التنفيذ.',
             'has_pending_payment' => 'لا يمكن تعطيل العميل. العميل لديه دفعة معلقة يجب إكمالها أولاً.',
+            'cannot_edit_deleted' => 'لا يمكن تعديل حساب عميل محذوف.',
         ],
         'stats' => [
             'total_customers' => 'إجمالي العملاء',

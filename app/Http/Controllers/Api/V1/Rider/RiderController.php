@@ -14,7 +14,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Rider\Location\UpdateLocationRequest;
 use App\Http\Requests\Api\V1\Rider\UpdateRiderStatusRequest;
 use App\Http\Resources\Api\V1\Rider\AppStateResource;
-use App\Http\Resources\Api\V1\Rider\RiderResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -23,18 +22,6 @@ use Illuminate\Http\Request;
  */
 class RiderController extends Controller
 {
-    /**
-     * Get rider profile
-     *
-     * Returns the authenticated rider's profile information
-     *
-     * @authenticated
-     */
-    public function profile(): RiderResource
-    {
-        return new RiderResource(auth('rider')->user());
-    }
-
     /**
      * Update rider's current location
      *

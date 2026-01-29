@@ -378,6 +378,11 @@ return [
             'included' => 'Included',
             'total' => 'Total',
         ],
+        'filters' => [
+            'all' => 'All',
+            'completed' => 'Completed',
+            'canceled' => 'Canceled',
+        ],
         'exceptions' => [
             'trip_not_pending' => 'This trip cannot be confirmed. Only draft trips can be confirmed.',
             'trip_not_draft' => 'Ride type can only be changed for draft trips.',
@@ -392,6 +397,7 @@ return [
             'trip_not_found' => 'No active trip found for payment.',
             'trip_payment_not_allowed' => 'Payment is not allowed for this trip.',
             'scheduled_trip_cannot_change_ride_type' => 'Ride type cannot be changed for scheduled trips.',
+            'trip_not_completed' => 'Receipt is only available for completed trips.',
         ],
     ],
     'not_your_trip' => 'You are not authorized to access this trip.',

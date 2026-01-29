@@ -40,7 +40,23 @@ class ConfirmTripRequest extends ChangeRideTypeRequest
     {
         $rules = parent::rules();
 
-        $rules['payment_method'] = ['required', 'integer', Rule::enum(PaymentMethodEnum::class)];
+        $rules['payment_method'] = [
+            'required',
+            'integer',
+            Rule::enum(PaymentMethodEnum::class),
+            function (string $attribute, mixed $value, \Closure $fail): void {
+                $rideTypeId = (int) $this->input('ride_type_id');
+                $paymentMethod = (int) $value;
+
+                // Check if ride type is round trip (ROUND_TRIP or ROUND_TRIP_WAIT)
+                $isRoundTrip = $rideTypeId === RideTypeEnum::ROUND_TRIP->value;
+
+                // If round trip and payment method is cash, fail validation
+                if ($isRoundTrip && $paymentMethod === PaymentMethodEnum::CASH->value) {
+                    $fail(trans('validations.trips.payment_method.cash_not_allowed_for_round_trip'));
+                }
+            },
+        ];
 
         return $rules;
     }
