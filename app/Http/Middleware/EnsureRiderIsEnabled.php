@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Exceptions\Rider\RiderAccountDeletedException;
 use App\Exceptions\Rider\RiderAccountDisabledException;
 use App\Models\Rider;
 use Closure;
@@ -16,11 +17,19 @@ class EnsureRiderIsEnabled
      * Handle an incoming request.
      *
      * @throws RiderAccountDisabledException
+     * @throws RiderAccountDeletedException
      */
     public function handle(Request $request, Closure $next): Response
     {
         /** @var Rider|null $rider */
         $rider = $request->user('rider');
+
+        if ($rider && $rider->isDeleted()) {
+            // Revoke all tokens to log out the rider
+            $rider->tokens()->delete();
+
+            throw new RiderAccountDeletedException();
+        }
 
         if ($rider && ! $rider->isEnabled()) {
             // Revoke all tokens to log out the rider

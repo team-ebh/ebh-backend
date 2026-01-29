@@ -102,4 +102,9 @@ class Customer extends User implements HasMedia
             CustomerStatusEnum::SUSPENDED,
         ]);
     }
+
+    public function isDeleted(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === CustomerStatusEnum::DELETED;
+    }
 }

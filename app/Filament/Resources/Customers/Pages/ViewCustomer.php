@@ -91,7 +91,7 @@ class ViewCustomer extends BaseViewRecord
                         ->send();
                 }),
 
-            Actions\EditAction::make(),
+            Actions\EditAction::make()->hidden(fn (Customer $record): bool => $record->isDeleted()),
         ];
     }
 }

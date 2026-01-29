@@ -24,6 +24,7 @@ return [
             'online' => 'Online',
             'offline' => 'Offline',
             'busy' => 'Busy',
+            'deleted' => 'Deleted',
         ],
         'model_label' => 'Rider',
         'plural_model_label' => 'Riders',
@@ -62,6 +63,7 @@ return [
         ],
         'exceptions' => [
             'has_active_trip' => 'Cannot disable rider. The rider has an active trip in progress.',
+            'cannot_edit_deleted' => 'Cannot edit a deleted rider account.',
         ],
     ],
     'api' => [
@@ -105,6 +107,7 @@ return [
         ],
         'exceptions' => [
             'account_disabled' => 'Your account is disabled. Please contact support.',
+            'account_deleted' => 'Your account has been deleted.',
             'cannot_change_status' => 'Cannot change status. You must complete or cancel your active trip first, or wait until you are not busy.',
         ],
         'success' => [

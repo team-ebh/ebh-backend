@@ -27,6 +27,10 @@ return [
     'user_rejected_status' => 'Your registration was rejected. Re-registration is not allowed.',
     'user_under_review_status' => 'Your registration is under review. Please wait for verification.',
     'user_verified_status' => 'You have already registered and been verified. Please Sign In or use Forgot Password to access your account.',
-    'invalid_user_status_for_sign_up' => 'You’ve already signed up. No need to register again!',
+    'invalid_user_status_for_sign_up' => "You've already signed up. No need to register again!",
     'verified_user_only' => 'Only verified users are allowed to perform this action.',
+
+    'exceptions' => [
+        'invalid_security_token' => 'Invalid or expired security token.',
+    ],
 ];

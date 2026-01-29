@@ -58,11 +58,7 @@ class CustomerForm
 
                         Select::make(Customer::COLUMN_STATUS)
                             ->label(trans('customers.admin.fields.status'))
-                            ->options([
-                                CustomerStatusEnum::ACTIVE->value => CustomerStatusEnum::ACTIVE->getLabel(),
-                                CustomerStatusEnum::INACTIVE->value => CustomerStatusEnum::INACTIVE->getLabel(),
-                                CustomerStatusEnum::SUSPENDED->value => CustomerStatusEnum::SUSPENDED->getLabel(),
-                            ])
+                            ->options(CustomerStatusEnum::class)
                             ->native(false)
                             ->required()
                             ->default(CustomerStatusEnum::ACTIVE)

@@ -18,6 +18,21 @@ class EditCustomer extends EditRecord
 {
     protected static string $resource = CustomerResource::class;
 
+    public function mount(int | string $record): void
+    {
+        parent::mount($record);
+
+        // Prevent editing deleted customers
+        if ($this->record->isDeleted()) {
+            Notification::make()
+                ->warning()
+                ->title(trans('customers.admin.exceptions.cannot_edit_deleted'))
+                ->send();
+
+            $this->redirect(CustomerResource::getUrl('view', ['record' => $this->record]));
+        }
+    }
+
     protected function getHeaderActions(): array
     {
         return [

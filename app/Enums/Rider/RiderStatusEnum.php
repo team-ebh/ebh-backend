@@ -12,6 +12,7 @@ enum RiderStatusEnum: string implements HasColor, HasLabel
     case ONLINE = 'online';
     case OFFLINE = 'offline';
     case BUSY = 'busy';
+    case DELETED = 'deleted';
 
     public function getLabel(): ?string
     {
@@ -24,6 +25,7 @@ enum RiderStatusEnum: string implements HasColor, HasLabel
             self::ONLINE => 'success',
             self::OFFLINE => 'gray',
             self::BUSY => 'warning',
+            self::DELETED => 'danger',
         };
     }
 
