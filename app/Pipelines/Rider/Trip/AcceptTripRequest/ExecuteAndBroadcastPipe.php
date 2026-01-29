@@ -26,7 +26,7 @@ readonly class ExecuteAndBroadcastPipe
         $dto = $payload['dto'];
         $rider = $payload['rider'];
 
-        // Accept trip with lock (inside transaction)
+        // Accept trip with lock and save vehicle snapshot (inside transaction)
         $trip = $this->riderTripRepository->acceptTripRequestWithLock($dto->tripRequest, $rider);
         $payload['trip'] = $trip;
 

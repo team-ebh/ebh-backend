@@ -785,6 +785,13 @@ describe('Past Trip Details API', function () {
             Trip::COLUMN_TOTAL_PRICE => 5.000,
             Trip::COLUMN_CURRENCY => CurrencyEnum::KWD->value,
             Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED->value,
+            Trip::COLUMN_VEHICLE_SNAPSHOT => [
+                'car_make' => 'Toyota',
+                'car_model' => 'Camry',
+                'model' => 'Toyota Camry',
+                'plate_number' => 'ABC-123',
+                'year' => 2023,
+            ],
         ]);
 
         TripLocation::create([

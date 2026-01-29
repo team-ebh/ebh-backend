@@ -8,9 +8,8 @@ use App\Http\Resources\Api\V1\Customer\StatusResource;
 use App\Http\Resources\Api\V1\Customer\Trip\AccessibilityRequirementsResource;
 use App\Http\Resources\Api\V1\Customer\Trip\RideTypeResource;
 use App\Http\Resources\Api\V1\Customer\Trip\TripPaymentResource;
-use App\Http\Resources\Api\V1\Rider\VehicleResource;
+use App\Http\Resources\Api\V1\Shared\VehicleSnapshotResource;
 use App\Models\Trip;
-use App\Models\TripRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -92,10 +91,7 @@ class PastTripDetailsResource extends JsonResource
              *
              * @var int|null
              */
-            'duration' => $this->when(
-                $trip->acceptedTripRequest !== null,
-                fn () => (int) ceil($trip->acceptedTripRequest->{TripRequest::COLUMN_ESTIMATED_ARRIVAL_SECONDS} / 60)
-            ),
+            'duration' => $trip->{Trip::COLUMN_DURATION_MINUTES},
 
             /**
              * Trip distance in meters
@@ -104,10 +100,7 @@ class PastTripDetailsResource extends JsonResource
              *
              * @var int|null
              */
-            'distance' => $this->when(
-                $trip->acceptedTripRequest !== null,
-                fn () => $trip->acceptedTripRequest->{TripRequest::COLUMN_DISTANCE_METERS}
-            ),
+            'distance' => $trip->{Trip::COLUMN_DISTANCE_METERS},
 
             /**
              * Payment information (only for completed trips with non-cash payment)
@@ -120,13 +113,13 @@ class PastTripDetailsResource extends JsonResource
             ),
 
             /**
-             * Vehicle Information
+             * Vehicle Information (snapshot from trip acceptance)
              *
-             * @var VehicleResource|null
+             * @var VehicleSnapshotResource|null
              */
             'vehicle' => $this->when(
-                $trip->rider?->vehicle !== null,
-                fn () => new VehicleResource($trip->rider->vehicle)
+                $trip->{Trip::COLUMN_VEHICLE_SNAPSHOT} !== null,
+                fn () => new VehicleSnapshotResource($trip->{Trip::COLUMN_VEHICLE_SNAPSHOT})
             ),
 
             /**

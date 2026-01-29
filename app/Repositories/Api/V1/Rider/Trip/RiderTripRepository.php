@@ -15,6 +15,7 @@ use App\Models\Rider;
 use App\Models\Trip;
 use App\Models\TripLocation;
 use App\Models\TripRequest;
+use App\Services\Trip\TripSnapshotService;
 use App\Services\TripPricingService;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -24,6 +25,7 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     public function __construct(
         private TripRequestRepositoryInterface $tripRequestRepository,
         private TripPricingService $tripPricingService,
+        private TripSnapshotService $tripSnapshotService,
     ) {}
 
     /**
@@ -81,10 +83,14 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
             TripRequest::COLUMN_RESPONDED_AT => now(),
         ]);
 
-        // Update trip with rider assignment and status
+        // Create vehicle snapshot
+        $vehicleSnapshot = $this->tripSnapshotService->createVehicleSnapshot($rider);
+
+        // Update trip with rider assignment, status, and vehicle snapshot
         $trip->update([
             Trip::COLUMN_RIDER_ID => $rider->{Rider::COLUMN_ID},
             Trip::COLUMN_STATUS => TripStatusEnum::ACCEPTED_RIDER,
+            Trip::COLUMN_VEHICLE_SNAPSHOT => $vehicleSnapshot,
         ]);
 
         // Update rider status to BUSY
@@ -233,17 +239,6 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
     }
 
     /**
-     * Update trip commission rate and amount
-     */
-    public function updateTripCommission(Trip $trip, float $commissionRate, string | float $commissionAmount): void
-    {
-        $trip->update([
-            Trip::COLUMN_COMMISSION_RATE => $commissionRate,
-            Trip::COLUMN_COMMISSION_AMOUNT => $commissionAmount,
-        ]);
-    }
-
-    /**
      * Check if rider has an active trip
      */
     public function existsActiveTrip(int $riderId): bool
@@ -288,16 +283,7 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
             ->with([
                 'locations:id,trip_id,location_title,location_sub_title,type,sequence',
                 'accessibility',
-                'acceptedTripRequest:id,trip_id,distance_meters,estimated_arrival_seconds',
-                'order:id,payment_method,status,total_price',
-                'rider:id',
-                'rider.vehicle:id,rider_id,car_type_id,car_color_id,passenger_capacity_id,car_make_id,car_model_id,year,plate_number',
-                'rider.vehicle.carType:id,name,name_ar',
-                'rider.vehicle.carColor:id,name,name_ar',
-                'rider.vehicle.passengerCapacity:id,capacity',
-                'rider.vehicle.carMake:id,name,name_ar',
-                'rider.vehicle.carModel:id,name,name_ar',
-                'rider.vehicle.accessibilityFeatures',
+                'order:id,payment_method,status,total_price,currency',
             ])
             ->first();
     }
@@ -325,5 +311,40 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
                 TripStatusEnum::CANCELLED_BY_RIDER,
             ])
             ->count();
+    }
+
+    /**
+     * Save picked up timestamp (first pickup only)
+     */
+    public function savePickedUpAt(Trip $trip): void
+    {
+        // Only save if not already set (first pickup)
+        if ($trip->{Trip::COLUMN_PICKED_UP_AT} === null) {
+            $trip->update([
+                Trip::COLUMN_PICKED_UP_AT => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Finalize trip completion with all data in a single update
+     *
+     * Updates: status, commission, completed_at, duration, distance
+     */
+    public function finalizeTripCompletion(
+        Trip $trip,
+        float $commissionRate,
+        string $commissionAmount,
+        int $durationMinutes,
+        int $distanceMeters
+    ): void {
+        $trip->update([
+            Trip::COLUMN_STATUS => TripStatusEnum::COMPLETED,
+            Trip::COLUMN_COMMISSION_RATE => $commissionRate,
+            Trip::COLUMN_COMMISSION_AMOUNT => $commissionAmount,
+            Trip::COLUMN_COMPLETED_AT => now(),
+            Trip::COLUMN_DURATION_MINUTES => $durationMinutes,
+            Trip::COLUMN_DISTANCE_METERS => $distanceMeters,
+        ]);
     }
 }
