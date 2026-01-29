@@ -282,6 +282,7 @@ readonly class RiderTripRepository implements RiderTripRepositoryInterface
             ->pastTrips()
             ->with([
                 'locations:id,trip_id,location_title,location_sub_title,type,sequence',
+                'locations.statusLogs:id,trip_location_id,status,created_at',
                 'accessibility',
                 'order:id,payment_method,status,total_price,currency',
             ])

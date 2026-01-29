@@ -56,9 +56,9 @@ class PastTripDetailsResource extends JsonResource
             /**
              * Trip locations sorted by sequence
              *
-             * @var HistoryTripLocationResource[]
+             * @var HistoryTripLocationDetailsResource[]
              */
-            'locations' => HistoryTripLocationResource::collection($trip->locations),
+            'locations' => HistoryTripLocationDetailsResource::collection($trip->locations),
 
             /**
              * Accessibility requirements selected for this trip
