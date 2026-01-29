@@ -116,13 +116,15 @@ class RidersTable
                         RiderStatusEnum::ONLINE->value => RiderStatusEnum::ONLINE->getLabel(),
                         RiderStatusEnum::OFFLINE->value => RiderStatusEnum::OFFLINE->getLabel(),
                         RiderStatusEnum::BUSY->value => RiderStatusEnum::BUSY->getLabel(),
+                        RiderStatusEnum::DELETED->value => RiderStatusEnum::DELETED->getLabel(),
                     ])
                     ->native(false),
             ])
             ->recordActions([
                 ViewAction::make()
                     ->url(fn (Rider $record): string => RiderResource::getUrl('view', ['record' => $record])),
-                EditAction::make(),
+                EditAction::make()
+                    ->hidden(fn (Rider $record): bool => $record->isDeleted()),
             ]);
     }
 }

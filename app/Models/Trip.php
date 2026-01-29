@@ -65,6 +65,16 @@ class Trip extends Model
 
     public const string COLUMN_SCHEDULED_TIME = 'scheduled_time';
 
+    public const string COLUMN_VEHICLE_SNAPSHOT = 'vehicle_snapshot';
+
+    public const string COLUMN_PICKED_UP_AT = 'picked_up_at';
+
+    public const string COLUMN_COMPLETED_AT = 'completed_at';
+
+    public const string COLUMN_DURATION_MINUTES = 'duration_minutes';
+
+    public const string COLUMN_DISTANCE_METERS = 'distance_meters';
+
     protected function casts(): array
     {
         return [
@@ -77,6 +87,9 @@ class Trip extends Model
             self::COLUMN_COMMISSION_RATE => 'decimal:2',
             self::COLUMN_COMMISSION_AMOUNT => 'decimal:3',
             self::COLUMN_WAITING_TIME_CONFIG => 'array',
+            self::COLUMN_VEHICLE_SNAPSHOT => 'array',
+            self::COLUMN_PICKED_UP_AT => 'datetime',
+            self::COLUMN_COMPLETED_AT => 'datetime',
         ];
     }
 

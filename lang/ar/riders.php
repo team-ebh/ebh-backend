@@ -24,6 +24,7 @@ return [
             'online' => 'متصل',
             'offline' => 'غير متصل',
             'busy' => 'مشغول',
+            'deleted' => 'محذوف',
         ],
         'model_label' => 'السائق',
         'plural_model_label' => 'السائقون',
@@ -60,6 +61,7 @@ return [
         ],
         'exceptions' => [
             'has_active_trip' => 'لا يمكن تعطيل السائق. السائق لديه رحلة نشطة قيد التنفيذ.',
+            'cannot_edit_deleted' => 'لا يمكن تعديل حساب سائق محذوف.',
         ],
     ],
     'api' => [
@@ -103,6 +105,7 @@ return [
         ],
         'exceptions' => [
             'account_disabled' => 'حسابك معطل. يرجى التواصل مع الدعم.',
+            'account_deleted' => 'تم حذف حسابك.',
             'cannot_change_status' => 'لا يمكن تغيير الحالة. يجب عليك إكمال أو إلغاء رحلتك النشطة أولاً، أو الانتظار حتى لا تكون مشغولاً.',
         ],
         'success' => [
@@ -111,6 +114,27 @@ return [
             'status_updated' => 'تم تحديث الحالة بنجاح',
         ],
         'location_updated_successfully' => 'تم تحديث الموقع بنجاح',
+        'earnings' => [
+            'filters' => [
+                'today' => 'اليوم',
+                'this_week' => 'هذا الأسبوع',
+                'past_trips' => 'الرحلات السابقة',
+            ],
+            'validation' => [
+                'filter' => [
+                    'enum' => 'الفلتر المحدد غير صالح.',
+                ],
+            ],
+            'comparison' => [
+                'no_change' => 'لا يوجد تغيير عن الفترة السابقة',
+                'text' => ':prefix:percentage% من :period',
+                'periods' => [
+                    'yesterday' => 'أمس',
+                    'last_week' => 'الأسبوع الماضي',
+                ],
+            ],
+            'route_text' => 'من :from إلى :to',
+        ],
     ],
     'location_updated_successfully' => 'تم تحديث الموقع بنجاح',
 ];

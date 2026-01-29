@@ -47,8 +47,6 @@ interface RiderTripRepositoryInterface
      */
     public function calculateAndUpdateWaitingTime(Trip $trip): bool;
 
-    public function updateTripCommission(Trip $trip, float $commissionRate, string | float $commissionAmount): void;
-
     public function existsActiveTrip(int $riderId): bool;
 
     /**
@@ -70,4 +68,22 @@ interface RiderTripRepositoryInterface
      * Get canceled trips count for a rider
      */
     public function getCanceledCount(int $riderId): int;
+
+    /**
+     * Save picked up timestamp (first pickup only)
+     */
+    public function savePickedUpAt(Trip $trip): void;
+
+    /**
+     * Finalize trip completion with all data in a single update
+     *
+     * Updates: status, commission, completed_at, duration, distance
+     */
+    public function finalizeTripCompletion(
+        Trip $trip,
+        float $commissionRate,
+        string $commissionAmount,
+        int $durationMinutes,
+        int $distanceMeters
+    ): void;
 }

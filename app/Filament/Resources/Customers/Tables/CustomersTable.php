@@ -82,13 +82,15 @@ class CustomersTable
                         CustomerStatusEnum::ACTIVE->value => CustomerStatusEnum::ACTIVE->getLabel(),
                         CustomerStatusEnum::INACTIVE->value => CustomerStatusEnum::INACTIVE->getLabel(),
                         CustomerStatusEnum::SUSPENDED->value => CustomerStatusEnum::SUSPENDED->getLabel(),
+                        CustomerStatusEnum::DELETED->value => CustomerStatusEnum::DELETED->getLabel(),
                     ])
                     ->native(false),
             ])
             ->recordActions([
                 ViewAction::make()
                     ->url(fn (Customer $record): string => CustomerResource::getUrl('view', ['record' => $record])),
-                EditAction::make(),
+                EditAction::make()
+                    ->hidden(fn (Customer $record): bool => $record->isDeleted()),
             ]);
     }
 }

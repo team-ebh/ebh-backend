@@ -6,9 +6,8 @@ namespace App\Http\Resources\Api\V1\Customer\Trip\History;
 
 use App\Http\Resources\Api\V1\Customer\StatusResource;
 use App\Http\Resources\Api\V1\Customer\Trip\AccessibilityRequirementsResource;
-use App\Http\Resources\Api\V1\Customer\Trip\History\Traits\HasVehicleInformation;
 use App\Http\Resources\Api\V1\Customer\Trip\TripPaymentResource;
-use App\Http\Resources\Api\V1\Customer\Trip\VehicleInfoResource;
+use App\Http\Resources\Api\V1\Shared\VehicleSnapshotResource;
 use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -21,8 +20,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class PastTripDetailsResource extends JsonResource
 {
-    use HasVehicleInformation;
-
     public function toArray(Request $request): array
     {
         /** @var Trip $trip */
@@ -50,15 +47,15 @@ class PastTripDetailsResource extends JsonResource
             ),
 
             /**
-             * Vehicle Information
+             * Vehicle Information (snapshot from trip acceptance)
              *
              * Vehicle details (null if trip was cancelled before rider accepted)
              *
-             * @var VehicleInfoResource|null
+             * @var VehicleSnapshotResource|null
              */
             'vehicle' => $this->when(
-                $this->getVehicleInformation($trip) !== null,
-                fn () => new VehicleInfoResource($this->getVehicleInformation($trip))
+                $trip->{Trip::COLUMN_VEHICLE_SNAPSHOT} !== null,
+                fn () => new VehicleSnapshotResource($trip->{Trip::COLUMN_VEHICLE_SNAPSHOT})
             ),
 
             /**

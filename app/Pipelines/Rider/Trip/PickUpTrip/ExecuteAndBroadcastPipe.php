@@ -63,6 +63,9 @@ readonly class ExecuteAndBroadcastPipe
             $this->riderTripRepository->updateTripStatus($trip, TripStatusEnum::IN_PROGRESS);
         }
 
+        // Save picked_up_at timestamp (first pickup only)
+        $this->riderTripRepository->savePickedUpAt($trip);
+
         // Calculate next action
         $nextAction = $this->tripActionService->getNextAction($trip->fresh());
         $payload['next_action'] = $nextAction?->value;

@@ -21,6 +21,21 @@ class EditRider extends EditRecord
 
     protected static string $resource = RiderResource::class;
 
+    public function mount(int | string $record): void
+    {
+        parent::mount($record);
+
+        // Prevent editing deleted riders
+        if ($this->record->isDeleted()) {
+            Notification::make()
+                ->warning()
+                ->title(trans('riders.admin.exceptions.cannot_edit_deleted'))
+                ->send();
+
+            $this->redirect(RiderResource::getUrl('view', ['record' => $this->record]));
+        }
+    }
+
     protected function getHeaderActions(): array
     {
         return [

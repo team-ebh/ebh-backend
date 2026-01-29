@@ -9,6 +9,7 @@ use App\Enums\Setting\SettingEnum;
 use App\Enums\Trip\RideTypeEnum;
 use App\Enums\Trip\TripLocationStatusEnum;
 use App\Enums\Trip\TripLocationTypeEnum;
+use App\Models\Company;
 use App\Models\Setting;
 use App\Models\Trip;
 use App\Models\TripLocation;
@@ -521,6 +522,56 @@ class TripPricingService
                 cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
 
         return $angle * $earthRadius;
+    }
+
+    /**
+     * Calculate commission data for a trip
+     *
+     * Calculates commission based on rider's company rate or default setting.
+     * Returns the data without saving to database.
+     *
+     * @return array{rate: float, amount: string}
+     */
+    public function calculateCommission(Trip $trip): array
+    {
+        // Refresh trip to get latest total_price (in case waiting time was added)
+        $trip->refresh();
+
+        // Get commission rate from rider's company or default
+        $commissionRate = $this->getCommissionRate($trip);
+
+        // Calculate commission amount
+        $commissionAmount = bcdiv(
+            bcmul((string) $trip->{Trip::COLUMN_TOTAL_PRICE}, (string) $commissionRate, 4),
+            '100',
+            3
+        );
+
+        return [
+            'rate' => $commissionRate,
+            'amount' => $commissionAmount,
+        ];
+    }
+
+    /**
+     * Get commission rate from rider's company or default setting
+     */
+    public function getCommissionRate(Trip $trip): float
+    {
+        // Load rider with company
+        $rider = $trip->rider()->with('company')->first();
+
+        if (! $rider) {
+            return (float) Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE);
+        }
+
+        $company = $rider->company;
+
+        if ($company && $company->{Company::COLUMN_COMMISSION_RATE} !== null) {
+            return (float) $company->{Company::COLUMN_COMMISSION_RATE};
+        }
+
+        return (float) Setting::get(SettingEnum::DEFAULT_COMMISSION_RATE);
     }
 
     /**

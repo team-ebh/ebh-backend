@@ -96,6 +96,11 @@ class Rider extends User implements HasMedia
         return $this->{self::COLUMN_STATUS} === RiderStatusEnum::BUSY;
     }
 
+    public function isDeleted(): bool
+    {
+        return $this->{self::COLUMN_STATUS} === RiderStatusEnum::DELETED;
+    }
+
     public function vehicle(): HasOne
     {
         return $this->hasOne(Vehicle::class, Vehicle::COLUMN_RIDER_ID);
