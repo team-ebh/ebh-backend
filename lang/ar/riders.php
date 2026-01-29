@@ -114,6 +114,27 @@ return [
             'status_updated' => 'تم تحديث الحالة بنجاح',
         ],
         'location_updated_successfully' => 'تم تحديث الموقع بنجاح',
+        'earnings' => [
+            'filters' => [
+                'today' => 'اليوم',
+                'this_week' => 'هذا الأسبوع',
+                'past_trips' => 'الرحلات السابقة',
+            ],
+            'validation' => [
+                'filter' => [
+                    'enum' => 'الفلتر المحدد غير صالح.',
+                ],
+            ],
+            'comparison' => [
+                'no_change' => 'لا يوجد تغيير عن الفترة السابقة',
+                'text' => ':prefix:percentage% من :period',
+                'periods' => [
+                    'yesterday' => 'أمس',
+                    'last_week' => 'الأسبوع الماضي',
+                ],
+            ],
+            'route_text' => 'من :from إلى :to',
+        ],
     ],
     'location_updated_successfully' => 'تم تحديث الموقع بنجاح',
 ];

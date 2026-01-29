@@ -24,6 +24,7 @@ arch()->preset()->laravel()->ignoring([
     'App\Http\Controllers\Api\V1\Rider\HistoryTripController', // Allow custom methods in Rider HistoryTripController
     'App\Http\Controllers\Api\V1\Customer\DeleteAccountController', // Allow custom methods in Customer DeleteAccountController
     'App\Http\Controllers\Api\V1\Rider\DeleteAccountController', // Allow custom methods in Rider DeleteAccountController
+    'App\Http\Controllers\Api\V1\Rider\EarningsController', // Allow custom methods in Rider EarningsController
     'App\Http\Controllers\Api\V1\TestSocketController', // Allow custom methods in TestSocketController
     'App\Events\Socket\Customer\TripSearchingForRiderEvent', // Uses custom resource for broadcasting
     'App\Events\Socket\Rider\NewTripRequestEvent', // Uses custom resource for broadcasting

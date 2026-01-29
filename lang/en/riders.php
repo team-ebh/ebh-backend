@@ -116,6 +116,27 @@ return [
             'status_updated' => 'Status updated successfully',
         ],
         'location_updated_successfully' => 'Location updated successfully',
+        'earnings' => [
+            'filters' => [
+                'today' => 'Today',
+                'this_week' => 'This Week',
+                'past_trips' => 'Past Trips',
+            ],
+            'validation' => [
+                'filter' => [
+                    'enum' => 'The selected filter is invalid.',
+                ],
+            ],
+            'comparison' => [
+                'no_change' => 'No change from previous period',
+                'text' => ':prefix:percentage% from :period',
+                'periods' => [
+                    'yesterday' => 'yesterday',
+                    'last_week' => 'last week',
+                ],
+            ],
+            'route_text' => 'From :from to :to',
+        ],
     ],
     'location_updated_successfully' => 'Location updated successfully',
 ];
