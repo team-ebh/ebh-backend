@@ -100,7 +100,7 @@ return [
             'required' => 'Payment method is required.',
             'integer' => 'Payment method must be an integer.',
             'enum' => 'The selected payment method is invalid.',
-            'cash_not_allowed_for_round_trip' => 'Cash payment is not available for round trips.',
+            'only_cash_allowed_for_round_trip' => 'Only cash payment is allowed for round trips.',
         ],
     ],
 ];

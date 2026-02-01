@@ -1786,7 +1786,9 @@ describe('Confirm Trip API', function () {
             ]);
     });
 
-    it('cannot confirm round trip with cash payment', function () {
+    it('can confirm round trip with cash payment', function () {
+        Event::fake();
+
         // Create a draft trip with ROUND_TRIP ride type
         $trip = Trip::create([
             'customer_id' => $this->customer->id,
@@ -1818,7 +1820,7 @@ describe('Confirm Trip API', function () {
             'sequence' => 2,
         ]);
 
-        // Try to confirm with CASH payment - should fail
+        // Confirm with CASH payment - should succeed (only cash is allowed for round trips)
         $response = postJson(route('v1.customers.trips.confirm', $trip), [
             'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::CASH->value,
@@ -1829,11 +1831,7 @@ describe('Confirm Trip API', function () {
             'return_time' => now()->addHours(2)->timestamp,
         ]);
 
-        $response->assertStatus(422);
-
-        $errors = $response->json('meta.errors');
-        $errorFields = collect($errors)->pluck('field')->toArray();
-        expect($errorFields)->toContain('payment_method');
+        $response->assertStatus(200);
     });
 
     it('can confirm round trip with wait using cash payment', function () {
@@ -1883,9 +1881,7 @@ describe('Confirm Trip API', function () {
         $response->assertStatus(200);
     });
 
-    it('can confirm round trip with KNET payment', function () {
-        Event::fake();
-
+    it('cannot confirm round trip with KNET payment', function () {
         // Create a draft trip with ROUND_TRIP ride type
         $trip = Trip::create([
             'customer_id' => $this->customer->id,
@@ -1917,7 +1913,7 @@ describe('Confirm Trip API', function () {
             'sequence' => 2,
         ]);
 
-        // Confirm with KNET payment - should succeed
+        // Try to confirm with KNET payment - should fail (only cash is allowed for round trips)
         $response = postJson(route('v1.customers.trips.confirm', $trip), [
             'ride_type_id' => \App\Enums\Trip\RideTypeEnum::ROUND_TRIP->value,
             'payment_method' => \App\Enums\Payment\PaymentMethodEnum::KNET->value,
@@ -1928,7 +1924,11 @@ describe('Confirm Trip API', function () {
             'return_time' => now()->addHours(2)->timestamp,
         ]);
 
-        $response->assertStatus(200);
+        $response->assertStatus(422);
+
+        $errors = $response->json('meta.errors');
+        $errorFields = collect($errors)->pluck('field')->toArray();
+        expect($errorFields)->toContain('payment_method');
     });
 
     it('can confirm one way trip with cash payment', function () {

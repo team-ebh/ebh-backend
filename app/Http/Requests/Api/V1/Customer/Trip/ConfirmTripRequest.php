@@ -51,9 +51,9 @@ class ConfirmTripRequest extends ChangeRideTypeRequest
                 // Check if ride type is round trip (ROUND_TRIP or ROUND_TRIP_WAIT)
                 $isRoundTrip = $rideTypeId === RideTypeEnum::ROUND_TRIP->value;
 
-                // If round trip and payment method is cash, fail validation
-                if ($isRoundTrip && $paymentMethod === PaymentMethodEnum::CASH->value) {
-                    $fail(trans('validations.trips.payment_method.cash_not_allowed_for_round_trip'));
+                // For round trips, only cash payment is allowed
+                if ($isRoundTrip && $paymentMethod !== PaymentMethodEnum::CASH->value) {
+                    $fail(trans('validations.trips.payment_method.only_cash_allowed_for_round_trip'));
                 }
             },
         ];
