@@ -16,7 +16,7 @@ class StaticPageSeeder extends Seeder
      */
     public function run(): void
     {
-        if (ApplicationEnvironmentEnum::isRiskyEnvironment()) {
+        if (ApplicationEnvironmentEnum::isProduction()) {
             return;
         }
 
