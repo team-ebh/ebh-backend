@@ -29,6 +29,11 @@ class ActivityLogResource extends Resource
 
     protected static ?int $navigationSort = 100;
 
+    public static function getNavigationGroup(): ?string
+    {
+        return trans('general.admin.navigation.technical_management');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return ActivityLogForm::configure($schema);

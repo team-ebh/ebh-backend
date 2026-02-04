@@ -6,6 +6,10 @@ namespace App\Filament\Resources\SmsLogs\Tables;
 
 use App\Enums\SMS\SmsProvidersEnum;
 use App\Enums\SMS\SmsTypesEnum;
+use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Resources\Riders\RiderResource;
+use App\Models\Customer;
+use App\Models\Rider;
 use App\Models\SmsLog;
 use Filament\Actions\ViewAction;
 use Filament\Support\Enums\FontWeight;
@@ -20,6 +24,7 @@ class SmsLogsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('receivable'))
             ->columns([
                 TextColumn::make('receivable_type')
                     ->label(__('sms.table.receiver_type'))
@@ -30,6 +35,37 @@ class SmsLogsTable
                         'Rider' => 'info',
                         default => 'gray',
                     })
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('receivable.full_name')
+                    ->label(__('sms.table.receiver'))
+                    ->formatStateUsing(function ($record) {
+                        if (! $record->receivable) {
+                            return __('sms.table.deleted_user');
+                        }
+
+                        $name = $record->receivable instanceof Customer
+                            ? $record->receivable->{Customer::COLUMN_FIRST_NAME} . ' ' . $record->receivable->{Customer::COLUMN_LAST_NAME}
+                            : $record->receivable->{Rider::COLUMN_FULL_NAME};
+
+                        return $name . ' (#' . $record->receivable_id . ')';
+                    })
+                    ->url(function ($record) {
+                        if (! $record->receivable) {
+                            return null;
+                        }
+
+                        return match (get_class($record->receivable)) {
+                            Customer::class => CustomerResource::getUrl('view', ['record' => $record->receivable_id]),
+                            Rider::class => RiderResource::getUrl('view', ['record' => $record->receivable_id]),
+                            default => null,
+                        };
+                    }, true)
+                    ->icon('heroicon-o-user')
+                    ->iconColor('primary')
+                    ->weight(FontWeight::SemiBold)
+                    ->color('primary')
                     ->searchable()
                     ->sortable(),
 

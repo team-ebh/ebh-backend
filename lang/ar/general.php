@@ -10,6 +10,7 @@ return [
             'fleet_management' => 'إدارة الأسطول',
             'order_management' => 'إدارة الطلبات',
             'settings' => 'الإعدادات',
+            'technical_management' => 'الإدارة التقنية',
         ],
         'created_at' => 'تاريخ الإنشاء',
         'updated_at' => 'تاريخ التحديث',
