@@ -8,7 +8,6 @@ use App\Filament\Resources\SmsLogs\Pages\ListSmsLogs;
 use App\Filament\Resources\SmsLogs\Pages\ViewSmsLog;
 use App\Filament\Resources\SmsLogs\Schemas\SmsLogInfolist;
 use App\Filament\Resources\SmsLogs\Tables\SmsLogsTable;
-use App\Models\Admin;
 use App\Models\SmsLog;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -50,18 +49,6 @@ class SmsLogResource extends Resource
     public static function table(Table $table): Table
     {
         return SmsLogsTable::configure($table);
-    }
-
-    public static function canAccess(): bool
-    {
-        /** @var Admin|null $admin */
-        $admin = auth()->user();
-
-        if (! $admin) {
-            return false;
-        }
-
-        return $admin->{Admin::COLUMN_EMAIL} === config('auth-credentials.admin.email');
     }
 
     public static function getRelations(): array

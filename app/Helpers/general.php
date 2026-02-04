@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\ApplicationEnvironmentEnum;
+use App\Models\Admin;
 use App\Models\Payment;
 use App\Models\Trip;
 use App\Services\SafeProcess;
@@ -228,5 +229,12 @@ if (! function_exists('getInfiniteScroll')) {
                 'next_cursor' => is_null($nextCursor) ? null : (string) $nextCursor,
             ],
         ];
+    }
+}
+
+if (! function_exists('isTechAdmin')) {
+    function isTechAdmin(): bool
+    {
+        return auth()->user()?->{Admin::COLUMN_EMAIL} === config('auth-credentials.admin.email');
     }
 }

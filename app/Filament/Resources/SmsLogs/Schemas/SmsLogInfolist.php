@@ -6,6 +6,10 @@ namespace App\Filament\Resources\SmsLogs\Schemas;
 
 use App\Enums\SMS\SmsProvidersEnum;
 use App\Enums\SMS\SmsTypesEnum;
+use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Resources\Riders\RiderResource;
+use App\Models\Customer;
+use App\Models\Rider;
 use App\Models\SmsLog;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -55,10 +59,31 @@ class SmsLogInfolist
 
                                 TextEntry::make('receivable_type')
                                     ->label(__('sms.infolist.receiver'))
-                                    ->formatStateUsing(fn ($state, $record) => __('sms.receiver_types.' . strtolower(class_basename($state))) . ' #' . $record->receivable_id)
+                                    ->formatStateUsing(function ($state, $record) {
+                                        if (! $record->receivable) {
+                                            return __('sms.receiver_types.' . strtolower(class_basename($state))) . ' #' . $record->receivable_id . ' (' . __('sms.infolist.deleted') . ')';
+                                        }
+
+                                        $name = $record->receivable instanceof Customer
+                                            ? $record->receivable->{Customer::COLUMN_FIRST_NAME} . ' ' . $record->receivable->{Customer::COLUMN_LAST_NAME}
+                                            : $record->receivable->{Rider::COLUMN_FULL_NAME};
+
+                                        return __('sms.receiver_types.' . strtolower(class_basename($state))) . ': ' . $name . ' (#' . $record->receivable_id . ')';
+                                    })
+                                    ->url(function ($record) {
+                                        if (! $record->receivable) {
+                                            return null;
+                                        }
+
+                                        return match (get_class($record->receivable)) {
+                                            Customer::class => CustomerResource::getUrl('view', ['record' => $record->receivable_id]),
+                                            Rider::class => RiderResource::getUrl('view', ['record' => $record->receivable_id]),
+                                            default => null,
+                                        };
+                                    }, true)
                                     ->badge()
                                     ->icon('heroicon-o-user')
-                                    ->color(fn ($state) => match (class_basename($state)) {
+                                    ->color(fn ($state, $record) => ! $record->receivable ? 'gray' : match (class_basename($state)) {
                                         'Customer' => 'success',
                                         'Rider' => 'info',
                                         default => 'gray',
@@ -106,6 +131,7 @@ class SmsLogInfolist
                             ->iconColor('primary'),
 
                         Section::make(__('sms.infolist.technical_details'))
+                            ->visible(fn () => isTechAdmin())
                             ->schema([
                                 TextEntry::make(SmsLog::COLUMN_REQUEST_DATA)
                                     ->label(__('sms.infolist.request_payload'))

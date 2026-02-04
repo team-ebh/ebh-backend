@@ -18,6 +18,8 @@ return [
     // أعمدة الجدول
     'table' => [
         'receiver_type' => 'نوع المستلم',
+        'receiver' => 'المستلم',
+        'deleted_user' => 'مستخدم محذوف',
         'phone_number' => 'رقم الهاتف',
         'sms_type' => 'نوع الرسالة',
         'provider' => 'مزود الخدمة',
@@ -34,6 +36,7 @@ return [
         'delivery_status' => 'حالة التسليم',
         'type' => 'النوع',
         'receiver' => 'المستلم',
+        'deleted' => 'محذوف',
         'provider' => 'مزود الخدمة',
         'sent_at' => 'تاريخ الإرسال',
         'http_status' => 'حالة HTTP',

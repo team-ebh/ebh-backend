@@ -18,6 +18,8 @@ return [
     // Table Columns
     'table' => [
         'receiver_type' => 'Receiver Type',
+        'receiver' => 'Receiver',
+        'deleted_user' => 'Deleted User',
         'phone_number' => 'Phone Number',
         'sms_type' => 'SMS Type',
         'provider' => 'Provider',
@@ -34,6 +36,7 @@ return [
         'delivery_status' => 'Delivery Status',
         'type' => 'Type',
         'receiver' => 'Receiver',
+        'deleted' => 'Deleted',
         'provider' => 'Provider',
         'sent_at' => 'Sent At',
         'http_status' => 'HTTP Status',
