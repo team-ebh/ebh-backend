@@ -22,12 +22,9 @@ class SmsService
     public function sendOtp(Model $receiver, string $otp, SmsTypesEnum $smsType): bool
     {
         // Skip SMS sending in test environment
-        //        if (! $this->shouldSendSms()) {
-        //            return false;
-        //        }
-
-        $dto = null;
-        $data = [];
+        if (! $this->shouldSendSms()) {
+            return false;
+        }
 
         try {
             $message = $this->buildOtpMessage($otp, $smsType);

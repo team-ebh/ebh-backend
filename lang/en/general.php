@@ -10,6 +10,7 @@ return [
             'fleet_management' => 'Fleet Management',
             'order_management' => 'Order Management',
             'settings' => 'Settings',
+            'technical_management' => 'Technical Management',
         ],
         'created_at' => 'Created at',
         'updated_at' => 'Updated at',

@@ -183,7 +183,7 @@ class AppSettings extends Page implements HasForms
 
     public static function getNavigationGroup(): ?string
     {
-        return trans('general.admin.navigation.settings');
+        return trans('general.admin.navigation.technical_management');
     }
 
     public function getTitle(): string

@@ -37,6 +37,11 @@ class SmsLogResource extends Resource
         return __('sms.resource.plural_label');
     }
 
+    public static function getNavigationGroup(): ?string
+    {
+        return trans('general.admin.navigation.technical_management');
+    }
+
     public static function infolist(Schema $schema): Schema
     {
         return SmsLogInfolist::configure($schema);
