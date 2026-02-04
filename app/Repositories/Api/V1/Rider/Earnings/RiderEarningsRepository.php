@@ -58,10 +58,20 @@ readonly class RiderEarningsRepository implements RiderEarningsRepositoryInterfa
 
     /**
      * Get latest completed trips for earnings with pagination
+     *
+     * Selects only required columns for optimal performance
      */
     public function getLatestTrips(int $riderId): CursorPaginator
     {
         return Trip::query()
+            ->select([
+                Trip::COLUMN_ID,
+                Trip::COLUMN_RIDER_ID,
+                Trip::COLUMN_CREATED_AT,
+                Trip::COLUMN_TOTAL_PRICE,
+                Trip::COLUMN_COMMISSION_AMOUNT,
+                Trip::COLUMN_CURRENCY,
+            ])
             ->where(Trip::COLUMN_RIDER_ID, $riderId)
             ->completed()
             ->with([
