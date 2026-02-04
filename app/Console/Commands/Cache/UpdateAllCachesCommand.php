@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands\Cache;
 
 use App\Jobs\Cache\UpdateAllCachesJob;
+use App\Services\Cache\AppStateCacheService;
 use App\Services\Cache\RiderCacheService;
 use App\Services\Cache\TripCacheService;
 use App\Services\Cache\TripLocationCacheService;
@@ -20,7 +21,8 @@ class UpdateAllCachesCommand extends Command
     public function handle(
         RiderCacheService $riderService,
         TripCacheService $tripService,
-        TripLocationCacheService $locationService
+        TripLocationCacheService $locationService,
+        AppStateCacheService $appStateService
     ): int {
         $async = $this->option('async');
 
@@ -34,18 +36,23 @@ class UpdateAllCachesCommand extends Command
         $this->info('Starting comprehensive cache update...');
         $this->newLine();
 
+        // Update app state cache
+        $this->info('1/4 Updating app state cache...');
+        $appStateStats = $appStateService->updateAll();
+        $this->line("   ✓ App State: {$appStateStats['success']}/{$appStateStats['total']} updated");
+
         // Update riders cache
-        $this->info('1/3 Updating riders cache...');
+        $this->info('2/4 Updating riders cache...');
         $riderStats = $riderService->updateAllRiders();
         $this->line("   ✓ Riders: {$riderStats['success']}/{$riderStats['total']} updated");
 
         // Update trips cache
-        $this->info('2/3 Updating trips cache...');
+        $this->info('3/4 Updating trips cache...');
         $tripStats = $tripService->updateActiveTrips();
         $this->line("   ✓ Trips: {$tripStats['success']}/{$tripStats['total']} updated");
 
         // Update trip locations cache
-        $this->info('3/3 Updating trip locations cache...');
+        $this->info('4/4 Updating trip locations cache...');
         $locationStats = $locationService->updateAllTripLocations();
         $this->line("   ✓ Trip Locations: {$locationStats['success']}/{$locationStats['total']} updated");
 
@@ -56,6 +63,7 @@ class UpdateAllCachesCommand extends Command
         $this->table(
             ['Entity', 'Total', 'Success', 'Failed'],
             [
+                ['App State', $appStateStats['total'], $appStateStats['success'], $appStateStats['failed']],
                 ['Riders', $riderStats['total'], $riderStats['success'], $riderStats['failed']],
                 ['Trips', $tripStats['total'], $tripStats['success'], $tripStats['failed']],
                 ['Trip Locations', $locationStats['total'], $locationStats['success'], $locationStats['failed']],

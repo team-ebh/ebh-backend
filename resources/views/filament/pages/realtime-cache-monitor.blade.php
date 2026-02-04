@@ -13,7 +13,21 @@
     </div>
 
     {{-- Stats Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <x-filament::section>
+            <div class="text-center">
+                <p class="text-sm text-gray-500 dark:text-gray-400">App Settings</p>
+                <p class="text-3xl font-bold text-purple-600">{{ $appStateStats['settings_count'] ?? 0 }}</p>
+                <p class="text-xs text-gray-400 mt-1">
+                    @if($appStateStats['settings_cached'] ?? false)
+                        <span class="text-success-500">✓ Cached</span>
+                    @else
+                        <span class="text-warning-500">Not Cached</span>
+                    @endif
+                </p>
+            </div>
+        </x-filament::section>
+
         <x-filament::section>
             <div class="text-center">
                 <p class="text-sm text-gray-500 dark:text-gray-400">Rider Locations</p>

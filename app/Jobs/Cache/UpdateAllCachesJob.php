@@ -26,6 +26,7 @@ class UpdateAllCachesJob implements ShouldQueue
         UpdateRidersCacheJob::dispatch(onlineOnly: false);
         UpdateTripsCacheJob::dispatch(activeOnly: true);
         UpdateTripLocationsCacheJob::dispatch();
+        UpdateAppStateCacheJob::dispatch(type: 'all');
 
         Log::info('All cache update jobs dispatched successfully');
     }

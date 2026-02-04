@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Jobs\Cache\UpdateAllCachesJob;
+use App\Jobs\Cache\UpdateAppStateCacheJob;
 use App\Jobs\Cache\UpdateRidersCacheJob;
 use App\Jobs\Cache\UpdateTripLocationsCacheJob;
 use App\Jobs\Cache\UpdateTripsCacheJob;
 use App\Models\Admin;
+use App\Services\Cache\AppStateCacheService;
 use App\Services\RealTimeCache\RealTimeCacheManager;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -35,6 +37,8 @@ class RealTimeCacheMonitor extends Page
 
     public array $activeTrips = [];
 
+    public array $appStateStats = [];
+
     public static function canAccess(): bool
     {
         /** @var Admin|null $admin */
@@ -58,10 +62,14 @@ class RealTimeCacheMonitor extends Page
         /** @var RealTimeCacheManager $cache */
         $cache = app(RealTimeCacheManager::class);
 
+        /** @var AppStateCacheService $appStateCache */
+        $appStateCache = app(AppStateCacheService::class);
+
         $this->stats = $cache->getStats();
         $this->riderLocations = $this->getRiderLocationsData($cache);
         $this->riderStatuses = $this->getRiderStatusesData($cache);
         $this->activeTrips = $this->getActiveTripsData($cache);
+        $this->appStateStats = $appStateCache->getStats();
     }
 
     protected function getRiderLocationsData(RealTimeCacheManager $cache): array
@@ -129,6 +137,23 @@ class RealTimeCacheMonitor extends Page
                 ->label('Refresh')
                 ->icon('heroicon-o-arrow-path')
                 ->action('loadData'),
+
+            Action::make('updateAppState')
+                ->label('Update App State')
+                ->icon('heroicon-o-cog-6-tooth')
+                ->color('info')
+                ->requiresConfirmation()
+                ->modalHeading('Update App State Cache?')
+                ->modalDescription('This will update settings and vehicle settings cache from database. Job will run in background.')
+                ->action(function () {
+                    UpdateAppStateCacheJob::dispatch(type: 'all');
+
+                    Notification::make()
+                        ->success()
+                        ->title('App state cache update job dispatched')
+                        ->body('Cache will be updated in background')
+                        ->send();
+                }),
 
             Action::make('updateRiders')
                 ->label('Update Riders')
