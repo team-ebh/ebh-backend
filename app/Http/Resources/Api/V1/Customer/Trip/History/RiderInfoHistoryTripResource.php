@@ -38,7 +38,7 @@ class RiderInfoHistoryTripResource extends JsonResource
              *
              * @var string
              */
-            'image' => $rider->getFirstMediaLink(),
+            'image' => $rider->getFirstMediaLink() ?: getDefaultAvatar(),
 
             /**
              * Rider Name

@@ -35,7 +35,7 @@ class RiderInfoResource extends JsonResource
              *
              * @var string
              */
-            'image' => $this->resource['image'],
+            'image' => $this->resource['image'] ?: getDefaultAvatar(),
 
             /**
              * Rider Name

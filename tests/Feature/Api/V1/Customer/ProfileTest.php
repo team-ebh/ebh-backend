@@ -71,7 +71,7 @@ describe('Get Profile API', function () {
                 ],
             ]);
 
-        expect($response->json('data.image'))->toBeNull();
+        expect($response->json('data.image'))->toBe(getDefaultAvatar());
     });
 
     test('profile includes total_rides_count', function () {
