@@ -51,12 +51,6 @@ class SmsLogsTable
                     })
                     ->sortable(),
 
-                TextColumn::make(SmsLog::COLUMN_SMS_PROVIDER)
-                    ->label(__('sms.table.provider'))
-                    ->formatStateUsing(fn (SmsProvidersEnum $state) => __('sms.providers.' . $state->value))
-                    ->badge()
-                    ->sortable(),
-
                 IconColumn::make(SmsLog::COLUMN_IS_SUCCESSFUL)
                     ->label(__('sms.table.status'))
                     ->boolean()
