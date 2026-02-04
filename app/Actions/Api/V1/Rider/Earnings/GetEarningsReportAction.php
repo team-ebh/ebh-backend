@@ -151,6 +151,8 @@ readonly class GetEarningsReportAction
 
     /**
      * Calculate average earnings per ride
+     *
+     * Uses floor to always round down to 2 decimal places
      */
     private function calculateAveragePerRide(float $totalEarnings, int $totalRides): float
     {
@@ -158,7 +160,9 @@ readonly class GetEarningsReportAction
             return 0.0;
         }
 
-        return round($totalEarnings / $totalRides, 2);
+        $average = $totalEarnings / $totalRides;
+
+        return floor($average * 100) / 100;
     }
 
     /**
