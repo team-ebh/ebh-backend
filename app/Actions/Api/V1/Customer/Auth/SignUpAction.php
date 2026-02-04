@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Customer\Auth;
 
 use App\DTOs\Api\V1\Customer\Auth\SignUpDTO;
+use App\Enums\SMS\SmsTypesEnum;
+use App\Events\OtpGenerated;
 use App\Interfaces\Repositories\Api\V1\Customer\CustomerRepositoryInterface;
 use App\Models\Customer;
 
@@ -38,11 +40,11 @@ class SignUpAction
 
         $customer = $this->customerRepository->generateOtp($customer);
 
-        // TODO: Send OTP via SMS service
-        //        $this->verificationCodeService->sendVerificationCode(
-        //            $customer,
-        //            VerificationCodeTypeEnum::SIGN_UP
-        //        );
+        event(new OtpGenerated(
+            $customer,
+            $customer->{Customer::COLUMN_OTP},
+            SmsTypesEnum::SIGNUP
+        ));
 
         return $this->otpResponse($customer);
     }

@@ -6,16 +6,20 @@ namespace App\Repositories\Api\V1\Rider;
 
 use App\DTOs\Api\V1\Rider\Profile\UpdateProfileDTO;
 use App\Enums\Trip\TripStatusEnum;
-use App\Exceptions\Customer\InvalidOtpException;
 use App\Exceptions\Customer\RiderNotFoundException;
 use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
 use App\Models\Rider;
 use App\Models\Trip;
+use App\Services\OtpVerificationService;
 use Illuminate\Http\UploadedFile;
 use Random\RandomException;
 
 class RiderRepository implements RiderRepositoryInterface
 {
+    public function __construct(
+        protected OtpVerificationService $otpVerificationService,
+    ) {}
+
     public function find(int $riderId): ?Rider
     {
         return Rider::find($riderId);
@@ -40,21 +44,21 @@ class RiderRepository implements RiderRepositoryInterface
 
     public function verifyOtp(Rider $rider, string $otp): bool
     {
-        return true;
-
-        // TODO::temp valid test otp code
-        //        return $rider->isOtpValid() && $otp === $rider->{Rider::COLUMN_OTP};
-        return $rider->isOtpValid() && ($otp === config('sms.test_mode.otp_code') || $otp === $rider->{Rider::COLUMN_OTP});
+        return $this->otpVerificationService->verify(
+            $rider,
+            $otp,
+            Rider::COLUMN_OTP,
+            Rider::COLUMN_PHONE_NUMBER
+        );
     }
 
     public function clearOtp(Rider $rider): Rider
     {
-        $rider->update([
-            'otp' => null,
-            'otp_expires_at' => null,
-        ]);
-
-        return $rider->fresh();
+        return $this->otpVerificationService->clear(
+            $rider,
+            Rider::COLUMN_OTP,
+            Rider::COLUMN_OTP_EXPIRES_AT
+        );
     }
 
     /**
@@ -62,13 +66,11 @@ class RiderRepository implements RiderRepositoryInterface
      */
     public function generateOtp(Rider $rider): Rider
     {
-        $rider
-            ->update([
-                Rider::COLUMN_OTP => generateOtpCode(),
-                Rider::COLUMN_OTP_EXPIRES_AT => now()->addSeconds(config('sms.otp_timeout')),
-            ]);
-
-        return $rider->fresh();
+        return $this->otpVerificationService->generate(
+            $rider,
+            Rider::COLUMN_OTP,
+            Rider::COLUMN_OTP_EXPIRES_AT
+        );
     }
 
     /**
@@ -76,7 +78,12 @@ class RiderRepository implements RiderRepositoryInterface
      */
     public function validateOtp(Rider $rider, string $otp): void
     {
-        throw_if(! $this->verifyOtp($rider, $otp), InvalidOtpException::class);
+        $this->otpVerificationService->validate(
+            $rider,
+            $otp,
+            Rider::COLUMN_OTP,
+            Rider::COLUMN_PHONE_NUMBER
+        );
     }
 
     public function createAuthToken(Rider $rider): string

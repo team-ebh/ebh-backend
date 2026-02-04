@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Customer\CustomerStatusEnum;
 use App\Models\Customer;
 use App\Models\DeleteAccountRequest;
+use Illuminate\Support\Facades\Config;
 
 use function Pest\Laravel\withHeaders;
 
@@ -130,9 +131,10 @@ describe('V1 Customer Delete Account API', function () {
             expect($errorFields)->toContain('otp');
         });
 
-        // TODO: Re-enable when OTP validation is enabled in CustomerRepository::verifyOtp()
-        // Currently OTP validation returns true for all OTPs (development mode)
-        it('returns error for invalid OTP', function () {
+        it('returns error for invalid OTP in production environment', function () {
+            // Simulate production environment for OTP validation
+            Config::set('app.env', 'production');
+
             $customer = Customer::factory()->withOtp()->create();
             $token = $customer->createToken('test-token')->plainTextToken;
 
@@ -143,8 +145,25 @@ describe('V1 Customer Delete Account API', function () {
                 ->post(route('v1.customers.delete-account.verify-otp'), [
                     'otp' => '0000', // Wrong OTP
                 ])
-                ->assertStatus(200); // Currently returns 200 because OTP validation is disabled
-        })->skip('OTP validation is disabled in CustomerRepository::verifyOtp() - returns true for all OTPs');
+                ->assertStatus(406); // InvalidOtpException returns 406
+        });
+
+        it('accepts any OTP in test environment', function () {
+            // Test environment accepts any OTP
+            Config::set('app.env', 'testing');
+
+            $customer = Customer::factory()->withOtp()->create();
+            $token = $customer->createToken('test-token')->plainTextToken;
+
+            withHeaders([
+                'Host' => 'api.localhost',
+                'Authorization' => "Bearer {$token}",
+            ])
+                ->post(route('v1.customers.delete-account.verify-otp'), [
+                    'otp' => '0000', // Any OTP works in test environment
+                ])
+                ->assertStatus(200);
+        });
 
         it('unauthenticated customer cannot verify OTP', function () {
             withHeaders([
