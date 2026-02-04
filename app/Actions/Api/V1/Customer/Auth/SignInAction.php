@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Customer\Auth;
 
 use App\DTOs\Api\V1\Customer\Auth\SignInDTO;
+use App\Enums\SMS\SmsTypesEnum;
+use App\Events\OtpGenerated;
 use App\Interfaces\Repositories\Api\V1\Customer\CustomerRepositoryInterface;
 use App\Models\Customer;
 
 class SignInAction
 {
     public function __construct(
-        protected CustomerRepositoryInterface $customerRepository
+        protected CustomerRepositoryInterface $customerRepository,
     ) {}
 
     /**
@@ -35,8 +37,11 @@ class SignInAction
 
         $customer = $this->customerRepository->generateOtp($customer);
 
-        // TODO: Send OTP via SMS service
-        // $this->sendOtpViaSms($customer->phone_number, $otp);
+        event(new OtpGenerated(
+            $customer,
+            $customer->{Customer::COLUMN_OTP},
+            SmsTypesEnum::SIGNIN
+        ));
 
         return $this->otpResponse($customer);
     }

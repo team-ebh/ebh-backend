@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Rider\RiderStatusEnum;
 use App\Models\DeleteAccountRequest;
 use App\Models\Rider;
+use Illuminate\Support\Facades\Config;
 
 use function Pest\Laravel\withHeaders;
 
@@ -130,9 +131,10 @@ describe('V1 Rider Delete Account API', function () {
             expect($errorFields)->toContain('otp');
         });
 
-        // TODO: Re-enable when OTP validation is enabled in RiderRepository::verifyOtp()
-        // Currently OTP validation returns true for all OTPs (development mode)
-        it('returns error for invalid OTP', function () {
+        it('returns error for invalid OTP in production environment', function () {
+            // Simulate production environment for OTP validation
+            Config::set('app.env', 'production');
+
             $rider = Rider::factory()->withOtp()->create();
             $token = $rider->createToken('test-token')->plainTextToken;
 
@@ -143,8 +145,25 @@ describe('V1 Rider Delete Account API', function () {
                 ->post(route('v1.riders.delete-account.verify-otp'), [
                     'otp' => '0000', // Wrong OTP
                 ])
-                ->assertStatus(200); // Currently returns 200 because OTP validation is disabled
-        })->skip('OTP validation is disabled in RiderRepository::verifyOtp() - returns true for all OTPs');
+                ->assertStatus(406); // InvalidOtpException returns 406
+        });
+
+        it('accepts any OTP in test environment', function () {
+            // Test environment accepts any OTP
+            Config::set('app.env', 'testing');
+
+            $rider = Rider::factory()->withOtp()->create();
+            $token = $rider->createToken('test-token')->plainTextToken;
+
+            withHeaders([
+                'Host' => 'api.localhost',
+                'Authorization' => "Bearer {$token}",
+            ])
+                ->post(route('v1.riders.delete-account.verify-otp'), [
+                    'otp' => '0000', // Any OTP works in test environment
+                ])
+                ->assertStatus(200);
+        });
 
         it('unauthenticated rider cannot verify OTP', function () {
             withHeaders([

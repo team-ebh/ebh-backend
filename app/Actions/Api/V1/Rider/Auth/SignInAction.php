@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Rider\Auth;
 
 use App\DTOs\Api\V1\Rider\Auth\SignInDTO;
+use App\Enums\SMS\SmsTypesEnum;
+use App\Events\OtpGenerated;
 use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
 use App\Models\Rider;
 
@@ -34,8 +36,11 @@ class SignInAction
 
         $rider = $this->riderRepository->generateOtp($rider);
 
-        // TODO: Send OTP via SMS service
-        // $this->sendOtpViaSms($rider->phone_number, $otp);
+        event(new OtpGenerated(
+            $rider,
+            $rider->{Rider::COLUMN_OTP},
+            SmsTypesEnum::SIGNIN
+        ));
 
         return $this->otpResponse($rider);
     }
