@@ -131,13 +131,13 @@ class SmsLogInfolist
                             ->iconColor('primary'),
 
                         Section::make(__('sms.infolist.technical_details'))
-                            ->visible(fn () => isTechAdmin())
                             ->schema([
                                 TextEntry::make(SmsLog::COLUMN_REQUEST_DATA)
                                     ->label(__('sms.infolist.request_payload'))
                                     ->formatStateUsing(fn ($state) => json_encode($state, JSON_PRETTY_PRINT))
                                     ->columnSpanFull()
                                     ->copyable()
+                                    ->visible(fn () => isTechAdmin())
                                     ->copyMessage(__('sms.infolist.request_copied'))
                                     ->placeholder(__('sms.infolist.no_request_data')),
 
