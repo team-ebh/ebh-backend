@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Jobs\Cache\UpdateAllCachesJob;
+use App\Jobs\Cache\UpdateRidersCacheJob;
+use App\Jobs\Cache\UpdateTripLocationsCacheJob;
+use App\Jobs\Cache\UpdateTripsCacheJob;
 use App\Models\Admin;
-use App\Services\RealTimeCache\Fallback\RedisHealthChecker;
 use App\Services\RealTimeCache\RealTimeCacheManager;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Facades\Redis;
+use Livewire\Attributes\On;
 
 class RealTimeCacheMonitor extends Page
 {
@@ -32,10 +35,6 @@ class RealTimeCacheMonitor extends Page
 
     public array $activeTrips = [];
 
-    public array $redisInfo = [];
-
-    public array $healthStatus = [];
-
     public static function canAccess(): bool
     {
         /** @var Admin|null $admin */
@@ -53,6 +52,7 @@ class RealTimeCacheMonitor extends Page
         $this->loadData();
     }
 
+    #[On('refresh-data')]
     public function loadData(): void
     {
         /** @var RealTimeCacheManager $cache */
@@ -62,16 +62,6 @@ class RealTimeCacheMonitor extends Page
         $this->riderLocations = $this->getRiderLocationsData($cache);
         $this->riderStatuses = $this->getRiderStatusesData($cache);
         $this->activeTrips = $this->getActiveTripsData($cache);
-        $this->redisInfo = $this->getRedisInfo();
-        $this->healthStatus = $this->getHealthStatus();
-    }
-
-    protected function getHealthStatus(): array
-    {
-        /** @var RedisHealthChecker $healthChecker */
-        $healthChecker = app(RedisHealthChecker::class);
-
-        return $healthChecker->getStatus();
     }
 
     protected function getRiderLocationsData(RealTimeCacheManager $cache): array
@@ -132,39 +122,6 @@ class RealTimeCacheMonitor extends Page
         return $trips;
     }
 
-    protected function getRedisInfo(): array
-    {
-        try {
-            $connection = config('realtime-cache.redis.connection', 'default');
-            $info = Redis::connection($connection)->info();
-
-            return [
-                'version' => $info['redis_version'] ?? 'N/A',
-                'used_memory' => $info['used_memory_human'] ?? 'N/A',
-                'connected_clients' => $info['connected_clients'] ?? 'N/A',
-                'uptime_days' => $info['uptime_in_days'] ?? 'N/A',
-                'total_keys' => $this->getTotalKeys(),
-            ];
-        } catch (\Exception $e) {
-            return [
-                'error' => $e->getMessage(),
-            ];
-        }
-    }
-
-    protected function getTotalKeys(): int
-    {
-        try {
-            $prefix = config('realtime-cache.redis.prefix', 'rtc:');
-            $connection = config('realtime-cache.redis.connection', 'default');
-            $keys = Redis::connection($connection)->keys($prefix . '*');
-
-            return count($keys);
-        } catch (\Exception) {
-            return 0;
-        }
-    }
-
     protected function getHeaderActions(): array
     {
         return [
@@ -173,9 +130,77 @@ class RealTimeCacheMonitor extends Page
                 ->icon('heroicon-o-arrow-path')
                 ->action('loadData'),
 
+            Action::make('updateRiders')
+                ->label('Update Riders')
+                ->icon('heroicon-o-users')
+                ->color('info')
+                ->requiresConfirmation()
+                ->modalHeading('Update Riders Cache?')
+                ->modalDescription('This will update all rider data in the cache from database. Job will run in background.')
+                ->action(function () {
+                    UpdateRidersCacheJob::dispatch(onlineOnly: false);
+
+                    Notification::make()
+                        ->success()
+                        ->title('Riders cache update job dispatched')
+                        ->body('Cache will be updated in background')
+                        ->send();
+                }),
+
+            Action::make('updateTrips')
+                ->label('Update Trips')
+                ->icon('heroicon-o-truck')
+                ->color('info')
+                ->requiresConfirmation()
+                ->modalHeading('Update Trips Cache?')
+                ->modalDescription('This will update active trip data in the cache from database. Job will run in background.')
+                ->action(function () {
+                    UpdateTripsCacheJob::dispatch(activeOnly: true);
+
+                    Notification::make()
+                        ->success()
+                        ->title('Trips cache update job dispatched')
+                        ->body('Cache will be updated in background')
+                        ->send();
+                }),
+
+            Action::make('updateTripLocations')
+                ->label('Update Trip Locations')
+                ->icon('heroicon-o-map-pin')
+                ->color('info')
+                ->requiresConfirmation()
+                ->modalHeading('Update Trip Locations Cache?')
+                ->modalDescription('This will update trip location data in the cache from database. Job will run in background.')
+                ->action(function () {
+                    UpdateTripLocationsCacheJob::dispatch();
+
+                    Notification::make()
+                        ->success()
+                        ->title('Trip locations cache update job dispatched')
+                        ->body('Cache will be updated in background')
+                        ->send();
+                }),
+
+            Action::make('updateAll')
+                ->label('Update All Caches')
+                ->icon('heroicon-o-arrow-path-rounded-square')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('Update All Caches?')
+                ->modalDescription('This will update all cache data (riders, trips, locations) from database. Jobs will run in background.')
+                ->action(function () {
+                    UpdateAllCachesJob::dispatch();
+
+                    Notification::make()
+                        ->success()
+                        ->title('All cache update jobs dispatched')
+                        ->body('All caches will be updated in background')
+                        ->send();
+                }),
+
             Action::make('flushLocations')
                 ->label('Flush Locations')
-                ->icon('heroicon-o-map-pin')
+                ->icon('heroicon-o-x-circle')
                 ->color('warning')
                 ->requiresConfirmation()
                 ->modalHeading('Flush Rider Locations?')
@@ -194,7 +219,7 @@ class RealTimeCacheMonitor extends Page
 
             Action::make('flushStatuses')
                 ->label('Flush Statuses')
-                ->icon('heroicon-o-signal')
+                ->icon('heroicon-o-x-circle')
                 ->color('warning')
                 ->requiresConfirmation()
                 ->modalHeading('Flush Rider Statuses?')
@@ -213,7 +238,7 @@ class RealTimeCacheMonitor extends Page
 
             Action::make('flushTrips')
                 ->label('Flush Trips')
-                ->icon('heroicon-o-truck')
+                ->icon('heroicon-o-x-circle')
                 ->color('warning')
                 ->requiresConfirmation()
                 ->modalHeading('Flush Trip Cache?')
