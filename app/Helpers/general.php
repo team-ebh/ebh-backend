@@ -28,10 +28,17 @@ if (! function_exists('getDefaultImageUrl')) {
     function getDefaultImageUrl(): ?string
     {
         if (ApplicationEnvironmentEnum::isDevelopmentEnvironment()) {
-            return asset('images/logo/light.png');
+            return asset('images/default-avatar.png');
         }
 
         return null;
+    }
+}
+
+if (! function_exists('getDefaultAvatar')) {
+    function getDefaultAvatar(): ?string
+    {
+        return asset('images/default-avatar.png');
     }
 }
 

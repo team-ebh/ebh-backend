@@ -377,6 +377,8 @@ return [
             'to_be_calculated' => 'سيتم حسابها',
             'included' => 'مشمول',
             'total' => 'الإجمالي',
+            'commission' => 'عمولة المنصة',
+            'rider_earnings' => 'أرباحك',
         ],
         'filters' => [
             'all' => 'الكل',

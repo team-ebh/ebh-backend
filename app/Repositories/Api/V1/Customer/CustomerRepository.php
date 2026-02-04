@@ -12,15 +12,19 @@ use App\Exceptions\Customer\CustomerAccountDisabledException;
 use App\Exceptions\Customer\CustomerBeforeRegisteredException;
 use App\Exceptions\Customer\CustomerMustBeRegisterException;
 use App\Exceptions\Customer\CustomerNotFoundException;
-use App\Exceptions\Customer\InvalidOtpException;
 use App\Interfaces\Repositories\Api\V1\Customer\CustomerRepositoryInterface;
 use App\Models\Customer;
 use App\Models\Trip;
+use App\Services\OtpVerificationService;
 use Illuminate\Http\UploadedFile;
 use Random\RandomException;
 
 class CustomerRepository implements CustomerRepositoryInterface
 {
+    public function __construct(
+        protected OtpVerificationService $otpVerificationService,
+    ) {}
+
     public function findByPhoneNumber(string $phoneNumber): ?Customer
     {
         return Customer::query()->where(Customer::COLUMN_PHONE_NUMBER, $phoneNumber)->first();
@@ -55,21 +59,21 @@ class CustomerRepository implements CustomerRepositoryInterface
 
     public function verifyOtp(Customer $customer, string $otp): bool
     {
-        return true;
-
-        // TODO::temp valid test otp code
-        //        return $customer->isOtpValid() && $otp === $customer->{Customer::COLUMN_OTP};
-        return $customer->isOtpValid() && ($otp === config('sms.test_mode.otp_code') || $otp === $customer->{Customer::COLUMN_OTP});
+        return $this->otpVerificationService->verify(
+            $customer,
+            $otp,
+            Customer::COLUMN_OTP,
+            Customer::COLUMN_PHONE_NUMBER
+        );
     }
 
     public function clearOtp(Customer $customer): Customer
     {
-        $customer->update([
-            'otp' => null,
-            'otp_expires_at' => null,
-        ]);
-
-        return $customer->fresh();
+        return $this->otpVerificationService->clear(
+            $customer,
+            Customer::COLUMN_OTP,
+            Customer::COLUMN_OTP_EXPIRES_AT
+        );
     }
 
     /**
@@ -77,13 +81,11 @@ class CustomerRepository implements CustomerRepositoryInterface
      */
     public function generateOtp(Customer $customer): Customer
     {
-        $customer
-            ->update([
-                Customer::COLUMN_OTP => generateOtpCode(),
-                Customer::COLUMN_OTP_EXPIRES_AT => now()->addSeconds(config('sms.otp_timeout')),
-            ]);
-
-        return $customer->fresh();
+        return $this->otpVerificationService->generate(
+            $customer,
+            Customer::COLUMN_OTP,
+            Customer::COLUMN_OTP_EXPIRES_AT
+        );
     }
 
     /**
@@ -115,7 +117,12 @@ class CustomerRepository implements CustomerRepositoryInterface
      */
     public function validateOtp(Customer $customer, string $otp): void
     {
-        throw_if(! $this->verifyOtp($customer, $otp), InvalidOtpException::class);
+        $this->otpVerificationService->validate(
+            $customer,
+            $otp,
+            Customer::COLUMN_OTP,
+            Customer::COLUMN_PHONE_NUMBER
+        );
     }
 
     public function createAuthToken(Customer $customer): string

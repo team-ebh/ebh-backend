@@ -377,6 +377,8 @@ return [
             'to_be_calculated' => 'To be calculated',
             'included' => 'Included',
             'total' => 'Total',
+            'commission' => 'Platform Commission',
+            'rider_earnings' => 'Your Earnings',
         ],
         'filters' => [
             'all' => 'All',

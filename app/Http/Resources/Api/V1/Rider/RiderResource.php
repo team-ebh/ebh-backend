@@ -62,7 +62,7 @@ class RiderResource extends JsonResource
              *
              * @var string|null
              */
-            'image' => $this->resource->getFirstMediaLink(Rider::PROFILE_PHOTO),
+            'image' => $this->resource->getFirstMediaLink(Rider::PROFILE_PHOTO) ?: getDefaultAvatar(),
 
             /**
              * Total number of completed trips
