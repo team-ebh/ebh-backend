@@ -48,13 +48,13 @@ class EarningsTripResource extends JsonResource
             'date_time' => $trip->{Trip::COLUMN_CREATED_AT}->timestamp,
 
             /**
-             * Trip total price
+             * Trip earnings (total price minus commission)
              *
              * @example 8.500
              *
              * @var float
              */
-            'price' => (float) ($trip->{Trip::COLUMN_TOTAL_PRICE} ?? 0),
+            'price' => $trip->getRiderEarnings(),
 
             /**
              * Currency code

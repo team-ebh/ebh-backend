@@ -241,7 +241,7 @@ describe('Get Latest Trips API', function () {
             ->and($response->json('data.trips.0.locations'))->toHaveCount(2)
             ->and($response->json('data.trips.0.locations.0.title'))->toBe('Kuwait Hospital')
             ->and($response->json('data.trips.0.locations.1.title'))->toBe('Al-Rahab')
-            ->and($response->json('data.trips.0.price'))->toEqual(10.0)
+            ->and($response->json('data.trips.0.price'))->toEqual(9.0) // 10.0 - 1.0 commission
             ->and($response->json('data.trips.0.currency'))->toBe('KWD');
     });
 

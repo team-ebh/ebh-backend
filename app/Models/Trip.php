@@ -353,4 +353,17 @@ class Trip extends Model
     {
         return $this->{Trip::COLUMN_RIDE_TYPE} === RideTypeEnum::ROUND_TRIP;
     }
+
+    /**
+     * Get rider earnings (total price minus commission)
+     *
+     * This is the amount the rider actually receives after platform commission is deducted
+     */
+    public function getRiderEarnings(): float
+    {
+        $totalPrice = $this->{self::COLUMN_TOTAL_PRICE} ?? 0;
+        $commission = $this->{self::COLUMN_COMMISSION_AMOUNT} ?? 0;
+
+        return (float) ($totalPrice - $commission);
+    }
 }

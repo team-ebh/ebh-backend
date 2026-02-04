@@ -634,4 +634,70 @@ class TripPricingService
 
         return $breakdown;
     }
+
+    /**
+     * Build price breakdown for earnings display (shows rider earnings after commission)
+     *
+     * This is used in the earnings section to show riders their actual earnings
+     * after platform commission has been deducted.
+     */
+    public function buildEarningsPriceBreakdown(Trip $trip): array
+    {
+        $breakdown = [];
+        $rideType = $trip->{Trip::COLUMN_RIDE_TYPE} ?? RideTypeEnum::ONE_WAY;
+
+        // 1. Base fare (always shown)
+        if ($trip->{Trip::COLUMN_BASE_FARE} !== null) {
+            $breakdown[] = [
+                'label' => trans('trips.api.breakdown.base_fare'),
+                'value' => priceFormat($trip->{Trip::COLUMN_BASE_FARE}) . ' ' . CurrencyEnum::KWD->getLabel(),
+            ];
+        }
+
+        // 2. Round trip fee (for ROUND_TRIP_WAIT)
+        if ($rideType === RideTypeEnum::ROUND_TRIP_WAIT
+            && $trip->{Trip::COLUMN_ROUND_TRIP_PRICE} !== null
+            && $trip->{Trip::COLUMN_ROUND_TRIP_PRICE} > 0) {
+            $breakdown[] = [
+                'label' => trans('trips.api.breakdown.round_trip_fee'),
+                'value' => priceFormat($trip->{Trip::COLUMN_ROUND_TRIP_PRICE}) . ' ' . CurrencyEnum::KWD->getLabel(),
+            ];
+        }
+
+        // 3. Wait time charge (only for ROUND_TRIP_WAIT when waiting_price > 0)
+        if ($rideType === RideTypeEnum::ROUND_TRIP_WAIT
+            && $trip->{Trip::COLUMN_WAITING_PRICE} !== null
+            && $trip->{Trip::COLUMN_WAITING_PRICE} > 0) {
+            $breakdown[] = [
+                'label' => trans('trips.api.breakdown.wait_time_charge'),
+                'value' => priceFormat($trip->{Trip::COLUMN_WAITING_PRICE}) . ' ' . CurrencyEnum::KWD->getLabel(),
+            ];
+        }
+
+        // 4. Accessibility services (when accessibility_price > 0)
+        if ($trip->{Trip::COLUMN_ACCESSIBILITY_PRICE} !== null
+            && $trip->{Trip::COLUMN_ACCESSIBILITY_PRICE} > 0) {
+            $breakdown[] = [
+                'label' => trans('trips.api.breakdown.accessibility_services'),
+                'value' => priceFormat($trip->{Trip::COLUMN_ACCESSIBILITY_PRICE}) . ' ' . CurrencyEnum::KWD->getLabel(),
+            ];
+        }
+
+        // 5. Platform Commission (deducted from total)
+        if ($trip->{Trip::COLUMN_COMMISSION_AMOUNT} !== null
+            && $trip->{Trip::COLUMN_COMMISSION_AMOUNT} > 0) {
+            $breakdown[] = [
+                'label' => trans('trips.api.breakdown.commission'),
+                'value' => '-' . priceFormat($trip->{Trip::COLUMN_COMMISSION_AMOUNT}) . ' ' . CurrencyEnum::KWD->getLabel(),
+            ];
+        }
+
+        // 6. Your Earnings (total price minus commission)
+        $breakdown[] = [
+            'label' => trans('trips.api.breakdown.rider_earnings'),
+            'value' => priceFormat($trip->getRiderEarnings()) . ' ' . CurrencyEnum::KWD->getLabel(),
+        ];
+
+        return $breakdown;
+    }
 }
