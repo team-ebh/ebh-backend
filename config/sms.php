@@ -8,15 +8,29 @@ use App\Enums\SMS\SmsProvidersEnum;
 
 return [
     'otp_timeout' => 120,
-    'otp_length' => 5,
+
+    /*
+    |--------------------------------------------------------------------------
+    | SMS Test Mode Configuration
+    |--------------------------------------------------------------------------
+    |
+    | When test mode is enabled, no SMS will be sent to ANY phone number.
+    | Test phone numbers will NEVER receive SMS in ANY environment.
+    | This prevents accidental SMS charges during development/testing.
+    |
+    */
     'test_mode' => [
-        'enabled' => env('SMS_TEST_MODE_ENABLED', true),
+        // Default OTP for testing (used when test mode is enabled)
         'default_otp' => env('SMS_TEST_OTP', '0421'),
+
+        // Phone numbers that will NEVER receive real SMS (in any environment)
+        // Add development/testing phone numbers here
         'test_phone_numbers' => [
-            '44556633',
-            '65656565',
+            '44556633',  // Test number 1
+            '65656565',  // Test number 2
         ],
     ],
+
     'active_provider' => env('SMS_PROVIDER', SmsProvidersEnum::KWT_SMS->value),
 
     SmsProvidersEnum::ROUTE_MOBILE->value => [
