@@ -21,11 +21,6 @@ class SmsService
      */
     public function sendOtp(Model $receiver, string $otp, SmsTypesEnum $smsType): bool
     {
-        // Skip SMS sending in test environment
-        if (! $this->shouldSendSms()) {
-            return false;
-        }
-
         try {
             $message = $this->buildOtpMessage($otp, $smsType);
 
@@ -41,11 +36,18 @@ class SmsService
                 'message' => $message,
             ]);
 
-            // Prepare request data for logging
-            $data = [
-                'message' => $message,
-                'phone_number' => $dto->phoneNumber,
-            ];
+            // Skip SMS sending if conditions are met
+            if (! $this->shouldSendSms($dto->phoneNumber)) {
+                Log::info('SMS skipped (test mode or test number)', [
+                    'phone_number' => $dto->phoneNumber,
+                    'receiver_type' => get_class($receiver),
+                    'receiver_id' => $receiver->id,
+                    'sms_type' => $smsType->name,
+                    'is_test_number' => $this->isTestPhoneNumber($dto->phoneNumber),
+                ]);
+
+                return true; // Return true to indicate OTP was "sent" successfully
+            }
 
             $smsProvider = SmsFactory::build();
             $result = $smsProvider->send($dto);
@@ -64,12 +66,28 @@ class SmsService
     }
 
     /**
-     * Check if SMS should be sent based on environment
+     * Check if SMS should be sent based on environment and phone number
      */
-    private function shouldSendSms(): bool
+    private function shouldSendSms(string $phoneNumber): bool
     {
+        // Skip SMS for test phone numbers in all environments
+        if ($this->isTestPhoneNumber($phoneNumber)) {
+            return false;
+        }
+
+        // Only send SMS in production or staging environments
         return ApplicationEnvironmentEnum::isProduction()
             || ApplicationEnvironmentEnum::isStage();
+    }
+
+    /**
+     * Check if phone number is a test number
+     */
+    private function isTestPhoneNumber(string $phoneNumber): bool
+    {
+        $testNumbers = config('sms.test_mode.test_phone_numbers', []);
+
+        return in_array($phoneNumber, $testNumbers, true);
     }
 
     /**

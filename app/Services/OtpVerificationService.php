@@ -36,14 +36,13 @@ class OtpVerificationService
 
         // In production/stage environments:
         // Check if test mode is enabled and phone number is in test list
-        $isTestMode = config('sms.test_mode.enabled', false);
         $testPhoneNumbers = config('sms.test_mode.test_phone_numbers', []);
         $defaultTestOtp = config('sms.test_mode.default_otp', '0421');
 
         $isTestPhoneNumber = in_array($user->{$phoneNumberColumn}, $testPhoneNumbers);
 
         // If test mode and test phone number, allow default OTP
-        if ($isTestMode && $isTestPhoneNumber && $otp === $defaultTestOtp) {
+        if ($isTestPhoneNumber && $otp === $defaultTestOtp) {
             return true;
         }
 
