@@ -6,6 +6,8 @@ namespace App\Services;
 
 use App\Enums\Customer\CustomerStatusEnum;
 use App\Enums\Rider\RiderStatusEnum;
+use App\Enums\SMS\SmsTypesEnum;
+use App\Events\OtpGenerated;
 use App\Exceptions\Customer\InvalidOtpException;
 use App\Exceptions\InvalidSecurityTokenException;
 use App\Models\Customer;
@@ -46,7 +48,18 @@ class DeleteAccountService
         // Generate new OTP using the repository callback
         $user = $generateOtpCallback($user);
 
-        // TODO: Send OTP via SMS service
+        // Determine OTP column based on user type
+        $otpColumn = match ($user::class) {
+            Customer::class => Customer::COLUMN_OTP,
+            Rider::class => Rider::COLUMN_OTP,
+            default => throw new \InvalidArgumentException('Unsupported user type'),
+        };
+
+        event(new OtpGenerated(
+            $user,
+            $user->{$otpColumn},
+            SmsTypesEnum::DELETE_ACCOUNT
+        ));
 
         return [
             'otp_expires_at' => $user->otp_expires_at,

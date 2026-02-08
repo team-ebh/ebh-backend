@@ -46,7 +46,7 @@ class CustomerInfoHistoryTripResource extends JsonResource
              *
              * @var string|null
              */
-            'image' => $customer->getFirstMediaLink(),
+            'image' => $customer->getFirstMediaLink() ?: getDefaultAvatar(),
         ];
     }
 }

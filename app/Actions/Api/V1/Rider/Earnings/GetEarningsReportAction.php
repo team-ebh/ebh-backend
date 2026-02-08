@@ -9,65 +9,244 @@ use App\Enums\Currency\CurrencyEnum;
 use App\Enums\Rider\EarningsFilterEnum;
 use App\Interfaces\Repositories\Api\V1\Rider\Earnings\RiderEarningsRepositoryInterface;
 
+/**
+ * Get Earnings Report Action
+ *
+ * Generates comprehensive earnings report for riders including:
+ * - Current period earnings summary
+ * - Comparison with previous period
+ * - Performance metrics (rides, hours, averages)
+ */
 readonly class GetEarningsReportAction
 {
+    private const int PERCENTAGE_FULL_GROWTH = 100;
+
+    private const int PERCENTAGE_NO_CHANGE = 0;
+
+    private const string DIRECTION_UP = 'up';
+
+    private const string DIRECTION_DOWN = 'down';
+
+    private const string DIRECTION_SAME = 'same';
+
     public function __construct(
         private RiderEarningsRepositoryInterface $riderEarningsRepository,
     ) {}
 
+    /**
+     * Execute earnings report generation
+     */
     public function __invoke(GetEarningsReportDTO $dto): array
     {
-        $summary = $this->riderEarningsRepository->getEarningsSummary($dto->riderId, $dto->filter);
+        $currentPeriodSummary = $this->getCurrentPeriodSummary($dto);
+        $previousPeriodEarnings = $this->getPreviousPeriodEarnings($dto);
+
+        $changePercentage = $this->calculateChangePercentage(
+            $currentPeriodSummary['total_earnings'],
+            $previousPeriodEarnings
+        );
+
+        return $this->buildEarningsReport(
+            $currentPeriodSummary,
+            $changePercentage,
+            $dto->filter
+        );
+    }
+
+    /**
+     * Get earnings summary for current period
+     */
+    private function getCurrentPeriodSummary(GetEarningsReportDTO $dto): array
+    {
+        return $this->riderEarningsRepository->getEarningsSummary($dto->riderId, $dto->filter);
+    }
+
+    /**
+     * Get earnings amount from previous period for comparison
+     */
+    private function getPreviousPeriodEarnings(GetEarningsReportDTO $dto): float
+    {
         $previousPeriod = $this->riderEarningsRepository->getPreviousPeriodEarnings($dto->riderId, $dto->filter);
 
-        $changePercentage = $this->calculateChangePercentage($summary['total_earnings'], $previousPeriod['total_earnings']);
-        $changeDirection = $this->getChangeDirection($changePercentage);
+        return $previousPeriod['total_earnings'];
+    }
+
+    /**
+     * Build complete earnings report array
+     */
+    private function buildEarningsReport(
+        array $summary,
+        int $changePercentage,
+        EarningsFilterEnum $filter
+    ): array {
+        $changeDirection = $this->determineChangeDirection($changePercentage);
 
         return [
             'total_earnings' => $summary['total_earnings'],
             'currency' => CurrencyEnum::KWD->getLabel(),
             'change_percentage' => abs($changePercentage),
             'change_direction' => $changeDirection,
-            'comparison_text' => $this->getComparisonText($changePercentage, $changeDirection, $dto->filter),
+            'comparison_text' => $this->buildComparisonText($changePercentage, $changeDirection, $filter),
             'total_rides' => $summary['total_rides'],
             'total_minutes' => $summary['total_minutes'],
-            'average_per_ride' => $summary['total_rides'] > 0
-                ? round($summary['total_earnings'] / $summary['total_rides'], 2)
-                : 0.0,
-            'is_empty' => $summary['total_rides'] === 0,
+            'average_per_ride' => $this->calculateAveragePerRide($summary['total_earnings'], $summary['total_rides']),
+            'is_empty' => $this->isEmptyReport($summary['total_rides']),
         ];
     }
 
-    private function calculateChangePercentage(float $current, float $previous): int
+    /**
+     * Calculate percentage change between current and previous period
+     *
+     * Returns 100% for growth from zero, 0% for no previous data
+     */
+    private function calculateChangePercentage(float $currentEarnings, float $previousEarnings): int
     {
-        if ($previous === 0.0) {
-            return $current > 0 ? 100 : 0;
+        if ($this->hasPreviousPeriodWithNoEarnings($previousEarnings)) {
+            return $this->hasCurrentEarnings($currentEarnings)
+                ? self::PERCENTAGE_FULL_GROWTH
+                : self::PERCENTAGE_NO_CHANGE;
         }
 
-        return (int) round((($current - $previous) / $previous) * 100);
+        return $this->computePercentageChange($currentEarnings, $previousEarnings);
     }
 
-    private function getChangeDirection(int $percentage): string
+    /**
+     * Check if previous period exists but has no earnings
+     */
+    private function hasPreviousPeriodWithNoEarnings(float $previousEarnings): bool
+    {
+        return $previousEarnings === 0.0;
+    }
+
+    /**
+     * Check if current period has earnings
+     */
+    private function hasCurrentEarnings(float $currentEarnings): bool
+    {
+        return $currentEarnings > 0;
+    }
+
+    /**
+     * Compute percentage change using standard formula
+     */
+    private function computePercentageChange(float $current, float $previous): int
+    {
+        $change = ($current - $previous) / $previous;
+        $percentage = $change * 100;
+
+        return (int) round($percentage);
+    }
+
+    /**
+     * Determine direction of change (up, down, or same)
+     */
+    private function determineChangeDirection(int $percentage): string
     {
         return match (true) {
-            $percentage > 0 => 'up',
-            $percentage < 0 => 'down',
-            default => 'same',
+            $percentage > 0 => self::DIRECTION_UP,
+            $percentage < 0 => self::DIRECTION_DOWN,
+            default => self::DIRECTION_SAME,
         };
     }
 
-    private function getComparisonText(int $percentage, string $direction, EarningsFilterEnum $filter): string
+    /**
+     * Calculate average earnings per ride
+     *
+     * Uses floor to always round down to 2 decimal places
+     */
+    private function calculateAveragePerRide(float $totalEarnings, int $totalRides): float
     {
-        if ($percentage === 0) {
-            return trans('riders.api.earnings.comparison.no_change');
+        if ($this->hasNoRides($totalRides)) {
+            return 0.0;
         }
 
-        $periodKey = $filter === EarningsFilterEnum::TODAY ? 'yesterday' : 'last_week';
+        $average = $totalEarnings / $totalRides;
 
+        return floor($average * 100) / 100;
+    }
+
+    /**
+     * Check if report has no rides
+     */
+    private function hasNoRides(int $totalRides): bool
+    {
+        return $totalRides === 0;
+    }
+
+    /**
+     * Check if earnings report is empty (no rides)
+     */
+    private function isEmptyReport(int $totalRides): bool
+    {
+        return $this->hasNoRides($totalRides);
+    }
+
+    /**
+     * Build human-readable comparison text
+     */
+    private function buildComparisonText(
+        int $percentage,
+        string $direction,
+        EarningsFilterEnum $filter
+    ): string {
+        if ($this->hasNoChange($percentage)) {
+            return $this->getNoChangeText();
+        }
+
+        return $this->getChangeText($percentage, $direction, $filter);
+    }
+
+    /**
+     * Check if there's no change in earnings
+     */
+    private function hasNoChange(int $percentage): bool
+    {
+        return $percentage === self::PERCENTAGE_NO_CHANGE;
+    }
+
+    /**
+     * Get translation for no change scenario
+     */
+    private function getNoChangeText(): string
+    {
+        return trans('riders.api.earnings.comparison.no_change');
+    }
+
+    /**
+     * Get formatted comparison text with percentage and period
+     */
+    private function getChangeText(int $percentage, string $direction, EarningsFilterEnum $filter): string
+    {
         return trans('riders.api.earnings.comparison.text', [
-            'prefix' => $direction === 'up' ? '+' : '-',
+            'prefix' => $this->getChangePrefix($direction),
             'percentage' => abs($percentage),
-            'period' => trans("riders.api.earnings.comparison.periods.{$periodKey}"),
+            'period' => $this->getComparisonPeriodLabel($filter),
         ]);
+    }
+
+    /**
+     * Get prefix symbol for change direction (+ or -)
+     */
+    private function getChangePrefix(string $direction): string
+    {
+        return $direction === self::DIRECTION_UP ? '+' : '-';
+    }
+
+    /**
+     * Get translated label for comparison period
+     */
+    private function getComparisonPeriodLabel(EarningsFilterEnum $filter): string
+    {
+        $periodKey = $this->getComparisonPeriodKey($filter);
+
+        return trans("riders.api.earnings.comparison.periods.{$periodKey}");
+    }
+
+    /**
+     * Get comparison period key based on filter
+     */
+    private function getComparisonPeriodKey(EarningsFilterEnum $filter): string
+    {
+        return $filter === EarningsFilterEnum::TODAY ? 'yesterday' : 'last_week';
     }
 }

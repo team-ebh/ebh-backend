@@ -49,7 +49,7 @@ describe('Get Profile API', function () {
         actingAs($this->rider, 'rider')
             ->getJson(route('v1.riders.profile'))
             ->assertOk()
-            ->assertJsonPath('data.image', null);
+            ->assertJsonPath('data.image', getDefaultAvatar());
     });
 
     it('profile includes total_rides_count', function () {

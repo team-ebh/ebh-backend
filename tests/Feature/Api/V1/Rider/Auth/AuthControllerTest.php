@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Rider\RiderStatusEnum;
 use App\Models\Customer;
 use App\Models\Rider;
+use Illuminate\Support\Facades\Config;
 
 use function Pest\Laravel\withHeaders;
 
@@ -71,9 +72,9 @@ describe('Sign In', function () {
 });
 
 describe('Verify OTP', function () {
-    // Note: OTP verification is currently bypassed (accepts any 4-digit code)
-    // These tests are skipped until proper OTP validation is implemented
-    it('can verify OTP and get token', function () {
+    it('can verify OTP and get token in test environment', function () {
+        Config::set('app.env', 'testing');
+
         $rider = Rider::factory()->create([
             'otp' => '1234',
             'otp_expires_at' => now()->addMinutes(10),
@@ -92,14 +93,48 @@ describe('Verify OTP', function () {
                         'id',
                         'full_name',
                         'email',
-                        'phone_number',
+                        'phone',
                         'status',
+                        'rating',
+                        'joined_at',
                     ],
                 ],
             ]);
 
         expect($response->json('data.token'))->not->toBeNull();
-    })->skip('OTP verification is bypassed - accepts any 4-digit code');
+    });
+
+    it('can verify correct OTP and get token in production environment', function () {
+        Config::set('app.env', 'production');
+
+        $rider = Rider::factory()->create([
+            'otp' => '1234',
+            'otp_expires_at' => now()->addMinutes(10),
+        ]);
+
+        $response = withHeaders(['Host' => 'api.localhost'])
+            ->post(route('v1.riders.auth.sign-in.verify-otp'), [
+                'phone_number' => $rider->phone_number,
+                'otp' => '1234', // Correct OTP
+            ])
+            ->assertStatus(200)
+            ->assertJsonStructure([
+                'data' => [
+                    'token',
+                    'rider' => [
+                        'id',
+                        'full_name',
+                        'email',
+                        'phone',
+                        'status',
+                        'rating',
+                        'joined_at',
+                    ],
+                ],
+            ]);
+
+        expect($response->json('data.token'))->not->toBeNull();
+    });
 
     it('validates required fields for verify OTP', function () {
         $response = withHeaders(['Host' => 'api.localhost'])
@@ -127,7 +162,9 @@ describe('Verify OTP', function () {
         expect($errorFields)->toContain('otp');
     });
 
-    it('returns error for invalid OTP', function () {
+    it('returns error for invalid OTP in production environment', function () {
+        Config::set('app.env', 'production');
+
         $rider = Rider::factory()->create([
             'otp' => '1234',
             'otp_expires_at' => now()->addMinutes(10),
@@ -136,15 +173,33 @@ describe('Verify OTP', function () {
         withHeaders(['Host' => 'api.localhost'])
             ->post(route('v1.riders.auth.sign-in.verify-otp'), [
                 'phone_number' => $rider->phone_number,
-                'otp' => '9999',
+                'otp' => '9999', // Wrong OTP
             ])
-            ->assertStatus(401);
-    })->skip('OTP verification is bypassed - accepts any 4-digit code');
+            ->assertStatus(406); // InvalidOtpException returns 406
+    });
 
-    it('returns error for expired OTP', function () {
+    it('accepts any OTP in test environment', function () {
+        Config::set('app.env', 'testing');
+
         $rider = Rider::factory()->create([
             'otp' => '1234',
-            'otp_expires_at' => now()->subMinutes(10),
+            'otp_expires_at' => now()->addMinutes(10),
+        ]);
+
+        withHeaders(['Host' => 'api.localhost'])
+            ->post(route('v1.riders.auth.sign-in.verify-otp'), [
+                'phone_number' => $rider->phone_number,
+                'otp' => '9999', // Any OTP works in test environment
+            ])
+            ->assertStatus(200);
+    });
+
+    it('returns error for expired OTP in production environment', function () {
+        Config::set('app.env', 'production');
+
+        $rider = Rider::factory()->create([
+            'otp' => '1234',
+            'otp_expires_at' => now()->subMinutes(10), // Expired
         ]);
 
         withHeaders(['Host' => 'api.localhost'])
@@ -152,8 +207,24 @@ describe('Verify OTP', function () {
                 'phone_number' => $rider->phone_number,
                 'otp' => '1234',
             ])
-            ->assertStatus(401);
-    })->skip('OTP verification is bypassed - accepts any 4-digit code');
+            ->assertStatus(406); // InvalidOtpException returns 406
+    });
+
+    it('accepts expired OTP in test environment', function () {
+        Config::set('app.env', 'testing');
+
+        $rider = Rider::factory()->create([
+            'otp' => '1234',
+            'otp_expires_at' => now()->subMinutes(10), // Expired but should pass in test env
+        ]);
+
+        withHeaders(['Host' => 'api.localhost'])
+            ->post(route('v1.riders.auth.sign-in.verify-otp'), [
+                'phone_number' => $rider->phone_number,
+                'otp' => '1234',
+            ])
+            ->assertStatus(200);
+    });
 
     it('returns error for non-existent rider', function () {
         withHeaders(['Host' => 'api.localhost'])
@@ -162,7 +233,7 @@ describe('Verify OTP', function () {
                 'otp' => '1234',
             ])
             ->assertStatus(406);
-    })->skip('OTP verification is bypassed - accepts any 4-digit code');
+    });
 });
 
 describe('Sign Out', function () {

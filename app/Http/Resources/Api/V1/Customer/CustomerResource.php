@@ -78,7 +78,7 @@ class CustomerResource extends JsonResource
              *
              * @var string|null
              */
-            'image' => $this->resource->getFirstMediaLink(Customer::PROFILE_PHOTO),
+            'image' => $this->resource->getFirstMediaLink(Customer::PROFILE_PHOTO) ?: getDefaultAvatar(),
 
             /**
              * Total number of completed trips
