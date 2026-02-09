@@ -619,7 +619,10 @@ describe('Upcoming Trip Details API', function () {
                     'locations' => [
                         '*' => ['title', 'sub_title'],
                     ],
-                    'price_breakdown',
+                    'price_breakdown' => [
+                        '*' => ['label', 'value'],
+                    ],
+                    'total_price' => ['label', 'value'],
                     'type' => ['id', 'label'],
                     'passenger_count',
                 ],
@@ -826,7 +829,10 @@ describe('Past Trip Details API', function () {
                     'locations' => [
                         '*' => ['title', 'sub_title'],
                     ],
-                    'price_breakdown',
+                    'price_breakdown' => [
+                        '*' => ['label', 'value'],
+                    ],
+                    'total_price' => ['label', 'value'],
                     'ride_type' => ['id', 'label'],
                     'passenger_count',
                     'date_time',

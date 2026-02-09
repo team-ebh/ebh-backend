@@ -36,6 +36,7 @@ readonly class GetPastTripDetailsAction
         return [
             'trip' => $trip,
             'price_breakdown' => $this->pricingService->buildHistoryPriceBreakdown($trip),
+            'total_price' => $this->pricingService->buildHistoryTotalPrice($trip),
         ];
     }
 }
