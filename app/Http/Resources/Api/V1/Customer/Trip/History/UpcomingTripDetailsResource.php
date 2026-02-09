@@ -75,6 +75,13 @@ class UpcomingTripDetailsResource extends JsonResource
             'price_breakdown' => TripPaymentResource::collection($priceBreakdown),
 
             /**
+             * Total Price
+             *
+             * @var TripPaymentResource
+             */
+            'total_price' => new TripPaymentResource($this->resource['total_price']),
+
+            /**
              * Ride type information
              *
              * @var RideTypeHistoryResource

@@ -245,7 +245,10 @@ describe('Get Past Trip Details API', function () {
                     'id',
                     'status' => ['id', 'label'],
                     'locations',
-                    'price_breakdown',
+                    'price_breakdown' => [
+                        '*' => ['label', 'value'],
+                    ],
+                    'total_price' => ['label', 'value'],
                     'ride_type' => ['id', 'label'],
                     'date_time',
                 ],
