@@ -577,10 +577,10 @@ class TripPricingService
     /**
      * Build price breakdown for history trips from Trip model
      *
-     * Builds breakdown based on ride type:
-     * - ONE_WAY: base_fare, accessibility (if > 0), total
-     * - ROUND_TRIP: base_fare, round_trip_fee, accessibility (if > 0), total
-     * - ROUND_TRIP_WAIT: base_fare, round_trip_fee, wait_time_charge (if > 0), accessibility (if > 0), total
+     * Builds breakdown based on ride type (without total):
+     * - ONE_WAY: base_fare, accessibility (if > 0)
+     * - ROUND_TRIP: base_fare, round_trip_fee, accessibility (if > 0)
+     * - ROUND_TRIP_WAIT: base_fare, round_trip_fee, wait_time_charge (if > 0), accessibility (if > 0)
      */
     public function buildHistoryPriceBreakdown(Trip $trip): array
     {
@@ -624,15 +624,20 @@ class TripPricingService
             ];
         }
 
-        // 5. Total price (always shown)
-        if ($trip->{Trip::COLUMN_TOTAL_PRICE} !== null) {
-            $breakdown[] = [
-                'label' => trans('trips.api.breakdown.total'),
-                'value' => priceFormat($trip->{Trip::COLUMN_TOTAL_PRICE}) . ' ' . CurrencyEnum::KWD->getLabel(),
-            ];
-        }
-
         return $breakdown;
+    }
+
+    /**
+     * Build total price for history trips
+     *
+     * Returns formatted total price for completed trips
+     */
+    public function buildHistoryTotalPrice(Trip $trip): array
+    {
+        return [
+            'label' => 'Total price',
+            'value' => priceFormat($trip->{Trip::COLUMN_TOTAL_PRICE}) . ' ' . CurrencyEnum::KWD->getLabel(),
+        ];
     }
 
     /**
