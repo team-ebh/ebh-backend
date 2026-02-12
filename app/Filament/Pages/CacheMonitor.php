@@ -14,6 +14,7 @@ use Filament\Actions\ActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\On;
 
@@ -54,8 +55,8 @@ class CacheMonitor extends Page
     public function loadData(): void
     {
         $this->stats = $this->getCacheStats();
-        $this->onlineRiders = array_slice(RiderCache::getOnline(), 0, 50);
-        $this->busyRiders = array_slice(RiderCache::getBusy(), 0, 50);
+        $this->onlineRiders = array_slice(RiderCache::getOnlineCacheOnly(), 0, 50);
+        $this->busyRiders = array_slice(RiderCache::getBusyCacheOnly(), 0, 50);
     }
 
     protected function getCacheStats(): array
@@ -79,6 +80,11 @@ class CacheMonitor extends Page
             }
         }
 
+        // Get TTL from cache classes dynamically
+        $appStateTtl = $this->formatTtl((new AppStateCache)->getTtl());
+        $riderTtl = $this->formatTtl((new RiderCache)->getTtl());
+        $tripTtl = $this->formatTtl((new TripCache)->getTtl());
+
         return [
             // Cache Configuration
             'cache_driver' => $cacheDriver,
@@ -87,103 +93,214 @@ class CacheMonitor extends Page
             'redis_memory' => $redisMemory,
             'redis_peak_memory' => $redisPeakMemory,
 
-            // RiderCache Stats
-            'total_riders' => RiderCache::count(),
-            'online_riders' => RiderCache::countByStatus('online'),
-            'busy_riders' => RiderCache::countByStatus('busy'),
+            // RiderCache Stats (cache only, no database fallback)
+            'total_riders' => RiderCache::countCacheOnly(),
+            'online_riders' => RiderCache::countByStatusCacheOnly('online'),
+            'busy_riders' => RiderCache::countByStatusCacheOnly('busy'),
 
             // Cache Scopes
             'scopes' => [
                 [
-                    'name' => 'App State Cache',
+                    'name' => trans('general.cache_monitor.cache_layers.app_state.name'),
                     'scope' => 'app_state',
-                    'ttl' => '15 minutes',
-                    'description' => 'Customer and rider app states',
+                    'ttl' => $appStateTtl,
+                    'description' => trans('general.cache_monitor.cache_layers.app_state.description'),
                 ],
                 [
-                    'name' => 'Rider Cache',
+                    'name' => trans('general.cache_monitor.cache_layers.rider.name'),
                     'scope' => 'rider',
-                    'ttl' => '1 minute',
-                    'description' => 'Rider status, location, and geospatial data',
+                    'ttl' => $riderTtl,
+                    'description' => trans('general.cache_monitor.cache_layers.rider.description'),
                 ],
                 [
-                    'name' => 'Trip Cache',
+                    'name' => trans('general.cache_monitor.cache_layers.trip.name'),
                     'scope' => 'trip',
-                    'ttl' => '5 minutes',
-                    'description' => 'Active trip data for customers and riders',
+                    'ttl' => $tripTtl,
+                    'description' => trans('general.cache_monitor.cache_layers.trip.description'),
                 ],
             ],
         ];
+    }
+
+    /**
+     * Format TTL seconds to human-readable format
+     */
+    protected function formatTtl(int $seconds): string
+    {
+        if ($seconds < 60) {
+            return $seconds . ' seconds';
+        }
+
+        if ($seconds < 3600) {
+            $minutes = $seconds / 60;
+
+            return $minutes . ' minute' . ($minutes > 1 ? 's' : '');
+        }
+
+        $hours = $seconds / 3600;
+
+        return $hours . ' hour' . ($hours > 1 ? 's' : '');
     }
 
     protected function getHeaderActions(): array
     {
         return [
             Action::make('refresh')
-                ->label('Refresh')
+                ->label(trans('general.cache_monitor.actions.refresh'))
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
                 ->action('loadData'),
 
             ActionGroup::make([
+                Action::make('cacheOnlineRiders')
+                    ->label(trans('general.cache_monitor.actions.cache_online_riders'))
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading(trans('general.cache_monitor.actions.confirm_cache_online_heading'))
+                    ->modalDescription(trans('general.cache_monitor.actions.confirm_cache_online_description'))
+                    ->action(function () {
+                        Artisan::call('cache:online-riders', ['--online' => true]);
+                        $this->loadData();
+
+                        Notification::make()
+                            ->success()
+                            ->title(trans('general.cache_monitor.actions.success_cache_online'))
+                            ->send();
+                    }),
+
+                Action::make('cacheBusyRiders')
+                    ->label(trans('general.cache_monitor.actions.cache_busy_riders'))
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading(trans('general.cache_monitor.actions.confirm_cache_busy_heading'))
+                    ->modalDescription(trans('general.cache_monitor.actions.confirm_cache_busy_description'))
+                    ->action(function () {
+                        Artisan::call('cache:online-riders', ['--busy' => true]);
+                        $this->loadData();
+
+                        Notification::make()
+                            ->success()
+                            ->title(trans('general.cache_monitor.actions.success_cache_busy'))
+                            ->send();
+                    }),
+
+                Action::make('cacheActiveRiders')
+                    ->label(trans('general.cache_monitor.actions.cache_active_riders'))
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading(trans('general.cache_monitor.actions.confirm_cache_active_heading'))
+                    ->modalDescription(trans('general.cache_monitor.actions.confirm_cache_active_description'))
+                    ->action(function () {
+                        Artisan::call('cache:online-riders', ['--active' => true]);
+                        $this->loadData();
+
+                        Notification::make()
+                            ->success()
+                            ->title(trans('general.cache_monitor.actions.success_cache_active'))
+                            ->send();
+                    }),
+
+                Action::make('cacheAllRiders')
+                    ->label(trans('general.cache_monitor.actions.cache_all_riders'))
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading(trans('general.cache_monitor.actions.confirm_cache_all_heading'))
+                    ->modalDescription(trans('general.cache_monitor.actions.confirm_cache_all_description'))
+                    ->action(function () {
+                        Artisan::call('cache:online-riders', ['--all' => true]);
+                        $this->loadData();
+
+                        Notification::make()
+                            ->success()
+                            ->title(trans('general.cache_monitor.actions.success_cache_all'))
+                            ->send();
+                    }),
+
+                Action::make('cacheFreshRiders')
+                    ->label(trans('general.cache_monitor.actions.cache_fresh_riders'))
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading(trans('general.cache_monitor.actions.confirm_cache_fresh_heading'))
+                    ->modalDescription(trans('general.cache_monitor.actions.confirm_cache_fresh_description'))
+                    ->action(function () {
+                        Artisan::call('cache:online-riders', ['--fresh' => true]);
+                        $this->loadData();
+
+                        Notification::make()
+                            ->success()
+                            ->title(trans('general.cache_monitor.actions.success_cache_fresh'))
+                            ->send();
+                    }),
+            ])
+                ->label(trans('general.cache_monitor.actions.cache_actions'))
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('success')
+                ->button(),
+
+            ActionGroup::make([
                 Action::make('flushAppState')
-                    ->label('Flush App State')
+                    ->label(trans('general.cache_monitor.actions.flush_app_state'))
                     ->icon('heroicon-o-cog-6-tooth')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->modalHeading('Flush App State Cache?')
-                    ->modalDescription('This will remove all customer and rider app state from cache.')
+                    ->modalHeading(trans('general.cache_monitor.actions.confirm_app_state_heading'))
+                    ->modalDescription(trans('general.cache_monitor.actions.confirm_app_state_description'))
                     ->action(function () {
                         AppStateCache::flush();
                         $this->loadData();
 
                         Notification::make()
                             ->success()
-                            ->title('App state cache flushed')
+                            ->title(trans('general.cache_monitor.actions.success_app_state'))
                             ->send();
                     }),
 
                 Action::make('flushRiders')
-                    ->label('Flush Riders')
+                    ->label(trans('general.cache_monitor.actions.flush_riders'))
                     ->icon('heroicon-o-users')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->modalHeading('Flush Riders Cache?')
-                    ->modalDescription('This will remove all rider data (status, location) from cache.')
+                    ->modalHeading(trans('general.cache_monitor.actions.confirm_riders_heading'))
+                    ->modalDescription(trans('general.cache_monitor.actions.confirm_riders_description'))
                     ->action(function () {
                         RiderCache::flush();
                         $this->loadData();
 
                         Notification::make()
                             ->success()
-                            ->title('Riders cache flushed')
+                            ->title(trans('general.cache_monitor.actions.success_riders'))
                             ->send();
                     }),
 
                 Action::make('flushTrips')
-                    ->label('Flush Trips')
+                    ->label(trans('general.cache_monitor.actions.flush_trips'))
                     ->icon('heroicon-o-map')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->modalHeading('Flush Trips Cache?')
-                    ->modalDescription('This will remove all active trip data from cache.')
+                    ->modalHeading(trans('general.cache_monitor.actions.confirm_trips_heading'))
+                    ->modalDescription(trans('general.cache_monitor.actions.confirm_trips_description'))
                     ->action(function () {
                         TripCache::flush();
                         $this->loadData();
 
                         Notification::make()
                             ->success()
-                            ->title('Trips cache flushed')
+                            ->title(trans('general.cache_monitor.actions.success_trips'))
                             ->send();
                     }),
 
                 Action::make('flushAll')
-                    ->label('Flush All Caches')
+                    ->label(trans('general.cache_monitor.actions.flush_all'))
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('Flush All Caches?')
-                    ->modalDescription('This will remove ALL cache data. This action cannot be undone.')
+                    ->modalHeading(trans('general.cache_monitor.actions.confirm_all_heading'))
+                    ->modalDescription(trans('general.cache_monitor.actions.confirm_all_description'))
                     ->action(function () {
                         // Flush specific caches
                         AppStateCache::flush();
@@ -194,11 +311,11 @@ class CacheMonitor extends Page
 
                         Notification::make()
                             ->success()
-                            ->title('All caches flushed successfully')
+                            ->title(trans('general.cache_monitor.actions.success_all'))
                             ->send();
                     }),
             ])
-                ->label('Flush Actions')
+                ->label(trans('general.cache_monitor.actions.flush_actions'))
                 ->icon('heroicon-o-trash')
                 ->color('danger')
                 ->button(),
@@ -207,7 +324,7 @@ class CacheMonitor extends Page
 
     public static function getNavigationLabel(): string
     {
-        return 'Cache Monitor';
+        return trans('general.cache_monitor.title');
     }
 
     public static function getNavigationGroup(): ?string
@@ -217,11 +334,11 @@ class CacheMonitor extends Page
 
     public function getTitle(): string
     {
-        return 'Cache Monitor';
+        return trans('general.cache_monitor.title');
     }
 
     public function getHeading(): string
     {
-        return 'Cache Monitor';
+        return trans('general.cache_monitor.title');
     }
 }

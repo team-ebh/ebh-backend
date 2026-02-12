@@ -37,6 +37,14 @@ abstract class BaseCache
     abstract protected function ttl(): int;
 
     /**
+     * Get TTL value (public accessor)
+     */
+    public function getTtl(): int
+    {
+        return $this->ttl();
+    }
+
+    /**
      * Check if caching is enabled for this scope
      * Override in child class to disable caching
      */

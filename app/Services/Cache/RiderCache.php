@@ -69,7 +69,8 @@ class RiderCache extends BaseCache
         parent::forget($id);
 
         if ($this->isRedisDriver()) {
-            Redis::zrem($this->geoKey(), (string) $id);
+            $cacheConnection = config('cache.stores.redis.connection', 'cache');
+            Redis::connection($cacheConnection)->zrem($this->geoKey(), (string) $id);
         }
     }
 
@@ -224,6 +225,50 @@ class RiderCache extends BaseCache
     }
 
     /**
+     * Get count from cache ONLY (no database fallback)
+     * Returns 0 if cache is empty or error occurs
+     */
+    public static function countCacheOnly(): int
+    {
+        return safeProcess()
+            ->onFailed(fn () => 0)
+            ->do(fn () => count((new static)->getAllRiderIds()));
+    }
+
+    /**
+     * Get count by status from cache ONLY (no database fallback)
+     * Returns 0 if cache is empty or error occurs
+     */
+    public static function countByStatusCacheOnly(string $status): int
+    {
+        return safeProcess()
+            ->onFailed(fn () => 0)
+            ->do(fn () => count((new static)->getRidersByStatus($status)));
+    }
+
+    /**
+     * Get online riders from cache ONLY (no database fallback)
+     * Returns empty array if cache is empty or error occurs
+     */
+    public static function getOnlineCacheOnly(): array
+    {
+        return safeProcess()
+            ->onFailed(fn () => [])
+            ->do(fn () => (new static)->getRidersByStatus(RiderStatusEnum::ONLINE->value));
+    }
+
+    /**
+     * Get busy riders from cache ONLY (no database fallback)
+     * Returns empty array if cache is empty or error occurs
+     */
+    public static function getBusyCacheOnly(): array
+    {
+        return safeProcess()
+            ->onFailed(fn () => [])
+            ->do(fn () => (new static)->getRidersByStatus(RiderStatusEnum::BUSY->value));
+    }
+
+    /**
      * Flush all riders + GEO set
      *
      * Note: Group flush only works with tag-supporting drivers (Redis, Memcached)
@@ -243,7 +288,8 @@ class RiderCache extends BaseCache
 
         // Remove GEO set if Redis
         if ($instance->isRedisDriver()) {
-            Redis::del($instance->geoKey());
+            $cacheConnection = config('cache.stores.redis.connection', 'cache');
+            Redis::connection($cacheConnection)->del($instance->geoKey());
         }
     }
 
@@ -269,7 +315,8 @@ class RiderCache extends BaseCache
 
     private function findNearbyRedis(float $lat, float $lng, int $radiusMeters): array
     {
-        $riders = Redis::georadius(
+        $cacheConnection = config('cache.stores.redis.connection', 'cache');
+        $riders = Redis::connection($cacheConnection)->georadius(
             $this->geoKey(),
             $lng,
             $lat,
@@ -345,21 +392,25 @@ class RiderCache extends BaseCache
     private function getAllRiderIds(): array
     {
         if ($this->isRedisDriver()) {
-            // Get all keys matching pattern
-            $pattern = $this->scope() . ':*';
-            $keys = [];
-            $cursor = 0;
+            // Get cache connection (not default Redis connection)
+            $cacheConnection = config('cache.stores.redis.connection', 'cache');
+            $redis = Redis::connection($cacheConnection);
 
-            do {
-                [$cursor, $batch] = Redis::scan($cursor, 'MATCH', $pattern, 'COUNT', 100);
-                $keys = array_merge($keys, $batch);
-            } while ($cursor !== 0);
+            // Get all keys matching pattern *:rider:*
+            // This matches both tagged and non-tagged cache keys
+            $pattern = '*:' . $this->scope() . ':*';
+            $keys = $redis->keys($pattern);
 
             // Extract rider IDs from keys
             $riderIds = [];
             foreach ($keys as $key) {
-                // Extract ID from key like "rider:123"
-                if (preg_match('/:(\d+)$/', $key, $matches)) {
+                // Skip tag metadata keys
+                if (str_contains($key, ':tag:')) {
+                    continue;
+                }
+
+                // Extract ID from key like "ebh_database_ebh_cache_hash:rider:123"
+                if (preg_match('/:' . $this->scope() . ':(\d+)$/', $key, $matches)) {
                     $riderIds[] = (int) $matches[1];
                 }
             }
@@ -399,7 +450,8 @@ class RiderCache extends BaseCache
 
     private function storeInGeoSet($riderId, float $lat, float $lng): void
     {
-        Redis::geoadd($this->geoKey(), $lng, $lat, (string) $riderId);
+        $cacheConnection = config('cache.stores.redis.connection', 'cache');
+        Redis::connection($cacheConnection)->geoadd($this->geoKey(), $lng, $lat, (string) $riderId);
     }
 
     private function calculateDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
