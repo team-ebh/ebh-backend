@@ -138,4 +138,42 @@ class RiderRepository implements RiderRepositoryInterface
             ->where(Trip::COLUMN_STATUS, TripStatusEnum::COMPLETED)
             ->count();
     }
+
+    public function getByStatus(string $status): \Illuminate\Database\Eloquent\Collection
+    {
+        return Rider::query()
+            ->where(Rider::COLUMN_STATUS, $status)
+            ->select([
+                Rider::COLUMN_ID,
+                Rider::COLUMN_FULL_NAME,
+                Rider::COLUMN_PHONE_NUMBER,
+                Rider::COLUMN_STATUS,
+                Rider::COLUMN_LATITUDE,
+                Rider::COLUMN_LONGITUDE,
+            ])
+            ->get();
+    }
+
+    public function findNearby(float $lat, float $lng, int $radiusMeters): \Illuminate\Database\Eloquent\Collection
+    {
+        $radiusKm = $radiusMeters / 1000;
+
+        return Rider::query()
+            ->whereIn(Rider::COLUMN_STATUS, ['online', 'busy'])
+            ->whereNotNull(Rider::COLUMN_LATITUDE)
+            ->whereNotNull(Rider::COLUMN_LONGITUDE)
+            ->selectRaw('
+                *,
+                (6371 * acos(
+                    cos(radians(?)) *
+                    cos(radians(' . Rider::COLUMN_LATITUDE . ')) *
+                    cos(radians(' . Rider::COLUMN_LONGITUDE . ') - radians(?)) +
+                    sin(radians(?)) *
+                    sin(radians(' . Rider::COLUMN_LATITUDE . '))
+                )) AS distance
+            ', [$lat, $lng, $lat])
+            ->having('distance', '<=', $radiusKm)
+            ->orderBy('distance')
+            ->get();
+    }
 }
