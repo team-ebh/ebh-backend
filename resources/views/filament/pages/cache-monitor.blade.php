@@ -31,9 +31,32 @@
         </div>
     </div>
 
-    {{-- Main Content Grid --}}
-    <div class="grid grid-cols-3 gap-4">
-        {{-- Cache Scopes (Left Column) --}}
+    {{-- Main Content Grid - 4 Columns --}}
+    <div class="grid grid-cols-4 gap-4">
+        {{-- System Info --}}
+        <div class="p-4 bg-white dark:bg-gray-800 rounded-lg">
+            <h3 class="mb-3 text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">System Info</h3>
+            <div class="space-y-3">
+                <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700">
+                    <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-1">Redis Host</div>
+                    <div class="text-xs font-mono text-gray-900 dark:text-white">{{ $stats['redis_host'] ?? 'N/A' }}</div>
+                </div>
+                <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700">
+                    <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-1">Redis Port</div>
+                    <div class="text-xs font-mono text-gray-900 dark:text-white">{{ $stats['redis_port'] ?? 'N/A' }}</div>
+                </div>
+                <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700">
+                    <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-1">Auto Refresh</div>
+                    <div class="text-xs text-gray-900 dark:text-white">Every 5 seconds</div>
+                </div>
+                <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700">
+                    <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-1">Last Update</div>
+                    <div class="text-xs font-mono text-gray-900 dark:text-white">{{ now()->format('H:i:s') }}</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Cache Scopes --}}
         <div class="p-4 bg-white dark:bg-gray-800 rounded-lg">
             <h3 class="mb-3 text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Cache Layers</h3>
             <div class="space-y-2">
@@ -43,22 +66,14 @@
                             <div class="text-xs font-medium text-gray-900 dark:text-white">{{ $scope['name'] }}</div>
                             <div class="text-[10px] font-semibold text-blue-600 dark:text-blue-400">{{ $scope['ttl'] }}</div>
                         </div>
-                        <div class="text-[10px] text-gray-600 dark:text-gray-400">{{ $scope['description'] }}</div>
-                        <div class="mt-1 text-[10px] font-mono text-gray-500 dark:text-gray-500">{{ $scope['scope'] }}</div>
+                        <div class="text-[10px] text-gray-600 dark:text-gray-400 mb-1">{{ $scope['description'] }}</div>
+                        <div class="text-[10px] font-mono text-gray-500 dark:text-gray-500">{{ $scope['scope'] }}</div>
                     </div>
                 @endforeach
             </div>
-
-            <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div class="text-[10px] text-gray-500 dark:text-gray-400 space-y-1">
-                    <div>Redis: {{ $stats['redis_host'] ?? 'N/A' }}:{{ $stats['redis_port'] ?? 'N/A' }}</div>
-                    <div>Auto-refresh: 5s</div>
-                    <div class="font-mono">{{ now()->format('H:i:s') }}</div>
-                </div>
-            </div>
         </div>
 
-        {{-- Online Riders (Middle Column) --}}
+        {{-- Online Riders --}}
         <div class="p-4 bg-white dark:bg-gray-800 rounded-lg">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Online Riders</h3>
@@ -80,10 +95,10 @@
                                 @foreach($onlineRiders as $rider)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/50">
                                         <td class="px-2 py-1.5 font-mono text-gray-900 dark:text-white">{{ $rider['rider_id'] ?? 'N/A' }}</td>
-                                        <td class="px-2 py-1.5 text-gray-900 dark:text-white truncate" style="max-width: 100px;">{{ $rider['name'] ?? 'N/A' }}</td>
-                                        <td class="px-2 py-1.5 font-mono text-gray-600 dark:text-gray-400">
+                                        <td class="px-2 py-1.5 text-gray-900 dark:text-white truncate" style="max-width: 80px;">{{ $rider['name'] ?? 'N/A' }}</td>
+                                        <td class="px-2 py-1.5 font-mono text-gray-600 dark:text-gray-400 text-[10px]">
                                             @if(isset($rider['lat']) && isset($rider['lng']))
-                                                {{ number_format($rider['lat'], 3) }},{{ number_format($rider['lng'], 3) }}
+                                                {{ number_format($rider['lat'], 2) }},{{ number_format($rider['lng'], 2) }}
                                             @else
                                                 <span class="text-gray-400">-</span>
                                             @endif
@@ -99,7 +114,7 @@
             @endif
         </div>
 
-        {{-- Busy Riders (Right Column) --}}
+        {{-- Busy Riders --}}
         <div class="p-4 bg-white dark:bg-gray-800 rounded-lg">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Busy Riders</h3>
@@ -121,10 +136,10 @@
                                 @foreach($busyRiders as $rider)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/50">
                                         <td class="px-2 py-1.5 font-mono text-gray-900 dark:text-white">{{ $rider['rider_id'] ?? 'N/A' }}</td>
-                                        <td class="px-2 py-1.5 text-gray-900 dark:text-white truncate" style="max-width: 100px;">{{ $rider['name'] ?? 'N/A' }}</td>
-                                        <td class="px-2 py-1.5 font-mono text-gray-600 dark:text-gray-400">
+                                        <td class="px-2 py-1.5 text-gray-900 dark:text-white truncate" style="max-width: 80px;">{{ $rider['name'] ?? 'N/A' }}</td>
+                                        <td class="px-2 py-1.5 font-mono text-gray-600 dark:text-gray-400 text-[10px]">
                                             @if(isset($rider['lat']) && isset($rider['lng']))
-                                                {{ number_format($rider['lat'], 3) }},{{ number_format($rider['lng'], 3) }}
+                                                {{ number_format($rider['lat'], 2) }},{{ number_format($rider['lng'], 2) }}
                                             @else
                                                 <span class="text-gray-400">-</span>
                                             @endif
