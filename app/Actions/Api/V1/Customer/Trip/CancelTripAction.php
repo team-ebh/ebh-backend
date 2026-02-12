@@ -13,6 +13,7 @@ use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Jobs\CancelTripRequestsJob;
 use App\Models\Trip;
 use App\Services\Cache\AppStateCache;
+use App\Services\Cache\TripCache;
 
 /**
  * Cancel Trip Action
@@ -62,6 +63,11 @@ readonly class CancelTripAction
 
         // Clear cache for both customer and rider
         AppStateCache::forgetBoth(
+            $dto->trip->{Trip::COLUMN_CUSTOMER_ID},
+            $dto->trip->{Trip::COLUMN_RIDER_ID}
+        );
+
+        TripCache::forgetBoth(
             $dto->trip->{Trip::COLUMN_CUSTOMER_ID},
             $dto->trip->{Trip::COLUMN_RIDER_ID}
         );

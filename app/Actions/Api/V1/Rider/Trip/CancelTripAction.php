@@ -10,6 +10,7 @@ use App\Pipelines\Rider\Trip\CancelTrip\ExecuteAndBroadcastPipe;
 use App\Pipelines\Rider\Trip\CancelTrip\ValidatePipe;
 use App\Services\Cache\AppStateCache;
 use App\Services\Cache\RiderCache;
+use App\Services\Cache\TripCache;
 use Illuminate\Pipeline\Pipeline;
 
 readonly class CancelTripAction
@@ -35,6 +36,11 @@ readonly class CancelTripAction
         );
 
         RiderCache::forgetRider($dto->riderId);
+
+        TripCache::forgetBoth(
+            $customerId,
+            $dto->riderId
+        );
 
         return $trip;
     }

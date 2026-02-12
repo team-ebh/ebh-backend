@@ -19,6 +19,7 @@ use App\Pipelines\Api\V1\Customer\Trip\ConfirmTrip\UpdatePaymentAndStatusPipe;
 use App\Pipelines\Api\V1\Customer\Trip\ConfirmTrip\ValidateScheduledTripPipe;
 use App\Pipelines\Api\V1\Customer\Trip\ConfirmTrip\ValidateTripPipe;
 use App\Services\Cache\AppStateCache;
+use App\Services\Cache\TripCache;
 use Illuminate\Pipeline\Pipeline;
 
 /**

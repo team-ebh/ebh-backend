@@ -11,6 +11,7 @@ use App\Pipelines\Rider\Trip\CompleteTrip\UpdateStatusPipe;
 use App\Pipelines\Rider\Trip\CompleteTrip\ValidateAndLoadPipe;
 use App\Services\Cache\AppStateCache;
 use App\Services\Cache\RiderCache;
+use App\Services\Cache\TripCache;
 use Illuminate\Pipeline\Pipeline;
 
 /**
@@ -39,6 +40,7 @@ readonly class CompleteTripAction
 
         AppStateCache::forgetBoth($customerId, $dto->riderId);
         RiderCache::forgetRider($dto->riderId);
+        TripCache::forgetBoth($customerId, $dto->riderId);
 
         return $result;
     }
