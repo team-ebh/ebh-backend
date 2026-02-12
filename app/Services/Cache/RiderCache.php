@@ -32,7 +32,7 @@ class RiderCache extends BaseCache
 
     protected function ttl(): int
     {
-        return 60; // 60 seconds
+        return 300; // 5 minutes
     }
 
     /**
