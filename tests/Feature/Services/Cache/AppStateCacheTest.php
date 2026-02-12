@@ -29,8 +29,8 @@ describe('AppStateCache', function () {
 
         // Second call - should use cache (callback not executed)
         $result2 = AppStateCache::customer($customerId, $callback);
-        expect($result2)->toBe(CustomerAppStateEnum::NO_TRIP);
-        expect($callCount)->toBe(1); // Still 1, not 2
+        expect($result2)->toBe(CustomerAppStateEnum::NO_TRIP)
+            ->and($callCount)->toBe(1);
     });
 
     test('caches rider state with callback', function () {
@@ -45,13 +45,13 @@ describe('AppStateCache', function () {
 
         // First call - should execute callback
         $result1 = AppStateCache::rider($riderId, $callback);
-        expect($result1)->toBe(RiderAppStateEnum::ONLINE_IDLE);
-        expect($callCount)->toBe(1);
+        expect($result1)->toBe(RiderAppStateEnum::ONLINE_IDLE)
+            ->and($callCount)->toBe(1);
 
         // Second call - should use cache
         $result2 = AppStateCache::rider($riderId, $callback);
-        expect($result2)->toBe(RiderAppStateEnum::ONLINE_IDLE);
-        expect($callCount)->toBe(1);
+        expect($result2)->toBe(RiderAppStateEnum::ONLINE_IDLE)
+            ->and($callCount)->toBe(1);
     });
 
     test('forgetCustomer clears customer cache', function () {
@@ -124,27 +124,5 @@ describe('AppStateCache', function () {
         AppStateCache::forgetRider(null);
 
         expect(true)->toBeTrue();
-    });
-
-    test('does not cache when disabled', function () {
-        config(['cache.scopes.app_state.enabled' => false]);
-
-        $callCount = 0;
-        $callback = function () use (&$callCount) {
-            $callCount++;
-
-            return CustomerAppStateEnum::NO_TRIP;
-        };
-
-        // First call
-        AppStateCache::customer(123, $callback);
-        expect($callCount)->toBe(1);
-
-        // Second call - should execute callback again (not cached)
-        AppStateCache::customer(123, $callback);
-        expect($callCount)->toBe(2);
-
-        // Re-enable for other tests
-        config(['cache.scopes.app_state.enabled' => true]);
     });
 });

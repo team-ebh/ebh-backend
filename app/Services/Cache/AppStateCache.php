@@ -22,4 +22,9 @@ class AppStateCache extends BaseCache
     {
         return 'app_state';
     }
+
+    protected function ttl(): int
+    {
+        return 900; // 15 minutes
+    }
 }

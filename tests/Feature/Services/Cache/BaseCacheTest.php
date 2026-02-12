@@ -12,11 +12,15 @@ class TestCache extends BaseCache
     {
         return 'test';
     }
+
+    protected function ttl(): int
+    {
+        return 60;
+    }
 }
 
 beforeEach(function () {
     Cache::flush();
-    config(['cache.scopes.test' => ['enabled' => true, 'ttl' => 60]]);
 });
 
 describe('BaseCache', function () {
@@ -64,9 +68,9 @@ describe('BaseCache', function () {
             $result1 = $cache->get(123, $callback);
             $result2 = $cache->get(123, $callback);
 
-            expect($result1)->toBe('result');
-            expect($result2)->toBe('result');
-            expect($callCount)->toBe(1); // Callback called only once
+            expect($result1)->toBe('result')
+                ->and($result2)->toBe('result')
+                ->and($callCount)->toBe(1);
         });
 
         test('different contexts have separate caches', function () {
@@ -88,15 +92,15 @@ describe('BaseCache', function () {
         test('customer helper works correctly', function () {
             $result = TestCache::customer(123, fn () => 'customer_value');
 
-            expect($result)->toBe('customer_value');
-            expect(Cache::tags(['test', 'customer'])->has('test:customer:123'))->toBeTrue();
+            expect($result)->toBe('customer_value')
+                ->and(Cache::tags(['test', 'customer'])->has('test:customer:123'))->toBeTrue();
         });
 
         test('rider helper works correctly', function () {
             $result = TestCache::rider(456, fn () => 'rider_value');
 
-            expect($result)->toBe('rider_value');
-            expect(Cache::tags(['test', 'rider'])->has('test:rider:456'))->toBeTrue();
+            expect($result)->toBe('rider_value')
+                ->and(Cache::tags(['test', 'rider'])->has('test:rider:456'))->toBeTrue();
         });
     });
 
@@ -145,26 +149,8 @@ describe('BaseCache', function () {
 
             TestCache::flush();
 
-            expect(Cache::tags(['test', 'customer'])->has('test:customer:123'))->toBeFalse();
-            expect(Cache::tags(['test', 'rider'])->has('test:rider:456'))->toBeFalse();
-        });
-    });
-
-    describe('Config', function () {
-        test('respects enabled config', function () {
-            config(['cache.scopes.test.enabled' => false]);
-
-            $callCount = 0;
-            $callback = function () use (&$callCount) {
-                $callCount++;
-
-                return 'value';
-            };
-
-            TestCache::customer(123, $callback);
-            TestCache::customer(123, $callback);
-
-            expect($callCount)->toBe(2); // Not cached
+            expect(Cache::tags(['test', 'customer'])->has('test:customer:123'))->toBeFalse()
+                ->and(Cache::tags(['test', 'rider'])->has('test:rider:456'))->toBeFalse();
         });
     });
 
@@ -175,8 +161,8 @@ describe('BaseCache', function () {
 
             Cache::tags(['customer'])->flush();
 
-            expect(Cache::tags(['test', 'customer'])->has('test:customer:123'))->toBeFalse();
-            expect(Cache::tags(['test', 'customer'])->has('test:customer:456'))->toBeFalse();
+            expect(Cache::tags(['test', 'customer'])->has('test:customer:123'))->toBeFalse()
+                ->and(Cache::tags(['test', 'customer'])->has('test:customer:456'))->toBeFalse();
         });
 
         test('can flush all rider caches across scopes', function () {
@@ -185,8 +171,8 @@ describe('BaseCache', function () {
 
             Cache::tags(['rider'])->flush();
 
-            expect(Cache::tags(['test', 'rider'])->has('test:rider:123'))->toBeFalse();
-            expect(Cache::tags(['test', 'rider'])->has('test:rider:456'))->toBeFalse();
+            expect(Cache::tags(['test', 'rider'])->has('test:rider:123'))->toBeFalse()
+                ->and(Cache::tags(['test', 'rider'])->has('test:rider:456'))->toBeFalse();
         });
     });
 });
