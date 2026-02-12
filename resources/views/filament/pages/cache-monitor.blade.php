@@ -1,106 +1,100 @@
 <x-filament-panels::page>
-    {{-- Stats Row --}}
-    <div class="grid grid-cols-6 gap-3 mb-4">
-        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg">
-            <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase">Driver</div>
-            <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ strtoupper($stats['cache_driver'] ?? 'N/A') }}</div>
+    {{-- Compact Stats Bar --}}
+    <div class="flex gap-2 mb-4">
+        <div class="flex-1 p-2 bg-white dark:bg-gray-800 rounded">
+            <div class="text-[9px] text-gray-500 dark:text-gray-400">Driver</div>
+            <div class="text-xs font-semibold">{{ strtoupper($stats['cache_driver'] ?? 'N/A') }}</div>
         </div>
-        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg">
-            <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase">Memory</div>
-            <div class="text-sm font-semibold text-purple-600 dark:text-purple-400">{{ $stats['redis_memory'] ?? 'N/A' }}</div>
+        <div class="flex-1 p-2 bg-white dark:bg-gray-800 rounded">
+            <div class="text-[9px] text-gray-500 dark:text-gray-400">Memory</div>
+            <div class="text-xs font-semibold text-purple-600 dark:text-purple-400">{{ $stats['redis_memory'] ?? 'N/A' }}</div>
         </div>
-        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg">
-            <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase">Peak</div>
-            <div class="text-sm font-semibold text-purple-600 dark:text-purple-400">{{ $stats['redis_peak_memory'] ?? 'N/A' }}</div>
+        <div class="flex-1 p-2 bg-white dark:bg-gray-800 rounded">
+            <div class="text-[9px] text-gray-500 dark:text-gray-400">Peak</div>
+            <div class="text-xs font-semibold text-purple-600 dark:text-purple-400">{{ $stats['redis_peak_memory'] ?? 'N/A' }}</div>
         </div>
-        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg">
-            <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase">Total</div>
-            <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ number_format($stats['total_riders'] ?? 0) }}</div>
+        <div class="flex-1 p-2 bg-white dark:bg-gray-800 rounded">
+            <div class="text-[9px] text-gray-500 dark:text-gray-400">Total</div>
+            <div class="text-xs font-semibold">{{ number_format($stats['total_riders'] ?? 0) }}</div>
         </div>
-        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg">
-            <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase flex items-center gap-1">
-                <span class="inline-block w-1.5 h-1.5 bg-green-500 rounded-full"></span> Online
-            </div>
-            <div class="text-sm font-semibold text-green-600 dark:text-green-400">{{ number_format($stats['online_riders'] ?? 0) }}</div>
+        <div class="flex-1 p-2 bg-white dark:bg-gray-800 rounded">
+            <div class="text-[9px] text-gray-500 dark:text-gray-400">Online</div>
+            <div class="text-xs font-semibold text-green-600 dark:text-green-400">{{ number_format($stats['online_riders'] ?? 0) }}</div>
         </div>
-        <div class="p-3 bg-white dark:bg-gray-800 rounded-lg">
-            <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase flex items-center gap-1">
-                <span class="inline-block w-1.5 h-1.5 bg-yellow-500 rounded-full"></span> Busy
-            </div>
-            <div class="text-sm font-semibold text-yellow-600 dark:text-yellow-400">{{ number_format($stats['busy_riders'] ?? 0) }}</div>
+        <div class="flex-1 p-2 bg-white dark:bg-gray-800 rounded">
+            <div class="text-[9px] text-gray-500 dark:text-gray-400">Busy</div>
+            <div class="text-xs font-semibold text-yellow-600 dark:text-yellow-400">{{ number_format($stats['busy_riders'] ?? 0) }}</div>
         </div>
     </div>
 
-    {{-- Main Content Grid - 4 Columns --}}
-    <div class="grid grid-cols-4 gap-4">
+    {{-- Main Content - Force Horizontal with Flex --}}
+    <div class="flex gap-3">
         {{-- System Info --}}
-        <div class="p-4 bg-white dark:bg-gray-800 rounded-lg">
-            <h3 class="mb-3 text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">System Info</h3>
-            <div class="space-y-3">
-                <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700">
-                    <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-1">Redis Host</div>
-                    <div class="text-xs font-mono text-gray-900 dark:text-white">{{ $stats['redis_host'] ?? 'N/A' }}</div>
+        <div class="w-48 flex-shrink-0 p-3 bg-white dark:bg-gray-800 rounded">
+            <h3 class="mb-2 text-[10px] font-semibold uppercase">System</h3>
+            <div class="space-y-2">
+                <div>
+                    <div class="text-[9px] text-gray-500 dark:text-gray-400">Host</div>
+                    <div class="text-[10px] font-mono">{{ $stats['redis_host'] ?? 'N/A' }}</div>
                 </div>
-                <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700">
-                    <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-1">Redis Port</div>
-                    <div class="text-xs font-mono text-gray-900 dark:text-white">{{ $stats['redis_port'] ?? 'N/A' }}</div>
+                <div>
+                    <div class="text-[9px] text-gray-500 dark:text-gray-400">Port</div>
+                    <div class="text-[10px] font-mono">{{ $stats['redis_port'] ?? 'N/A' }}</div>
                 </div>
-                <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700">
-                    <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-1">Auto Refresh</div>
-                    <div class="text-xs text-gray-900 dark:text-white">Every 5 seconds</div>
+                <div>
+                    <div class="text-[9px] text-gray-500 dark:text-gray-400">Refresh</div>
+                    <div class="text-[10px]">5s</div>
                 </div>
-                <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700">
-                    <div class="text-[10px] text-gray-500 dark:text-gray-400 uppercase mb-1">Last Update</div>
-                    <div class="text-xs font-mono text-gray-900 dark:text-white">{{ now()->format('H:i:s') }}</div>
+                <div>
+                    <div class="text-[9px] text-gray-500 dark:text-gray-400">Updated</div>
+                    <div class="text-[10px] font-mono">{{ now()->format('H:i:s') }}</div>
                 </div>
             </div>
-        </div>
 
-        {{-- Cache Scopes --}}
-        <div class="p-4 bg-white dark:bg-gray-800 rounded-lg">
-            <h3 class="mb-3 text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Cache Layers</h3>
-            <div class="space-y-2">
-                @foreach($stats['scopes'] ?? [] as $scope)
-                    <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between mb-1">
-                            <div class="text-xs font-medium text-gray-900 dark:text-white">{{ $scope['name'] }}</div>
-                            <div class="text-[10px] font-semibold text-blue-600 dark:text-blue-400">{{ $scope['ttl'] }}</div>
+            <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <h3 class="mb-2 text-[10px] font-semibold uppercase">Cache Layers</h3>
+                <div class="space-y-1.5">
+                    @foreach($stats['scopes'] ?? [] as $scope)
+                        <div class="p-2 bg-gray-50 dark:bg-gray-900/50 rounded">
+                            <div class="flex items-center justify-between">
+                                <div class="text-[10px] font-medium">{{ Str::replace(' Cache', '', $scope['name']) }}</div>
+                                <div class="text-[9px] text-blue-600 dark:text-blue-400">{{ $scope['ttl'] }}</div>
+                            </div>
+                            <div class="text-[9px] font-mono text-gray-500">{{ $scope['scope'] }}</div>
                         </div>
-                        <div class="text-[10px] text-gray-600 dark:text-gray-400 mb-1">{{ $scope['description'] }}</div>
-                        <div class="text-[10px] font-mono text-gray-500 dark:text-gray-500">{{ $scope['scope'] }}</div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
         </div>
 
         {{-- Online Riders --}}
-        <div class="p-4 bg-white dark:bg-gray-800 rounded-lg">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Online Riders</h3>
-                <span class="text-[10px] text-gray-500 dark:text-gray-400">Top 50</span>
+        <div class="flex-1 min-w-0 p-3 bg-white dark:bg-gray-800 rounded">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-[10px] font-semibold uppercase">Online Riders</h3>
+                <span class="text-[9px] text-gray-500">{{ count($onlineRiders) }}</span>
             </div>
 
             @if(count($onlineRiders) > 0)
                 <div class="overflow-hidden border border-gray-200 dark:border-gray-700 rounded">
-                    <div class="overflow-y-auto" style="max-height: 500px;">
-                        <table class="min-w-full text-[11px]">
+                    <div class="overflow-y-auto" style="max-height: 480px;">
+                        <table class="w-full text-[10px]">
                             <thead class="bg-gray-50 dark:bg-gray-900/50 sticky top-0">
                                 <tr>
-                                    <th class="px-2 py-1.5 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">ID</th>
-                                    <th class="px-2 py-1.5 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Name</th>
-                                    <th class="px-2 py-1.5 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Lat/Lng</th>
+                                    <th class="px-2 py-1 text-left text-[9px] font-medium text-gray-500">ID</th>
+                                    <th class="px-2 py-1 text-left text-[9px] font-medium text-gray-500">Name</th>
+                                    <th class="px-2 py-1 text-left text-[9px] font-medium text-gray-500">Location</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                                 @foreach($onlineRiders as $rider)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/50">
-                                        <td class="px-2 py-1.5 font-mono text-gray-900 dark:text-white">{{ $rider['rider_id'] ?? 'N/A' }}</td>
-                                        <td class="px-2 py-1.5 text-gray-900 dark:text-white truncate" style="max-width: 80px;">{{ $rider['name'] ?? 'N/A' }}</td>
-                                        <td class="px-2 py-1.5 font-mono text-gray-600 dark:text-gray-400 text-[10px]">
+                                        <td class="px-2 py-1 font-mono">{{ $rider['rider_id'] ?? '-' }}</td>
+                                        <td class="px-2 py-1 truncate" style="max-width: 100px;">{{ $rider['name'] ?? '-' }}</td>
+                                        <td class="px-2 py-1 font-mono text-[9px] text-gray-600 dark:text-gray-400">
                                             @if(isset($rider['lat']) && isset($rider['lng']))
                                                 {{ number_format($rider['lat'], 2) }},{{ number_format($rider['lng'], 2) }}
                                             @else
-                                                <span class="text-gray-400">-</span>
+                                                -
                                             @endif
                                         </td>
                                     </tr>
@@ -110,38 +104,38 @@
                     </div>
                 </div>
             @else
-                <div class="py-12 text-center text-xs text-gray-500 dark:text-gray-400">No online riders</div>
+                <div class="py-8 text-center text-[10px] text-gray-500">No online riders</div>
             @endif
         </div>
 
         {{-- Busy Riders --}}
-        <div class="p-4 bg-white dark:bg-gray-800 rounded-lg">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Busy Riders</h3>
-                <span class="text-[10px] text-gray-500 dark:text-gray-400">Top 50</span>
+        <div class="flex-1 min-w-0 p-3 bg-white dark:bg-gray-800 rounded">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-[10px] font-semibold uppercase">Busy Riders</h3>
+                <span class="text-[9px] text-gray-500">{{ count($busyRiders) }}</span>
             </div>
 
             @if(count($busyRiders) > 0)
                 <div class="overflow-hidden border border-gray-200 dark:border-gray-700 rounded">
-                    <div class="overflow-y-auto" style="max-height: 500px;">
-                        <table class="min-w-full text-[11px]">
+                    <div class="overflow-y-auto" style="max-height: 480px;">
+                        <table class="w-full text-[10px]">
                             <thead class="bg-gray-50 dark:bg-gray-900/50 sticky top-0">
                                 <tr>
-                                    <th class="px-2 py-1.5 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">ID</th>
-                                    <th class="px-2 py-1.5 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Name</th>
-                                    <th class="px-2 py-1.5 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Lat/Lng</th>
+                                    <th class="px-2 py-1 text-left text-[9px] font-medium text-gray-500">ID</th>
+                                    <th class="px-2 py-1 text-left text-[9px] font-medium text-gray-500">Name</th>
+                                    <th class="px-2 py-1 text-left text-[9px] font-medium text-gray-500">Location</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                                 @foreach($busyRiders as $rider)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/50">
-                                        <td class="px-2 py-1.5 font-mono text-gray-900 dark:text-white">{{ $rider['rider_id'] ?? 'N/A' }}</td>
-                                        <td class="px-2 py-1.5 text-gray-900 dark:text-white truncate" style="max-width: 80px;">{{ $rider['name'] ?? 'N/A' }}</td>
-                                        <td class="px-2 py-1.5 font-mono text-gray-600 dark:text-gray-400 text-[10px]">
+                                        <td class="px-2 py-1 font-mono">{{ $rider['rider_id'] ?? '-' }}</td>
+                                        <td class="px-2 py-1 truncate" style="max-width: 100px;">{{ $rider['name'] ?? '-' }}</td>
+                                        <td class="px-2 py-1 font-mono text-[9px] text-gray-600 dark:text-gray-400">
                                             @if(isset($rider['lat']) && isset($rider['lng']))
                                                 {{ number_format($rider['lat'], 2) }},{{ number_format($rider['lng'], 2) }}
                                             @else
-                                                <span class="text-gray-400">-</span>
+                                                -
                                             @endif
                                         </td>
                                     </tr>
@@ -151,7 +145,7 @@
                     </div>
                 </div>
             @else
-                <div class="py-12 text-center text-xs text-gray-500 dark:text-gray-400">No busy riders</div>
+                <div class="py-8 text-center text-[10px] text-gray-500">No busy riders</div>
             @endif
         </div>
     </div>
