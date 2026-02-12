@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Cache;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 
 /**
  * Base Cache Service
@@ -59,14 +60,16 @@ abstract class BaseCache
 
         // Get cache connection
         $cacheConnection = config('cache.stores.redis.connection', 'cache');
-        $redis = \Illuminate\Support\Facades\Redis::connection($cacheConnection);
+        $redis = Redis::connection($cacheConnection);
 
         // Pattern to match all keys for this scope
         $pattern = '*:' . $this->scope() . ':*';
         $keys = $redis->keys($pattern);
 
-        // Filter out tag metadata keys
-        $dataKeys = array_filter($keys, fn ($key) => ! str_contains($key, ':tag:'));
+        // Filter out tag metadata keys (they contain 'tag:' in the key)
+        $dataKeys = array_filter($keys, function ($key) {
+            return ! str_contains($key, 'tag:') && ! str_contains($key, ':tag');
+        });
 
         return count($dataKeys);
     }
