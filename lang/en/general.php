@@ -71,6 +71,7 @@ return [
         ],
         'cache_layers' => [
             'heading' => 'Cache Layers',
+            'entries' => 'entries',
             'app_state' => [
                 'name' => 'App State Cache',
                 'description' => 'Customer and rider app states',

@@ -54,9 +54,13 @@
             <div class="grid gap-4 md:grid-cols-3">
                 @foreach($stats['scopes'] ?? [] as $scope)
                     <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900/50">
-                        <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-start justify-between mb-3">
                             <h3 class="font-medium text-gray-900 dark:text-white">{{ $scope['name'] }}</h3>
                             <x-filament::badge color="info">{{ $scope['ttl'] }}</x-filament::badge>
+                        </div>
+                        <div class="mb-3">
+                            <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ number_format($scope['count'] ?? 0) }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ trans('general.cache_monitor.cache_layers.entries') }}</div>
                         </div>
                         <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ $scope['description'] }}</p>
                         <code class="text-xs text-gray-500 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{{ $scope['scope'] }}</code>

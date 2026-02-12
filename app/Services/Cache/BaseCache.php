@@ -45,6 +45,33 @@ abstract class BaseCache
     }
 
     /**
+     * Count total entries in this cache scope
+     */
+    public function countEntries(): int
+    {
+        if (! $this->enabled()) {
+            return 0;
+        }
+
+        if (! $this->supportsTags()) {
+            return 0;
+        }
+
+        // Get cache connection
+        $cacheConnection = config('cache.stores.redis.connection', 'cache');
+        $redis = \Illuminate\Support\Facades\Redis::connection($cacheConnection);
+
+        // Pattern to match all keys for this scope
+        $pattern = '*:' . $this->scope() . ':*';
+        $keys = $redis->keys($pattern);
+
+        // Filter out tag metadata keys
+        $dataKeys = array_filter($keys, fn ($key) => ! str_contains($key, ':tag:'));
+
+        return count($dataKeys);
+    }
+
+    /**
      * Check if caching is enabled for this scope
      * Override in child class to disable caching
      */
