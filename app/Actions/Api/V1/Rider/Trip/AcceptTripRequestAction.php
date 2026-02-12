@@ -10,6 +10,7 @@ use App\Pipelines\Rider\Trip\AcceptTripRequest\ExecuteAndBroadcastPipe;
 use App\Pipelines\Rider\Trip\AcceptTripRequest\FormatResponsePipe;
 use App\Pipelines\Rider\Trip\AcceptTripRequest\LoadAndValidatePipe;
 use App\Services\Cache\AppStateCache;
+use App\Services\Cache\RiderCache;
 use Illuminate\Pipeline\Pipeline;
 
 /**
@@ -36,6 +37,8 @@ readonly class AcceptTripRequestAction
             $dto->tripRequest->trip->{Trip::COLUMN_CUSTOMER_ID},
             $dto->riderId
         );
+
+        RiderCache::forgetRider($dto->riderId);
 
         return $result;
     }
