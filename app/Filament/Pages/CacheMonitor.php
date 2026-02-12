@@ -121,82 +121,89 @@ class CacheMonitor extends Page
             Action::make('refresh')
                 ->label('Refresh')
                 ->icon('heroicon-o-arrow-path')
+                ->color('gray')
                 ->action('loadData'),
 
-            Action::make('flushAppState')
-                ->label('Flush App State')
-                ->icon('heroicon-o-cog-6-tooth')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->modalHeading('Flush App State Cache?')
-                ->modalDescription('This will remove all customer and rider app state from cache.')
-                ->action(function () {
-                    AppStateCache::flush();
-                    $this->loadData();
+            \Filament\Actions\ActionGroup::make([
+                Action::make('flushAppState')
+                    ->label('Flush App State')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Flush App State Cache?')
+                    ->modalDescription('This will remove all customer and rider app state from cache.')
+                    ->action(function () {
+                        AppStateCache::flush();
+                        $this->loadData();
 
-                    Notification::make()
-                        ->success()
-                        ->title('App state cache flushed')
-                        ->send();
-                }),
+                        Notification::make()
+                            ->success()
+                            ->title('App state cache flushed')
+                            ->send();
+                    }),
 
-            Action::make('flushRiders')
-                ->label('Flush Riders')
-                ->icon('heroicon-o-users')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->modalHeading('Flush Riders Cache?')
-                ->modalDescription('This will remove all rider data (status, location) from cache.')
-                ->action(function () {
-                    RiderCache::flush();
-                    $this->loadData();
+                Action::make('flushRiders')
+                    ->label('Flush Riders')
+                    ->icon('heroicon-o-users')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Flush Riders Cache?')
+                    ->modalDescription('This will remove all rider data (status, location) from cache.')
+                    ->action(function () {
+                        RiderCache::flush();
+                        $this->loadData();
 
-                    Notification::make()
-                        ->success()
-                        ->title('Riders cache flushed')
-                        ->send();
-                }),
+                        Notification::make()
+                            ->success()
+                            ->title('Riders cache flushed')
+                            ->send();
+                    }),
 
-            Action::make('flushTrips')
-                ->label('Flush Trips')
-                ->icon('heroicon-o-map')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->modalHeading('Flush Trips Cache?')
-                ->modalDescription('This will remove all active trip data from cache.')
-                ->action(function () {
-                    TripCache::flush();
-                    $this->loadData();
+                Action::make('flushTrips')
+                    ->label('Flush Trips')
+                    ->icon('heroicon-o-map')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Flush Trips Cache?')
+                    ->modalDescription('This will remove all active trip data from cache.')
+                    ->action(function () {
+                        TripCache::flush();
+                        $this->loadData();
 
-                    Notification::make()
-                        ->success()
-                        ->title('Trips cache flushed')
-                        ->send();
-                }),
+                        Notification::make()
+                            ->success()
+                            ->title('Trips cache flushed')
+                            ->send();
+                    }),
 
-            Action::make('flushAll')
-                ->label('Flush All Caches')
+                Action::make('flushAll')
+                    ->label('Flush All Caches')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Flush All Caches?')
+                    ->modalDescription('This will remove ALL cache data. This action cannot be undone.')
+                    ->action(function () {
+                        // Flush all cache tags
+                        Cache::flush();
+
+                        // Flush specific caches
+                        AppStateCache::flush();
+                        RiderCache::flush();
+                        TripCache::flush();
+
+                        $this->loadData();
+
+                        Notification::make()
+                            ->success()
+                            ->title('All caches flushed successfully')
+                            ->send();
+                    }),
+            ])
+                ->label('Flush Actions')
                 ->icon('heroicon-o-trash')
                 ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading('Flush All Caches?')
-                ->modalDescription('This will remove ALL cache data. This action cannot be undone.')
-                ->action(function () {
-                    // Flush all cache tags
-                    Cache::flush();
-
-                    // Flush specific caches
-                    AppStateCache::flush();
-                    RiderCache::flush();
-                    TripCache::flush();
-
-                    $this->loadData();
-
-                    Notification::make()
-                        ->success()
-                        ->title('All caches flushed successfully')
-                        ->send();
-                }),
+                ->button(),
         ];
     }
 
