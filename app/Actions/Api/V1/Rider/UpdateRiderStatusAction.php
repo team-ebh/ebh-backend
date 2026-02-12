@@ -7,7 +7,7 @@ namespace App\Actions\Api\V1\Rider;
 use App\DTOs\Api\V1\Rider\UpdateRiderStatusDTO;
 use App\Exceptions\Rider\CannotChangeRiderStatusException;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
-use App\Models\Rider;
+use App\Services\Cache\AppStateCache;
 
 /**
  * Update Rider Status Action
@@ -33,6 +33,9 @@ readonly class UpdateRiderStatusAction
             ->withTransaction()
             ->onFailed(fn ($e) => throw $e)
             ->do([$this, 'updateStatus'], $dto);
+
+        // Clear rider cache after status change
+        AppStateCache::forgetRider($dto->riderId);
     }
 
     /**

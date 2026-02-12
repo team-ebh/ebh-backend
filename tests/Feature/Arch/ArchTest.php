@@ -55,5 +55,6 @@ arch('avoid inheritance')
         'App\Models',
         'App\Notifications',
         'App\Providers',
+        'App\Services\Cache', // Allow cache services to extend BaseCache
         'App\View',
     ]);

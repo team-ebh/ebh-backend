@@ -107,4 +107,31 @@ return [
 
     'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_cache_'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cache Scopes Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Define cache configuration for different scopes/services.
+    | Each scope can have its own TTL and enabled/disabled setting.
+    |
+    | Example:
+    | 'scopes' => [
+    |     'app_state' => ['enabled' => true, 'ttl' => 1800],
+    |     'product' => ['enabled' => true, 'ttl' => 3600],
+    | ]
+    |
+    */
+
+    'scopes' => [
+        'app_state' => [
+            'enabled' => env('APP_STATE_CACHE_ENABLED', true),
+            'ttl' => 1800, // 30 minutes
+        ],
+
+        // Add more scopes here as needed
+        // 'product' => ['enabled' => true, 'ttl' => 3600],
+        // 'notification' => ['enabled' => true, 'ttl' => 600],
+    ],
+
 ];

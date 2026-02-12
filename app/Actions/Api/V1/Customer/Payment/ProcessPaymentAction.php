@@ -11,6 +11,7 @@ use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\LockPendingPaymentsBefo
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\PaymentProcessContext;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\UpdatePaymentStatusPipe;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\ValidatePendingPaymentPipe;
+use App\Services\Cache\AppStateCache;
 use Illuminate\Pipeline\Pipeline;
 
 /**
@@ -28,10 +29,15 @@ readonly class ProcessPaymentAction
      */
     public function __invoke(ProcessPaymentDTO $dto): PaymentProcessContext
     {
-        return safeProcess()
+        $result = safeProcess()
             ->withTransaction()
             ->onFailed(fn ($e) => throw $e)
             ->do(fn () => $this->process($dto));
+
+        // Clear customer cache after payment processing (affects pending payment state)
+        AppStateCache::forgetCustomer($result->payment?->customer_id);
+
+        return $result;
     }
 
     /**

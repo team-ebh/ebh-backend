@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Rider\Trip;
 
 use App\DTOs\Api\V1\Rider\Trip\AcceptTripRequestDTO;
+use App\Models\Trip;
 use App\Pipelines\Rider\Trip\AcceptTripRequest\ExecuteAndBroadcastPipe;
 use App\Pipelines\Rider\Trip\AcceptTripRequest\FormatResponsePipe;
 use App\Pipelines\Rider\Trip\AcceptTripRequest\LoadAndValidatePipe;
+use App\Services\Cache\AppStateCache;
 use Illuminate\Pipeline\Pipeline;
 
 /**
@@ -24,10 +26,18 @@ readonly class AcceptTripRequestAction
      */
     public function __invoke(AcceptTripRequestDTO $dto): array
     {
-        return safeProcess()
+        $result = safeProcess()
             ->withTransaction()
             ->onFailed(fn ($e) => throw $e)
             ->do([$this, 'acceptTrip'], $dto);
+
+        // Clear cache for both rider and customer
+        AppStateCache::forgetBoth(
+            $dto->tripRequest->trip->{Trip::COLUMN_CUSTOMER_ID},
+            $dto->riderId
+        );
+
+        return $result;
     }
 
     /**

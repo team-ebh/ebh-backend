@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Rider\Trip;
 
 use App\DTOs\Api\V1\Rider\Trip\CompleteTripDTO;
+use App\Models\Trip;
 use App\Pipelines\Rider\Trip\CompleteTrip\FinalizeAndCalculatePipe;
 use App\Pipelines\Rider\Trip\CompleteTrip\UpdateStatusPipe;
 use App\Pipelines\Rider\Trip\CompleteTrip\ValidateAndLoadPipe;
+use App\Services\Cache\AppStateCache;
 use Illuminate\Pipeline\Pipeline;
 
 /**
@@ -26,10 +28,17 @@ readonly class CompleteTripAction
      */
     public function __invoke(CompleteTripDTO $dto): array
     {
-        return safeProcess()
+        $result = safeProcess()
             ->withTransaction()
             ->onFailed(fn ($e) => throw $e)
             ->do([$this, 'markAsCompleted'], $dto);
+
+        // Clear cache for both rider and customer
+        $customerId = $dto->tripRequest->trip->{Trip::COLUMN_CUSTOMER_ID} ?? null;
+
+        AppStateCache::forgetBoth($customerId, $dto->riderId);
+
+        return $result;
     }
 
     /**

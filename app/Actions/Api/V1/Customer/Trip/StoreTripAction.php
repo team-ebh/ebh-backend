@@ -14,6 +14,7 @@ use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\DeleteDraftTripsPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\ReverseGeocodeDestinationPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\ReverseGeocodeOriginPipe;
 use App\Pipelines\Api\V1\Customer\Trip\CreateTrip\TripCreationContext;
+use App\Services\Cache\AppStateCache;
 use Illuminate\Pipeline\Pipeline;
 
 /**
@@ -30,10 +31,15 @@ readonly class StoreTripAction
      */
     public function __invoke(TripStoreDTO $dto): array
     {
-        return safeProcess()
+        $result = safeProcess()
             ->withTransaction()
             ->onFailed(fn ($e) => throw $e)
             ->do([$this, 'storeTrip'], $dto);
+
+        // Clear customer cache after trip creation
+        AppStateCache::forgetCustomer($dto->customerId);
+
+        return $result;
     }
 
     /**
