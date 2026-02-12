@@ -23,6 +23,12 @@ class TripCache extends BaseCache
     {
         return 'trip';
     }
+
+    protected function ttl(): int
+    {
+        return 900; // 15 minutes
+    }
+
 }
 
 // Usage:
@@ -56,6 +62,12 @@ class CustomerProfileCache extends BaseCache
     {
         return 'customer_profile';
     }
+
+    protected function ttl(): int
+    {
+        return 3600; // 1 hour
+    }
+
 }
 
 // Usage:
@@ -85,6 +97,12 @@ class EarningsCache extends BaseCache
     {
         return 'earnings';
     }
+
+    protected function ttl(): int
+    {
+        return 1800; // 30 minutes
+    }
+
 }
 
 // Usage:
@@ -117,6 +135,12 @@ class VehicleSettingsCache extends BaseCache
     {
         return 'vehicle_settings';
     }
+
+    protected function ttl(): int
+    {
+        return 86400; // 24 hours (rarely changes)
+    }
+
 }
 
 // Usage:
@@ -153,6 +177,12 @@ class NotificationCache extends BaseCache
         return 'notification';
     }
 
+    protected function ttl(): int
+    {
+        return 600; // 10 minutes
+    }
+
+
     // Custom helper for admin
     public static function admin($id, callable $callback)
     {
@@ -178,14 +208,18 @@ NotificationCache::admin($adminId, fn() => $this->notificationRepository->getUnr
 
 ```php
 'scopes' => [
-    'app_state' => ['enabled' => true, 'ttl' => 1800],           // 30 min (customer/rider app state)
-    'trip' => ['enabled' => true, 'ttl' => 900],                 // 15 min (active trip data)
-    'customer_profile' => ['enabled' => true, 'ttl' => 3600],    // 1 hour (customer profiles)
-    'earnings' => ['enabled' => true, 'ttl' => 1800],            // 30 min (rider earnings)
-    'vehicle_settings' => ['enabled' => true, 'ttl' => 86400],   // 24 hours (vehicle settings - rarely change)
-    'notification' => ['enabled' => true, 'ttl' => 600],         // 10 min (notifications)
+    'app_state' => ['enabled' => env('APP_STATE_CACHE_ENABLED', true)],
+
+    // Add more scopes here as needed (only 'enabled' is configured - ttl is defined in each service)
+    // 'trip' => ['enabled' => true],
+    // 'customer_profile' => ['enabled' => true],
+    // 'earnings' => ['enabled' => true],
+    // 'vehicle_settings' => ['enabled' => true],
+    // 'notification' => ['enabled' => true],
 ],
 ```
+
+**Note**: TTL is now defined in each cache service class, not in config. This keeps the service self-contained and easier to maintain.
 
 ## 7️⃣ Disabling Cache for Testing
 
