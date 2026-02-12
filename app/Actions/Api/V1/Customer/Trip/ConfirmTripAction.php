@@ -49,6 +49,7 @@ readonly class ConfirmTripAction
 
         // Clear customer cache after trip confirmation
         AppStateCache::forgetCustomer($dto->customerId);
+        TripCache::forgetCustomer($dto->customerId);
     }
 
     /**
