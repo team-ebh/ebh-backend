@@ -59,16 +59,32 @@ class CacheMonitor extends Page
 
     protected function getCacheStats(): array
     {
-        $redis = Cache::getRedis();
-        $info = $redis->info('memory');
+        $cacheDriver = config('cache.default');
+
+        // Get Redis info only if using Redis
+        $redisMemory = 'N/A';
+        $redisPeakMemory = 'N/A';
+
+        if (in_array($cacheDriver, ['redis', 'predis'])) {
+            try {
+                $redis = Cache::getRedis();
+                $info = $redis->info('memory');
+                $redisMemory = $info['used_memory_human'] ?? 'N/A';
+                $redisPeakMemory = $info['used_memory_peak_human'] ?? 'N/A';
+            } catch (\Exception $e) {
+                // Redis not available
+                $redisMemory = 'Not Available';
+                $redisPeakMemory = 'Not Available';
+            }
+        }
 
         return [
             // Cache Configuration
-            'cache_driver' => config('cache.default'),
+            'cache_driver' => $cacheDriver,
             'redis_host' => config('database.redis.default.host'),
             'redis_port' => config('database.redis.default.port'),
-            'redis_memory' => $info['used_memory_human'] ?? 'N/A',
-            'redis_peak_memory' => $info['used_memory_peak_human'] ?? 'N/A',
+            'redis_memory' => $redisMemory,
+            'redis_peak_memory' => $redisPeakMemory,
 
             // RiderCache Stats
             'total_riders' => RiderCache::count(),
