@@ -7,6 +7,7 @@ namespace App\Filament\Pages;
 use App\Models\Admin;
 use App\Services\Cache\AppStateCache;
 use App\Services\Cache\RiderCache;
+use App\Services\Cache\TripCache;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -58,11 +59,43 @@ class CacheMonitor extends Page
 
     protected function getCacheStats(): array
     {
+        $redis = Cache::getRedis();
+        $info = $redis->info('memory');
+
         return [
+            // Cache Configuration
             'cache_driver' => config('cache.default'),
+            'redis_host' => config('database.redis.default.host'),
+            'redis_port' => config('database.redis.default.port'),
+            'redis_memory' => $info['used_memory_human'] ?? 'N/A',
+            'redis_peak_memory' => $info['used_memory_peak_human'] ?? 'N/A',
+
+            // RiderCache Stats
             'total_riders' => RiderCache::count(),
             'online_riders' => RiderCache::countByStatus('online'),
             'busy_riders' => RiderCache::countByStatus('busy'),
+
+            // Cache Scopes
+            'scopes' => [
+                [
+                    'name' => 'App State Cache',
+                    'scope' => 'app_state',
+                    'ttl' => '15 minutes',
+                    'description' => 'Customer and rider app states',
+                ],
+                [
+                    'name' => 'Rider Cache',
+                    'scope' => 'rider',
+                    'ttl' => '1 minute',
+                    'description' => 'Rider status, location, and geospatial data',
+                ],
+                [
+                    'name' => 'Trip Cache',
+                    'scope' => 'trip',
+                    'ttl' => '5 minutes',
+                    'description' => 'Active trip data for customers and riders',
+                ],
+            ],
         ];
     }
 
@@ -108,6 +141,23 @@ class CacheMonitor extends Page
                         ->send();
                 }),
 
+            Action::make('flushTrips')
+                ->label('Flush Trips')
+                ->icon('heroicon-o-map')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('Flush Trips Cache?')
+                ->modalDescription('This will remove all active trip data from cache.')
+                ->action(function () {
+                    TripCache::flush();
+                    $this->loadData();
+
+                    Notification::make()
+                        ->success()
+                        ->title('Trips cache flushed')
+                        ->send();
+                }),
+
             Action::make('flushAll')
                 ->label('Flush All Caches')
                 ->icon('heroicon-o-trash')
@@ -122,6 +172,7 @@ class CacheMonitor extends Page
                     // Flush specific caches
                     AppStateCache::flush();
                     RiderCache::flush();
+                    TripCache::flush();
 
                     $this->loadData();
 

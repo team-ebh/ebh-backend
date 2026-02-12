@@ -26,8 +26,8 @@ describe('TripCache', function () {
 
             // First call - should execute callback
             $result1 = TripCache::customer($customerId, $callback);
-            expect($result1)->toBe(['trip_id' => 456, 'status' => 'active']);
-            expect($callCount)->toBe(1);
+            expect($result1)->toBe(['trip_id' => 456, 'status' => 'active'])
+                ->and($callCount)->toBe(1);
 
             // Second call - should use cache (callback not executed)
             $result2 = TripCache::customer($customerId, $callback);
