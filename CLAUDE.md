@@ -22,6 +22,9 @@ php artisan serve --port=9000
 # Run tests
 php artisan test
 
+# Run tests in parallel (faster)
+./vendor/bin/pest --parallel
+
 # Fix code style (Laravel Pint)
 ./vendor/bin/pint
 

@@ -18,6 +18,8 @@ use App\Pipelines\Api\V1\Customer\Trip\ConfirmTrip\SendRiderRequestsPipe;
 use App\Pipelines\Api\V1\Customer\Trip\ConfirmTrip\UpdatePaymentAndStatusPipe;
 use App\Pipelines\Api\V1\Customer\Trip\ConfirmTrip\ValidateScheduledTripPipe;
 use App\Pipelines\Api\V1\Customer\Trip\ConfirmTrip\ValidateTripPipe;
+use App\Services\Cache\AppStateCache;
+use App\Services\Cache\TripCache;
 use Illuminate\Pipeline\Pipeline;
 
 /**
@@ -44,6 +46,10 @@ readonly class ConfirmTripAction
             ->withTransaction()
             ->onFailed(fn ($e) => throw $e)
             ->do([$this, 'confirmTrip'], $dto);
+
+        // Clear customer cache after trip confirmation
+        AppStateCache::forgetCustomer($dto->customerId);
+        TripCache::forgetCustomer($dto->customerId);
     }
 
     /**

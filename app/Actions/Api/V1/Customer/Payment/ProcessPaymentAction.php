@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Actions\Api\V1\Customer\Payment;
 
 use App\DTOs\Api\V1\Customer\Payment\ProcessPaymentDTO;
+use App\Models\Payment;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\CheckPaymentStatusPipe;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\GenerateDeeplinkPipe;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\LockPendingPaymentsBeforeUpdatePipe;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\PaymentProcessContext;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\UpdatePaymentStatusPipe;
 use App\Pipelines\Api\V1\Customer\Payment\ProcessPayment\ValidatePendingPaymentPipe;
+use App\Services\Cache\AppStateCache;
 use Illuminate\Pipeline\Pipeline;
 
 /**
@@ -28,10 +30,15 @@ readonly class ProcessPaymentAction
      */
     public function __invoke(ProcessPaymentDTO $dto): PaymentProcessContext
     {
-        return safeProcess()
+        $result = safeProcess()
             ->withTransaction()
             ->onFailed(fn ($e) => throw $e)
             ->do(fn () => $this->process($dto));
+
+        // Clear customer cache after payment processing (affects pending payment state)
+        AppStateCache::forgetCustomer($result->payment?->{Payment::COLUMN_CUSTOMER_ID});
+
+        return $result;
     }
 
     /**
