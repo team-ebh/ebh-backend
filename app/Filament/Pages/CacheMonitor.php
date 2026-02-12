@@ -10,6 +10,7 @@ use App\Services\Cache\RiderCache;
 use App\Services\Cache\TripCache;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -124,7 +125,7 @@ class CacheMonitor extends Page
                 ->color('gray')
                 ->action('loadData'),
 
-            \Filament\Actions\ActionGroup::make([
+            ActionGroup::make([
                 Action::make('flushAppState')
                     ->label('Flush App State')
                     ->icon('heroicon-o-cog-6-tooth')
@@ -184,9 +185,6 @@ class CacheMonitor extends Page
                     ->modalHeading('Flush All Caches?')
                     ->modalDescription('This will remove ALL cache data. This action cannot be undone.')
                     ->action(function () {
-                        // Flush all cache tags
-                        Cache::flush();
-
                         // Flush specific caches
                         AppStateCache::flush();
                         RiderCache::flush();
