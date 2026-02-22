@@ -21,7 +21,8 @@ return [
             'banner_title_ar' => 'Title (Arabic)',
             'banner_subtitle' => 'Subtitle (English)',
             'banner_subtitle_ar' => 'Subtitle (Arabic)',
-            'banner_image' => 'Banner Image',
+            'banner_image' => 'Banner Image (English)',
+            'banner_image_ar' => 'Banner Image (Arabic)',
             'banner_sort' => 'Order',
         ],
         'sections' => [

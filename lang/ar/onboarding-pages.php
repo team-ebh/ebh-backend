@@ -21,7 +21,8 @@ return [
             'banner_title_ar' => 'العنوان (عربي)',
             'banner_subtitle' => 'العنوان الفرعي (إنجليزي)',
             'banner_subtitle_ar' => 'العنوان الفرعي (عربي)',
-            'banner_image' => 'صورة اللافتة',
+            'banner_image' => 'صورة اللافتة (إنجليزي)',
+            'banner_image_ar' => 'صورة اللافتة (عربي)',
             'banner_sort' => 'الترتيب',
         ],
         'sections' => [

@@ -32,11 +32,18 @@ class OnboardingPageBanner extends Model implements HasMedia
 
     public const string IMAGE = 'image';
 
+    public const string IMAGE_AR = 'image_ar';
+
     public const string MEDIA_COLLECTION_NAME = 'onboarding_page_banners';
+
+    public const string MEDIA_COLLECTION_NAME_AR = 'onboarding_page_banners_ar';
 
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection(self::MEDIA_COLLECTION_NAME)
+            ->singleFile();
+
+        $this->addMediaCollection(self::MEDIA_COLLECTION_NAME_AR)
             ->singleFile();
     }
 }

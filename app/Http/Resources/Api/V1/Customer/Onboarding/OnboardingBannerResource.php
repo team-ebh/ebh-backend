@@ -51,13 +51,13 @@ class OnboardingBannerResource extends JsonResource
                 : $banner->{OnboardingPageBanner::COLUMN_SUBTITLE},
 
             /**
-             * Banner image URL
+             * Banner image URL based on app language (falls back to English image if Arabic not available)
              *
              * @var string|null
              *
              * @example https://example.com/images/onboarding/customer-1.png
              */
-            'image' => $banner->getFirstMediaLink(OnboardingPageBanner::IMAGE),
+            'image' => $banner->getFirstTranslatedMediaLinkWithFallback(OnboardingPageBanner::IMAGE),
         ];
     }
 }

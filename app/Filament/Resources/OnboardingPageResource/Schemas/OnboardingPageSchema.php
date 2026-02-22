@@ -70,7 +70,16 @@ class OnboardingPageSchema
                                     ->required()
                                     ->maxSize(2048)
                                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/jpg', 'image/webp'])
-                                    ->columnSpanFull(),
+                                    ->columnSpan(1),
+
+                                SpatieMediaLibraryFileUpload::make(OnboardingPageBanner::IMAGE_AR)
+                                    ->label(trans('onboarding-pages.admin.fields.banner_image_ar'))
+                                    ->collection(OnboardingPageBanner::MEDIA_COLLECTION_NAME_AR)
+                                    ->image()
+                                    ->imageEditor()
+                                    ->maxSize(2048)
+                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/jpg', 'image/webp'])
+                                    ->columnSpan(1),
 
                                 TextInput::make(OnboardingPageBanner::COLUMN_TITLE)
                                     ->label(trans('onboarding-pages.admin.fields.banner_title'))
