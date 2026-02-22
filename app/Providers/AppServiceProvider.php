@@ -14,6 +14,7 @@ use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\Earnings\RiderEarningsRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
+use App\Interfaces\Repositories\Onboarding\OnboardingPageRepositoryInterface;
 use App\Interfaces\Repositories\Payment\PaymentLogRepositoryInterface;
 use App\Interfaces\Repositories\Payment\PaymentRepositoryInterface;
 use App\Interfaces\Repositories\TripRequestRepositoryInterface;
@@ -26,6 +27,7 @@ use App\Repositories\Api\V1\Customer\Trip\TripRepository;
 use App\Repositories\Api\V1\Rider\Earnings\RiderEarningsRepository;
 use App\Repositories\Api\V1\Rider\RiderRepository;
 use App\Repositories\Api\V1\Rider\Trip\RiderTripRepository;
+use App\Repositories\Onboarding\OnboardingPageRepository;
 use App\Repositories\Payment\PaymentLogRepository;
 use App\Repositories\Payment\PaymentRepository;
 use App\Repositories\TripRequestRepository;
@@ -80,6 +82,7 @@ class AppServiceProvider extends ServiceProvider
         TripRequestRepositoryInterface::class => TripRequestRepository::class,
         PaymentRepositoryInterface::class => PaymentRepository::class,
         PaymentLogRepositoryInterface::class => PaymentLogRepository::class,
+        OnboardingPageRepositoryInterface::class => OnboardingPageRepository::class,
     ];
 
     /**

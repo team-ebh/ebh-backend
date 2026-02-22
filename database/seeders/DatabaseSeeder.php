@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminInitializerSeeder::class,
             StaticPageSeeder::class,
+            OnboardingPageSeeder::class,
         ]);
 
         if (ApplicationEnvironmentEnum::isLocalEnvironments()) {
