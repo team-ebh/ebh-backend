@@ -10,6 +10,7 @@ use App\Interfaces\Repositories\Api\V1\Rider\RiderRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Models\Rider;
 use App\Models\Trip;
+use App\Services\Cache\RiderCache;
 
 readonly class UpdateLocationAction
 {
@@ -29,6 +30,9 @@ readonly class UpdateLocationAction
             $dto->latitude,
             $dto->longitude
         );
+
+        // Clear rider cache to update location in cache and GEO set
+        RiderCache::forgetRider($dto->rider->{Rider::COLUMN_ID});
 
         // Check if rider has an active trip and broadcast location update
         $activeTrip = $this->riderTripRepository->getActiveTrip($dto->rider->{Rider::COLUMN_ID});

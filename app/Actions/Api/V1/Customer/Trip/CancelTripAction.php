@@ -12,6 +12,8 @@ use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Rider\Trip\RiderTripRepositoryInterface;
 use App\Jobs\CancelTripRequestsJob;
 use App\Models\Trip;
+use App\Services\Cache\AppStateCache;
+use App\Services\Cache\TripCache;
 
 /**
  * Cancel Trip Action
@@ -58,6 +60,17 @@ readonly class CancelTripAction
                     $this->riderTripRepository->updateRiderStatusToOnline($dto->trip->{Trip::COLUMN_RIDER_ID});
                 }
             });
+
+        // Clear cache for both customer and rider
+        AppStateCache::forgetBoth(
+            $dto->trip->{Trip::COLUMN_CUSTOMER_ID},
+            $dto->trip->{Trip::COLUMN_RIDER_ID}
+        );
+
+        TripCache::forgetBoth(
+            $dto->trip->{Trip::COLUMN_CUSTOMER_ID},
+            $dto->trip->{Trip::COLUMN_RIDER_ID}
+        );
 
         // Dispatch background job to cancel all trip requests and notify riders
         CancelTripRequestsJob::dispatch(

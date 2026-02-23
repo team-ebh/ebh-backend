@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\EditProfile;
+use App\Filament\Pages\Auth\Login;
 use App\Http\Middleware\CheckAdminEnabledMiddleware;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -19,6 +20,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\App;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Nizek\StaticPage\Filament\StaticPagesPlugin;
 
@@ -30,7 +32,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('')
-            ->login()
+            ->login(Login::class)
             ->colors([
                 'primary' => Color::Yellow,
             ])
@@ -61,10 +63,10 @@ class AdminPanelProvider extends PanelProvider
                 new StaticPagesPlugin(),
             ])
             ->sidebarCollapsibleOnDesktop()
-//            ->brandLogo(asset('/images/logo/dark.svg'))
-//            ->darkModeBrandLogo(asset('/images/logo/light.svg'))
-//            ->favicon(asset('images/logo/light.svg', ! App::isLocal()))
-//            ->brandLogoHeight('3rem')
+            ->brandLogo(asset('/images/icons/white-b.png'))
+            ->darkModeBrandLogo(asset('/images/icons/yellow-b.png'))
+            ->favicon(asset('/images/icons/white-b.png', ! App::isLocal()))
+            ->brandLogoHeight('3rem')
             ->maxContentWidth('full')
             ->spa();
     }

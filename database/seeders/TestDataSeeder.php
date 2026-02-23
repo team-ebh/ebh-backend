@@ -159,7 +159,7 @@ class TestDataSeeder extends Seeder
                 'unique_key' => self::TEST_RIDER_PHONE,
                 'data' => [
                     Rider::COLUMN_FULL_NAME => 'Test Rider',
-                    Rider::COLUMN_EMAIL => 'rider@test.com',
+                    Rider::COLUMN_EMAIL => 'rider-' . self::TEST_RIDER_PHONE . '@test.com',
                     Rider::COLUMN_PHONE_NUMBER => self::TEST_RIDER_PHONE,
                     Rider::COLUMN_COMPANY_ID => $company->id,
                     Rider::COLUMN_STATUS => RiderStatusEnum::ONLINE,
@@ -169,7 +169,7 @@ class TestDataSeeder extends Seeder
                 'unique_key' => '50003001',
                 'data' => [
                     Rider::COLUMN_FULL_NAME => 'Ahmed Hassan',
-                    Rider::COLUMN_EMAIL => 'ahmed.hassan@test.com',
+                    Rider::COLUMN_EMAIL => 'ahmed.hassan-50003001@test.com',
                     Rider::COLUMN_PHONE_NUMBER => '50003001',
                     Rider::COLUMN_COMPANY_ID => $company->id,
                     Rider::COLUMN_STATUS => RiderStatusEnum::ONLINE,
@@ -179,7 +179,7 @@ class TestDataSeeder extends Seeder
                 'unique_key' => '50003002',
                 'data' => [
                     Rider::COLUMN_FULL_NAME => 'Mohammed Ali',
-                    Rider::COLUMN_EMAIL => 'mohammed.ali@test.com',
+                    Rider::COLUMN_EMAIL => 'mohammed.ali-50003002@test.com',
                     Rider::COLUMN_PHONE_NUMBER => '50003002',
                     Rider::COLUMN_COMPANY_ID => $company->id,
                     Rider::COLUMN_STATUS => RiderStatusEnum::OFFLINE,

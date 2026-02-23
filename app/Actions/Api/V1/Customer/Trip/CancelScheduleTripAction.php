@@ -10,6 +10,7 @@ use App\Exceptions\Trip\TripCannotBeCancelledException;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\CustomerTripRepositoryInterface;
 use App\Interfaces\Repositories\Api\V1\Customer\Trip\TripRepositoryInterface;
 use App\Models\Trip;
+use App\Services\Cache\AppStateCache;
 
 /**
  * Cancel Trip Action
@@ -32,7 +33,8 @@ readonly class CancelScheduleTripAction
      */
     public function __invoke(): void
     {
-        $scheduleTrip = $this->customerTripRepository->firstScheduledTrip(auth('customer')->id());
+        $customerId = auth('customer')->id();
+        $scheduleTrip = $this->customerTripRepository->firstScheduledTrip($customerId);
 
         throw_if(
             ! $scheduleTrip,
@@ -48,5 +50,8 @@ readonly class CancelScheduleTripAction
                     TripStatusEnum::CANCELED_BY_CUSTOMER
                 );
             });
+
+        // Clear customer cache after cancelling scheduled trip
+        AppStateCache::forgetCustomer($customerId);
     }
 }

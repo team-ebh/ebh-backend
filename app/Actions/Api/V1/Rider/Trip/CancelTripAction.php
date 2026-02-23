@@ -8,6 +8,9 @@ use App\DTOs\Api\V1\Rider\Trip\CancelTripDTO;
 use App\Models\Trip;
 use App\Pipelines\Rider\Trip\CancelTrip\ExecuteAndBroadcastPipe;
 use App\Pipelines\Rider\Trip\CancelTrip\ValidatePipe;
+use App\Services\Cache\AppStateCache;
+use App\Services\Cache\RiderCache;
+use App\Services\Cache\TripCache;
 use Illuminate\Pipeline\Pipeline;
 
 readonly class CancelTripAction
@@ -19,10 +22,27 @@ readonly class CancelTripAction
      */
     public function __invoke(CancelTripDTO $dto): Trip
     {
-        return safeProcess()
+        $trip = safeProcess()
             ->withTransaction()
             ->onFailed(fn ($e) => throw $e)
             ->do([$this, 'cancelTrip'], $dto);
+
+        // Clear cache for both rider and customer
+        $customerId = $dto->tripRequest->trip->{Trip::COLUMN_CUSTOMER_ID} ?? null;
+
+        AppStateCache::forgetBoth(
+            $customerId,
+            $dto->riderId
+        );
+
+        RiderCache::forgetRider($dto->riderId);
+
+        TripCache::forgetBoth(
+            $customerId,
+            $dto->riderId
+        );
+
+        return $trip;
     }
 
     /**
